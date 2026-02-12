@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RTE - Entity Overview</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <!-- Top Menu Bar -->
+  <nav class="top-menu">
+    <div class="menu-brand">🎯 PO AI</div>
+    <div class="menu-items">
+      <a href="/" class="menu-btn">📝 Debrief</a>
+      <a href="/" class="menu-btn">🔍 Retrieve</a>
+      <a href="/" class="menu-btn">✨ Create</a>
+      <a href="/rte" class="menu-btn active">📊 RTE</a>
+      <a href="/" class="menu-btn">🌐 Translate</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="rte-header">
+      <h1>📊 Release Train Entities</h1>
+      <p>All extracted people, teams, systems, and relationships</p>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-value" id="entityCount">-</div>
+        <div class="stat-label">Entities</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="relationshipCount">-</div>
+        <div class="stat-label">Relationships</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="fileCount">-</div>
+        <div class="stat-label">Files Saved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="glossaryCount">-</div>
+        <div class="stat-label">Glossary Terms</div>
+      </div>
+    </section>
+
+    <!-- Entities -->
+    <section class="rte-section">
+      <h2>👤 Entities</h2>
+      <div class="entity-list" id="entityList">
+        <p class="loading">Loading...</p>
+      </div>
+    </section>
+
+    <!-- Relationships -->
+    <section class="rte-section">
+      <h2>🔗 Relationships</h2>
+      <div class="relationship-list" id="relationshipList">
+        <p class="loading">Loading...</p>
+      </div>
+    </section>
+
+    <!-- Recent Files -->
+    <section class="rte-section">
+      <h2>📁 Recent Files</h2>
+      <div class="file-list" id="fileList">
+        <p class="loading">Loading...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- File Editor Modal -->
+  <div id="fileEditorModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>✏️ Edit File</h3>
+        <button class="close-btn" onclick="closeEditor()">×</button>
+      </div>
+      <input type="hidden" id="editorFilename">
+      <textarea id="editorContent" class="editor-textarea"></textarea>
+      <div class="modal-actions">
+        <button class="save-btn" onclick="saveFile()">💾 Save</button>
+        <button class="cancel-btn" onclick="closeEditor()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/rte/stats');
+        const stats = await response.json();
+
+        document.getElementById('entityCount').textContent = stats.entities || 0;
+        document.getElementById('relationshipCount').textContent = stats.relationships || 0;
+        document.getElementById('fileCount').textContent = stats.files || 0;
+        document.getElementById('glossaryCount').textContent = stats.glossaryTerms || 0;
+      } catch (error) {
+        console.error('Stats error:', error);
+      }
+    }
+
+    async function loadEntities() {
+      try {
+        const response = await fetch('/api/rte/entities');
+        const data = await response.json();
+
+        if (data.entities.length === 0) {
+          document.getElementById('entityList').innerHTML = '<p class="empty">No entities yet. Submit a debrief to extract entities.</p>';
+          return;
+        }
+
+        let html = '';
+        Object.entries(data.grouped).forEach(([type, entities]) => {
+          html += `
+            <div class="entity-group-section">
+              <h3 class="type-${type}">${type} (${entities.length})</h3>
+              <div class="entity-items-grid">
+                ${entities.map(e => `
+                  <div class="entity-item">
+                    <span class="entity-name">${e.name}</span>
+                    ${e.role ? `<span class="entity-role">${e.role}</span>` : ''}
+                    ${e.team ? `<span class="entity-team">${e.team}</span>` : ''}
+                    <button class="delete-btn" onclick="deleteEntity(${e.id})">×</button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        });
+
+        document.getElementById('entityList').innerHTML = html;
+      } catch (error) {
+        document.getElementById('entityList').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    }
+
+    async function loadRelationships() {
+      try {
+        const response = await fetch('/api/rte/relationships');
+        const data = await response.json();
+
+        if (data.relationships.length === 0) {
+          document.getElementById('relationshipList').innerHTML = '<p class="empty">No relationships yet.</p>';
+          return;
+        }
+
+        let html = '<div class="relationship-items">';
+        data.relationships.forEach(r => {
+          html += `
+            <div class="relationship-item">
+              <span class="rel-source">${r.source_name}</span>
+              <span class="rel-type">${r.type}</span>
+              <span class="rel-target">${r.target_name}</span>
+              ${r.context ? `<span class="rel-context">${r.context}</span>` : ''}
+              <button class="delete-btn" onclick="deleteRelationship(${r.id})">×</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+
+        document.getElementById('relationshipList').innerHTML = html;
+      } catch (error) {
+        document.getElementById('relationshipList').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    }
+
+    async function loadFiles() {
+      try {
+        const response = await fetch('/api/rte/files');
+        const data = await response.json();
+
+        if (data.files.length === 0) {
+          document.getElementById('fileList').innerHTML = '<p class="empty">No files saved yet.</p>';
+          return;
+        }
+
+        let html = '<div class="file-items">';
+        data.files.forEach(f => {
+          html += `
+            <div class="file-item">
+              <a href="/api/rte/file/${encodeURIComponent(f.filename)}" target="_blank" class="file-name">${f.filename}</a>
+              <span class="file-type type-${f.type}">${f.type}</span>
+              <span class="file-date">${f.date}</span>
+              <button class="edit-btn" onclick="editFile('${f.filename}')">✏️</button>
+              <button class="delete-btn" onclick="deleteFile(${f.id}, '${f.filename}')">×</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+
+        document.getElementById('fileList').innerHTML = html;
+      } catch (error) {
+        document.getElementById('fileList').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    }
+
+    async function deleteEntity(id) {
+      await fetch(`/api/rte/entity/${id}`, { method: 'DELETE' });
+      loadEntities();
+      loadStats();
+    }
+
+    async function deleteRelationship(id) {
+      await fetch(`/api/rte/relationship/${id}`, { method: 'DELETE' });
+      loadRelationships();
+      loadStats();
+    }
+
+    async function deleteFile(id, filename) {
+      await fetch(`/api/rte/file/${id}`, { method: 'DELETE' });
+      loadFiles();
+      loadStats();
+    }
+
+    async function editFile(filename) {
+      try {
+        const response = await fetch(`/api/rte/file/${encodeURIComponent(filename)}`);
+        const content = await response.text();
+
+        // Show editor modal
+        document.getElementById('editorFilename').value = filename;
+        document.getElementById('editorContent').value = content;
+        document.getElementById('fileEditorModal').classList.remove('hidden');
+      } catch (error) {
+        alert('Error loading file: ' + error.message);
+      }
+    }
+
+    async function saveFile() {
+      const filename = document.getElementById('editorFilename').value;
+      const content = document.getElementById('editorContent').value;
+
+      try {
+        await fetch(`/api/rte/file/${encodeURIComponent(filename)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+        closeEditor();
+        loadFiles();
+      } catch (error) {
+        alert('Error saving: ' + error.message);
+      }
+    }
+
+    function closeEditor() {
+      document.getElementById('fileEditorModal').classList.add('hidden');
+    }
+
+    // Load all data
+    loadStats();
+    loadEntities();
+    loadRelationships();
+    loadFiles();
+  </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PO AI - Orchestrator Files</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <!-- Top Menu Bar -->
+  <nav class="top-menu">
+    <div class="menu-brand">🎯 PO AI</div>
+    <div class="menu-items">
+      <a href="/" class="menu-btn">📝 Debrief</a>
+      <a href="/rte" class="menu-btn">📊 RTE</a>
+      <a href="/md-files" class="menu-btn active">📚 .md Files</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="rte-header">
+      <h1>📚 Orchestrator Files</h1>
+      <p>Browse and edit the .md guides that power your AI assistant</p>
+    </section>
+
+    <!-- Orchestrator Main File -->
+    <section class="rte-section">
+      <h2>🎯 Main Orchestrator</h2>
+      <div class="file-list" id="orchestratorFile">
+        <p class="loading">Loading...</p>
+      </div>
+    </section>
+
+    <!-- Prompts/Templates -->
+    <section class="rte-section">
+      <h2>📝 Prompts & Templates</h2>
+      <div class="file-list" id="promptFiles">
+        <p class="loading">Loading...</p>
+      </div>
+    </section>
+
+    <!-- Best Practices -->
+    <section class="rte-section">
+      <h2>📖 Best Practices</h2>
+      <div class="file-list" id="practiceFiles">
+        <p class="loading">Loading...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- File Editor Modal -->
+  <div id="fileEditorModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>✏️ Edit: <span id="editorTitle"></span></h3>
+        <button class="close-btn" onclick="closeEditor()">×</button>
+      </div>
+      <input type="hidden" id="editorFilepath">
+      <textarea id="editorContent" class="editor-textarea"></textarea>
+      <div class="modal-actions">
+        <button class="save-btn" onclick="saveFile()">💾 Save</button>
+        <button class="cancel-btn" onclick="closeEditor()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadFiles() {
+      try {
+        const response = await fetch('/api/md-files');
+        const data = await response.json();
+
+        // Main orchestrator
+        if (data.orchestrator) {
+          document.getElementById('orchestratorFile').innerHTML = renderFile(data.orchestrator);
+        } else {
+          document.getElementById('orchestratorFile').innerHTML = '<p class="empty">No orchestrator file found</p>';
+        }
+
+        // Prompts
+        if (data.prompts && data.prompts.length > 0) {
+          document.getElementById('promptFiles').innerHTML =
+            '<div class="file-items">' + data.prompts.map(f => renderFile(f)).join('') + '</div>';
+        } else {
+          document.getElementById('promptFiles').innerHTML = '<p class="empty">No prompt files found</p>';
+        }
+
+        // Best practices
+        if (data.practices && data.practices.length > 0) {
+          document.getElementById('practiceFiles').innerHTML =
+            '<div class="file-items">' + data.practices.map(f => renderFile(f)).join('') + '</div>';
+        } else {
+          document.getElementById('practiceFiles').innerHTML = '<p class="empty">No practice files found</p>';
+        }
+
+      } catch (error) {
+        console.error('Error loading files:', error);
+      }
+    }
+
+    function renderFile(f) {
+      return `
+        <div class="file-item">
+          <a href="/api/md-files/view?path=${encodeURIComponent(f.path)}" target="_blank" class="file-name">${f.name}</a>
+          <button class="edit-btn" onclick="editFile('${encodeURIComponent(f.path)}', '${f.name}')">✏️</button>
+        </div>
+      `;
+    }
+
+    async function editFile(encodedPath, name) {
+      try {
+        const response = await fetch(`/api/md-files/view?path=${encodedPath}`);
+        const content = await response.text();
+
+        document.getElementById('editorFilepath').value = decodeURIComponent(encodedPath);
+        document.getElementById('editorTitle').textContent = name;
+        document.getElementById('editorContent').value = content;
+        document.getElementById('fileEditorModal').classList.remove('hidden');
+      } catch (error) {
+        alert('Error loading file: ' + error.message);
+      }
+    }
+
+    async function saveFile() {
+      const filepath = document.getElementById('editorFilepath').value;
+      const content = document.getElementById('editorContent').value;
+
+      try {
+        const response = await fetch('/api/md-files/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filepath, content })
+        });
+
+        if (response.ok) {
+          closeEditor();
+          loadFiles();
+        } else {
+          const err = await response.json();
+          alert('Error saving: ' + err.error);
+        }
+      } catch (error) {
+        alert('Error saving: ' + error.message);
+      }
+    }
+
+    function closeEditor() {
+      document.getElementById('fileEditorModal').classList.add('hidden');
+    }
+
+    // Load files on page load
+    loadFiles();
+  </script>
+</body>
+</html>

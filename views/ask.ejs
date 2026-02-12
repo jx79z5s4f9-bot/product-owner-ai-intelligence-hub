@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ask - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .ask-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .ask-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .ask-header h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    .ask-form {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .question-input {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.1rem;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      margin-bottom: 16px;
+      resize: none;
+    }
+    
+    .question-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .filters-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .filter-group label {
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .filter-group select {
+      padding: 8px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+    }
+    
+    .ask-btn {
+      padding: 12px 32px;
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-left: auto;
+    }
+    
+    .ask-btn:hover {
+      background: #2ea043;
+    }
+    
+    .ask-btn:disabled {
+      background: #21262d;
+      cursor: not-allowed;
+    }
+    
+    .results-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    @media (max-width: 768px) {
+      .results-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .evidence-panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .evidence-panel h2 {
+      font-size: 1.1rem;
+      color: #c9d1d9;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .evidence-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .evidence-card:hover {
+      border-color: #58a6ff;
+      background: #161b22;
+    }
+    
+    .evidence-card:last-child {
+      margin-bottom: 0;
+    }
+    
+    .evidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .evidence-filename {
+      color: #58a6ff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .evidence-filename:hover {
+      text-decoration: underline;
+    }
+    
+    .evidence-view-hint {
+      color: #484f58;
+      font-size: 0.7rem;
+      margin-top: 6px;
+      font-style: italic;
+    }
+    
+    .evidence-score {
+      color: #8b949e;
+      font-size: 0.75rem;
+    }
+    
+    .evidence-snippet {
+      color: #8b949e;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    
+    .evidence-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .tag {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+    }
+    
+    .tag.person {
+      background: rgba(56, 139, 253, 0.2);
+      color: #58a6ff;
+    }
+    
+    .tag.project {
+      background: rgba(163, 113, 247, 0.2);
+      color: #a371f7;
+    }
+    
+    .tag.semantic {
+      background: rgba(35, 134, 54, 0.2);
+      color: #3fb950;
+    }
+    
+    .answer-panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .answer-panel h2 {
+      font-size: 1.1rem;
+      color: #c9d1d9;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .answer-content {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      color: #c9d1d9;
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+    
+    .answer-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #30363d;
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+    
+    .confidence-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .confidence-fill {
+      width: 60px;
+      height: 6px;
+      background: #21262d;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .confidence-fill-inner {
+      height: 100%;
+      background: linear-gradient(90deg, #f85149 0%, #f0883e 50%, #3fb950 100%);
+      transition: width 0.3s;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #8b949e;
+    }
+    
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b949e;
+    }
+    
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: #c9d1d9;
+    }
+    
+    .example-questions {
+      margin-top: 24px;
+    }
+    
+    .example-questions h4 {
+      font-size: 0.9rem;
+      color: #8b949e;
+      margin-bottom: 12px;
+    }
+    
+    .example-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 10px 16px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    
+    .example-btn:hover {
+      background: #161b22;
+      border-color: #58a6ff;
+    }
+    
+    /* History styles */
+    .history-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #30363d;
+    }
+    
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .history-header h2 {
+      font-size: 1.1rem;
+      color: #c9d1d9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .clear-history-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid #f85149;
+      color: #f85149;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    
+    .clear-history-btn:hover {
+      background: rgba(248, 81, 73, 0.1);
+    }
+    
+    .history-item {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    
+    .history-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .history-item-header:hover {
+      background: #1c2128;
+    }
+    
+    .history-question {
+      color: #c9d1d9;
+      font-weight: 500;
+      flex: 1;
+      margin-right: 12px;
+    }
+    
+    .history-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    
+    .history-date {
+      color: #8b949e;
+      font-size: 0.75rem;
+    }
+    
+    .history-rte {
+      padding: 2px 8px;
+      background: rgba(56, 139, 253, 0.2);
+      color: #58a6ff;
+      border-radius: 10px;
+      font-size: 0.7rem;
+    }
+    
+    .history-actions {
+      display: flex;
+      gap: 6px;
+    }
+    
+    .history-actions button {
+      padding: 4px 8px;
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    
+    .history-actions button:hover {
+      background: #21262d;
+      color: #c9d1d9;
+    }
+    
+    .history-actions button.delete:hover {
+      border-color: #f85149;
+      color: #f85149;
+    }
+    
+    .history-answer {
+      display: none;
+      padding: 0 16px 16px;
+      border-top: 1px solid #30363d;
+    }
+    
+    .history-item.expanded .history-answer {
+      display: block;
+      padding-top: 12px;
+    }
+    
+    .history-answer-content {
+      background: #0d1117;
+      border-radius: 6px;
+      padding: 12px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .history-expand-icon {
+      color: #8b949e;
+      transition: transform 0.2s;
+    }
+    
+    .history-item.expanded .history-expand-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Document Viewer Modal */
+    .doc-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .doc-modal-overlay.active {
+      display: flex;
+    }
+
+    .doc-modal-box {
+      background: #1a1a1a;
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .doc-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .doc-modal-header h3 {
+      margin: 0;
+      color: #58a6ff;
+      font-size: 1rem;
+    }
+
+    .doc-modal-close {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #999;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .doc-modal-close:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .doc-modal-body {
+      flex-grow: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #c9d1d9;
+    }
+
+    .doc-modal-body .doc-content {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .doc-modal-body .doc-content .evidence-highlight {
+      background: rgba(88, 166, 255, 0.2);
+      border-left: 3px solid #58a6ff;
+      padding: 8px 12px;
+      margin: 4px 0;
+      border-radius: 0 6px 6px 0;
+      display: block;
+    }
+
+    .doc-modal-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(88, 166, 255, 0.15);
+      color: #58a6ff;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-left: 12px;
+      font-weight: normal;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'ask' }) %>
+
+  <div class="ask-container">
+    <div class="ask-header">
+      <h1>❓ Ask PO AI</h1>
+      <p style="color: #8b949e;">Ask questions about your documents and get evidence-based answers</p>
+    </div>
+    
+    <div class="ask-form">
+      <textarea 
+        class="question-input" 
+        id="questionInput" 
+        placeholder="Ask a question about your projects, people, or documents..."
+        rows="3"
+      ></textarea>
+      
+      <div class="filters-row">
+        <div class="filter-group">
+          <label>📍 RTE:</label>
+          <select id="rteFilter">
+            <option value="">All RTEs</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>👤 Person:</label>
+          <select id="personFilter">
+            <option value="">All People</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>📁 Project:</label>
+          <select id="projectFilter">
+            <option value="">All Projects</option>
+          </select>
+        </div>
+        
+        <button class="ask-btn" id="askBtn" onclick="askQuestion()">
+          🔮 Ask
+        </button>
+      </div>
+    </div>
+    
+    <div id="resultsArea">
+      <div class="empty-state">
+        <h3>What would you like to know?</h3>
+        <p>Ask a question about your RTEs, projects, or people.</p>
+        
+        <div class="example-questions">
+          <h4>💡 Try these examples:</h4>
+          <button class="example-btn" onclick="setQuestion('What decisions were made about DNA-C?')">
+            What decisions were made about DNA-C?
+          </button>
+          <button class="example-btn" onclick="setQuestion('What is Clara working on?')">
+            What is Clara working on?
+          </button>
+          <button class="example-btn" onclick="setQuestion('What are the open blockers?')">
+            What are the open blockers?
+          </button>
+          <button class="example-btn" onclick="setQuestion('What promises were made recently?')">
+            What promises were made recently?
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Question History -->
+    <div class="history-section" id="historySection" style="display: none;">
+      <div class="history-header">
+        <h2>📜 Question History</h2>
+        <button class="clear-history-btn" onclick="clearHistory()">🗑️ Clear All</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- Document Viewer Modal -->
+  <div class="doc-modal-overlay" id="docViewerModal">
+    <div class="doc-modal-box">
+      <div class="doc-modal-header">
+        <h3 id="docViewerTitle">Document</h3>
+        <button class="doc-modal-close" onclick="closeDocViewer()">✕</button>
+      </div>
+      <div class="doc-modal-body">
+        <div class="doc-content" id="docViewerContent">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let rtes = [];
+    let currentEvidence = []; // Store evidence for click-through
+
+    async function init() {
+      // Load RTEs
+      try {
+        const response = await fetch('/api/rte');
+        rtes = await response.json();
+        
+        const rteFilter = document.getElementById('rteFilter');
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        
+        rtes.forEach(rte => {
+          const option = document.createElement('option');
+          option.value = rte.id;
+          option.textContent = rte.name;
+          if (defaultRte && defaultRte == rte.id) {
+            option.selected = true;
+          }
+          rteFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Failed to load RTEs:', error);
+      }
+
+      // Load filters
+      try {
+        const response = await fetch('/api/search/filters');
+        const filters = await response.json();
+        
+        const personFilter = document.getElementById('personFilter');
+        filters.persons.forEach(p => {
+          const option = document.createElement('option');
+          option.value = p.name;
+          option.textContent = `${p.name} (${p.count})`;
+          personFilter.appendChild(option);
+        });
+        
+        const projectFilter = document.getElementById('projectFilter');
+        filters.projects.forEach(p => {
+          const option = document.createElement('option');
+          option.value = p.name;
+          option.textContent = `${p.name} (${p.count})`;
+          projectFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Failed to load filters:', error);
+      }
+    }
+
+    function setQuestion(question) {
+      document.getElementById('questionInput').value = question;
+      askQuestion();
+    }
+
+    async function askQuestion() {
+      const question = document.getElementById('questionInput').value.trim();
+      if (!question) return;
+
+      const rteId = document.getElementById('rteFilter').value;
+      const person = document.getElementById('personFilter').value;
+      const project = document.getElementById('projectFilter').value;
+
+      const resultsArea = document.getElementById('resultsArea');
+      const askBtn = document.getElementById('askBtn');
+      
+      askBtn.disabled = true;
+      askBtn.textContent = '⏳ Thinking...';
+      resultsArea.innerHTML = '<div class="loading">Gathering evidence and analyzing</div>';
+
+      try {
+        const response = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question,
+            rteId: rteId || undefined,
+            person: person || undefined,
+            project: project || undefined
+          })
+        });
+
+        const result = await response.json();
+        displayResult(result);
+        loadHistory(); // Refresh history after successful question
+      } catch (error) {
+        resultsArea.innerHTML = `
+          <div class="empty-state">
+            <h3>Error</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      } finally {
+        askBtn.disabled = false;
+        askBtn.textContent = '🔮 Ask';
+      }
+    }
+
+    function displayResult(result) {
+      const resultsArea = document.getElementById('resultsArea');
+      currentEvidence = result.evidence; // Store for click-through
+
+      const evidenceHtml = result.evidence.map((e, i) => {
+        const tags = [
+          ...(e.tags?.people || []).map(t => `<span class="tag person">👤 ${t}</span>`),
+          ...(e.tags?.projects || []).map(t => `<span class="tag project">📁 ${t}</span>`),
+          ...(e.tags?.semantics || []).map(t => `<span class="tag semantic">${t}</span>`)
+        ].join('');
+
+        return `
+          <div class="evidence-card" onclick="openEvidenceDoc(${i})" title="Click to view source document">
+            <div class="evidence-header">
+              <span class="evidence-filename">[${i + 1}] ${e.filename}</span>
+              <span class="evidence-score">${(e.score * 100).toFixed(0)}% match</span>
+            </div>
+            <div class="evidence-snippet">${escapeHtml(e.snippet.substring(0, 200))}${e.snippet.length > 200 ? '...' : ''}</div>
+            ${tags ? `<div class="evidence-tags">${tags}</div>` : ''}
+            <div class="evidence-view-hint">📄 Click to view source</div>
+          </div>
+        `;
+      }).join('');
+
+      resultsArea.innerHTML = `
+        <div class="results-container">
+          <div class="evidence-panel">
+            <h2>📚 Evidence (${result.evidence.length})</h2>
+            ${result.evidence.length > 0 ? evidenceHtml : '<p style="color: #8b949e;">No evidence found</p>'}
+          </div>
+          
+          <div class="answer-panel">
+            <h2>💡 Answer</h2>
+            <div class="answer-content">${formatAnswer(result.answer)}</div>
+            <div class="answer-meta">
+              <span>Model: ${result.model || 'N/A'}</span>
+              <div class="confidence-bar">
+                <span>Confidence:</span>
+                <div class="confidence-fill">
+                  <div class="confidence-fill-inner" style="width: ${result.confidence}%"></div>
+                </div>
+                <span>${result.confidence}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function formatAnswer(text) {
+      if (!text) return '<em>No answer available</em>';
+      // Convert [Evidence N] to clickable styled spans
+      return escapeHtml(text).replace(/\[Evidence (\d+)\]/g, (match, num) => {
+        const idx = parseInt(num) - 1;
+        return `<strong class="evidence-ref" style="color: #58a6ff; cursor: pointer; text-decoration: underline;" onclick="openEvidenceDoc(${idx})" title="Click to view source">[${num}]</strong>`;
+      });
+    }
+
+    function formatHistoryAnswer(text) {
+      if (!text) return '<em>No answer available</em>';
+      // In history, [Evidence N] are styled but not clickable (no evidence data available)
+      return escapeHtml(text).replace(/\[Evidence (\d+)\]/g, '<strong style="color: #58a6ff;">[$1]</strong>');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Submit on Enter (without Shift)
+    document.getElementById('questionInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        askQuestion();
+      }
+    });
+
+    // History functions
+    async function loadHistory() {
+      try {
+        const response = await fetch('/api/ask/recent?limit=20');
+        const data = await response.json();
+        
+        const historySection = document.getElementById('historySection');
+        const historyList = document.getElementById('historyList');
+        
+        if (data.questions && data.questions.length > 0) {
+          historySection.style.display = 'block';
+          historyList.innerHTML = data.questions.map(q => `
+            <div class="history-item" data-id="${q.id}">
+              <div class="history-item-header" onclick="toggleHistoryItem(${q.id})">
+                <span class="history-question">${escapeHtml(q.question)}</span>
+                <div class="history-meta">
+                  ${q.rteName ? `<span class="history-rte">${q.rteName}</span>` : ''}
+                  <span class="history-date">${formatDate(q.createdAt)}</span>
+                  <span class="history-expand-icon">▼</span>
+                </div>
+              </div>
+              <div class="history-answer">
+                <div class="history-answer-content">${formatHistoryAnswer(q.answer)}</div>
+                <div class="history-actions" style="margin-top: 12px;">
+                  <button onclick="reaskQuestion('${escapeHtml(q.question).replace(/'/g, "\\'")}')">🔄 Re-ask</button>
+                  <button class="delete" onclick="deleteHistoryItem(${q.id}, event)">🗑️ Delete</button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          historySection.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Failed to load history:', error);
+      }
+    }
+    
+    function toggleHistoryItem(id) {
+      const item = document.querySelector(`.history-item[data-id="${id}"]`);
+      if (item) {
+        item.classList.toggle('expanded');
+      }
+    }
+    
+    function reaskQuestion(question) {
+      document.getElementById('questionInput').value = question;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      askQuestion();
+    }
+    
+    async function deleteHistoryItem(id, event) {
+      event.stopPropagation();
+      const confirmed = await POAI.confirm.danger('Delete Question', 'Delete this question from history?');
+      if (!confirmed) return;
+      
+      try {
+        await fetch(`/api/ask/history/${id}`, { method: 'DELETE' });
+        loadHistory();
+      } catch (error) {
+        console.error('Failed to delete:', error);
+      }
+    }
+    
+    async function clearHistory() {
+      const confirmed = await POAI.confirm.danger('Clear History', 'Clear all question history?');
+      if (!confirmed) return;
+      
+      try {
+        await fetch('/api/ask/history', { method: 'DELETE' });
+        loadHistory();
+      } catch (error) {
+        console.error('Failed to clear history:', error);
+      }
+    }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = now - date;
+      
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+      
+      return date.toLocaleDateString();
+    }
+
+    // === Document Viewer (Evidence Click-Through) ===
+
+    async function openEvidenceDoc(evidenceIndex) {
+      if (evidenceIndex < 0 || evidenceIndex >= currentEvidence.length) {
+        console.warn('[Ask] No evidence at index', evidenceIndex, '- currentEvidence has', currentEvidence.length, 'items');
+        return;
+      }
+
+      const evidence = currentEvidence[evidenceIndex];
+      const modal = document.getElementById('docViewerModal');
+      const title = document.getElementById('docViewerTitle');
+      const contentEl = document.getElementById('docViewerContent');
+
+      // Guard: filepath must exist
+      if (!evidence.filepath) {
+        title.innerHTML = `📄 ${escapeHtml(evidence.filename || 'Unknown')}`;
+        contentEl.textContent = 'Source document path not available. Try re-asking the question to load the document link.';
+        modal.classList.add('active');
+        return;
+      }
+
+      title.innerHTML = `📄 ${escapeHtml(evidence.filename)} <span class="doc-modal-badge">Evidence ${evidenceIndex + 1}</span>`;
+      contentEl.textContent = 'Loading document...';
+      modal.classList.add('active');
+
+      try {
+        // Fetch the full document
+        const response = await fetch(`/api/ask/document?filepath=${encodeURIComponent(evidence.filepath)}`);
+        const data = await response.json();
+
+        if (data.error) {
+          contentEl.textContent = `Error: ${data.error}`;
+          return;
+        }
+
+        // Render the document with the evidence chunk highlighted
+        contentEl.innerHTML = renderDocWithHighlight(data.content, evidence.chunkContent);
+
+        // Scroll to highlighted section
+        requestAnimationFrame(() => {
+          const highlighted = contentEl.querySelector('.evidence-highlight');
+          if (highlighted) {
+            highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+      } catch (error) {
+        contentEl.textContent = `Failed to load document: ${error.message}`;
+      }
+    }
+
+    function renderDocWithHighlight(fullContent, chunkContent) {
+      if (!chunkContent || !fullContent) {
+        return escapeHtml(fullContent);
+      }
+
+      // Clean up the chunk content for matching (remove FTS markup)
+      const cleanChunk = chunkContent
+        .replace(/<mark>/g, '')
+        .replace(/<\/mark>/g, '')
+        .replace(/\.\.\.$/g, '')
+        .trim();
+
+      // Try to find the chunk in the full document
+      // Use first 80 chars as a search anchor (chunks can be large)
+      const searchText = cleanChunk.substring(0, 80).trim();
+
+      if (!searchText || searchText.length < 10) {
+        return escapeHtml(fullContent);
+      }
+
+      const idx = fullContent.indexOf(searchText);
+
+      if (idx === -1) {
+        // Fallback: try a more fuzzy match with first line
+        const firstLine = cleanChunk.split('\n')[0].trim();
+        const fallbackIdx = firstLine.length > 10 ? fullContent.indexOf(firstLine) : -1;
+
+        if (fallbackIdx === -1) {
+          // No match found — just show the document
+          return escapeHtml(fullContent);
+        }
+
+        // Highlight around the first line match
+        const endIdx = Math.min(fallbackIdx + cleanChunk.length, fullContent.length);
+        return escapeHtml(fullContent.substring(0, fallbackIdx)) +
+          '<span class="evidence-highlight">' + escapeHtml(fullContent.substring(fallbackIdx, endIdx)) + '</span>' +
+          escapeHtml(fullContent.substring(endIdx));
+      }
+
+      // Found exact match — highlight the chunk region
+      const endIdx = Math.min(idx + cleanChunk.length, fullContent.length);
+      return escapeHtml(fullContent.substring(0, idx)) +
+        '<span class="evidence-highlight">' + escapeHtml(fullContent.substring(idx, endIdx)) + '</span>' +
+        escapeHtml(fullContent.substring(endIdx));
+    }
+
+    function closeDocViewer() {
+      document.getElementById('docViewerModal').classList.remove('active');
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeDocViewer();
+      }
+    });
+
+    // Close modal on background click
+    document.getElementById('docViewerModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeDocViewer();
+      }
+    });
+
+    init();
+    loadHistory();
+  </script>
+</body>
+</html>

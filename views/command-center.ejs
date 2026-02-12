@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PO AI Command Center</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'home' }) %>
+
+  <main class="container">
+    <!-- Card Deck Section -->
+    <section class="card-deck-section">
+      <!-- Orchestrator Card (Always Visible) -->
+      <div class="orchestrator-card" id="orchestratorCard">
+        <div class="card-header">
+          <div class="card-icon">🎯</div>
+          <div class="card-info">
+            <h2>Workflow Orchestrator</h2>
+            <p>Master orchestration - auto-selects guides based on your input</p>
+          </div>
+          <button class="expand-btn" id="expandBtn">▼</button>
+        </div>
+        <div class="card-selected">
+          <span class="selected-badge">✓ Active</span>
+        </div>
+      </div>
+
+      <!-- Expandable Card Hierarchy -->
+      <div class="card-hierarchy hidden" id="cardHierarchy">
+        <!-- Level 2: Frameworks -->
+        <div class="card-level level-2">
+          <div class="level-label">📐 Frameworks & Methodology</div>
+          <div class="cards-row">
+            <div class="file-card card-green" data-card="safe-agile-framework.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">safe-agile-framework.md</span>
+            </div>
+            <div class="file-card card-green" data-card="backlog-management-framework.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">backlog-management-framework.md</span>
+            </div>
+            <div class="file-card card-green" data-card="organizational-logic.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">organizational-logic.md</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level 3: Best Practices -->
+        <div class="card-level level-3">
+          <div class="level-label">⚡ Best Practices & Patterns</div>
+          <div class="cards-row">
+            <div class="file-card card-blue" data-card="efficiency-best-practices.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">efficiency-best-practices.md</span>
+            </div>
+            <div class="file-card card-blue" data-card="creativity-best-practices.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">creativity-best-practices.md</span>
+            </div>
+            <div class="file-card card-blue" data-card="automated-workflow-intelligence.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">automated-workflow-intelligence.md</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level 4: Templates -->
+        <div class="card-level level-4">
+          <div class="level-label">📝 Templates</div>
+          <div class="cards-row">
+            <div class="file-card card-purple" data-card="lean-business-case-template.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">lean-business-case-template.md</span>
+            </div>
+            <div class="file-card card-purple" data-card="pi-planning-template.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">pi-planning-template.md</span>
+            </div>
+            <div class="file-card card-purple" data-card="idea-evolution-template.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">idea-evolution-template.md</span>
+            </div>
+            <div class="file-card card-purple" data-card="value-stream-mapping-template.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">value-stream-mapping-template.md</span>
+            </div>
+            <div class="file-card card-purple" data-card="okr-metrics-dashboard-template.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">okr-metrics-dashboard-template.md</span>
+            </div>
+            <div class="file-card card-purple" data-card="summarize-template.md">
+              <input type="checkbox" class="card-check">
+              <span class="card-name">summarize-template.md</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="confirm-btn" id="confirmSelection">✅ Confirm Selection</button>
+      </div>
+
+      <!-- Selected Cards Summary -->
+      <div class="selected-cards" id="selectedCards">
+        <div class="selected-label">Selected guides:</div>
+        <div class="selected-list" id="selectedList">
+          <span class="selected-item orchestrator">workflow-orchestrator-v2.md</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prompt Section -->
+    <section class="prompt-section">
+      <div class="prompt-label">
+        <span id="modeLabel">📝 DEBRIEF MODE</span>
+        <span class="prompt-hint">Paste your meeting notes, work log, or content below</span>
+      </div>
+      <textarea id="promptInput" placeholder="Paste your content here...
+
+Example:
+## Sprint Planning Meeting
+Attendees: Alice (PO), Bob (Dev), Carol (SM)
+
+- Discussed Sprint 14 goals
+- Alice presented the new feature requirements
+- Bob raised concerns about API performance
+- Action: Bob to create spike for caching solution
+
+## Client Sync
+Met with ACME Corp team about integration timeline..."></textarea>
+      <div class="prompt-actions">
+        <select id="rteSelect" class="rte-select">
+          <option value="">Loading RTEs...</option>
+        </select>
+        <button id="submitBtn" class="submit-btn">🚀 Submit</button>
+        <span id="statusText" class="status-text"></span>
+      </div>
+    </section>
+
+    <!-- Response Section -->
+    <section class="response-section hidden" id="responseSection">
+      <div class="response-header">
+        <h3>📄 AI Response</h3>
+        <div class="response-actions">
+          <button id="saveResponseBtn" class="secondary-btn hidden" onclick="saveResponse()">💾 Save Response</button>
+          <div class="file-saved" id="fileSaved"></div>
+        </div>
+      </div>
+      <div class="response-content" id="responseContent"></div>
+
+      <!-- Extracted Entities -->
+      <div class="extraction-section" id="extractionSection">
+        <h4>🔍 Extracted Entities</h4>
+        <div class="entity-grid" id="entityGrid"></div>
+      </div>
+    </section>
+
+    <!-- Translate Section (hidden by default) -->
+    <section class="translate-section hidden" id="translateSection">
+      <div class="translate-header">
+        <h3>🌐 Translate</h3>
+        <div class="direction-btns">
+          <button class="dir-btn active" data-dir="auto">Auto</button>
+          <button class="dir-btn" data-dir="nl-en">NL → EN</button>
+          <button class="dir-btn" data-dir="en-nl">EN → NL</button>
+        </div>
+      </div>
+      <div class="translate-grid">
+        <div class="translate-input">
+          <label>Input (use &&term&& to add to glossary)</label>
+          <textarea id="translateInput" placeholder="Paste Dutch or English text..."></textarea>
+        </div>
+        <div class="translate-output">
+          <label>Translation</label>
+          <textarea id="translateOutput" readonly></textarea>
+        </div>
+      </div>
+      <div class="translate-actions">
+        <button id="translateBtn" class="submit-btn">🔄 Translate</button>
+        <button id="viewGlossaryBtn" class="secondary-btn">📖 View Glossary</button>
+      </div>
+      <div class="marked-terms hidden" id="markedTerms">
+        <h4>📝 New Terms</h4>
+        <div id="termsList"></div>
+        <button id="addAllTermsBtn" class="secondary-btn">Add All to Glossary</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // State
+    let currentMode = 'debrief';
+    let selectedCards = ['workflow-orchestrator-v2.md'];
+    let translateDirection = 'auto';
+
+    // DOM Elements
+    const expandBtn = document.getElementById('expandBtn');
+    const cardHierarchy = document.getElementById('cardHierarchy');
+    const confirmBtn = document.getElementById('confirmSelection');
+    const selectedList = document.getElementById('selectedList');
+    const promptInput = document.getElementById('promptInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusText = document.getElementById('statusText');
+    const responseSection = document.getElementById('responseSection');
+    const responseContent = document.getElementById('responseContent');
+    const fileSaved = document.getElementById('fileSaved');
+    const extractionSection = document.getElementById('extractionSection');
+    const entityGrid = document.getElementById('entityGrid');
+    const modeLabel = document.getElementById('modeLabel');
+    const translateSection = document.getElementById('translateSection');
+    const promptSection = document.querySelector('.prompt-section');
+    const saveResponseBtn = document.getElementById('saveResponseBtn');
+
+    // Store last response for manual saving
+    let lastResponse = null;
+
+    // Menu handling
+    document.querySelectorAll('.menu-btn[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        updateModeUI();
+      });
+    });
+
+    function updateModeUI() {
+      const labels = {
+        debrief: '📝 DEBRIEF MODE',
+        create: '✨ CREATE MODE',
+        translate: '🌐 TRANSLATE MODE'
+      };
+      modeLabel.textContent = labels[currentMode] || labels.debrief;
+
+      // Show/hide sections based on mode
+      if (currentMode === 'translate') {
+        translateSection.classList.remove('hidden');
+        promptSection.classList.add('hidden');
+        responseSection.classList.add('hidden');
+      } else {
+        translateSection.classList.add('hidden');
+        promptSection.classList.remove('hidden');
+      }
+    }
+
+    // Card deck expand/collapse
+    expandBtn.addEventListener('click', () => {
+      const isHidden = cardHierarchy.classList.toggle('hidden');
+      expandBtn.textContent = isHidden ? '▼' : '▲';
+    });
+
+    // Card selection
+    document.querySelectorAll('.file-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.type === 'checkbox') return;
+        const checkbox = card.querySelector('.card-check');
+        checkbox.checked = !checkbox.checked;
+        card.classList.toggle('selected', checkbox.checked);
+      });
+    });
+
+    // Confirm selection
+    confirmBtn.addEventListener('click', () => {
+      selectedCards = ['workflow-orchestrator-v2.md']; // Always include orchestrator
+
+      document.querySelectorAll('.file-card').forEach(card => {
+        const checkbox = card.querySelector('.card-check');
+        if (checkbox.checked) {
+          selectedCards.push(card.dataset.card);
+        }
+      });
+
+      // Update selected list display
+      selectedList.innerHTML = selectedCards.map(card =>
+        `<span class="selected-item ${card.includes('orchestrator') ? 'orchestrator' : ''}">${card}</span>`
+      ).join('');
+
+      // Collapse hierarchy
+      cardHierarchy.classList.add('hidden');
+      expandBtn.textContent = '▼';
+    });
+
+    // Submit prompt
+    submitBtn.addEventListener('click', async () => {
+      const prompt = promptInput.value.trim();
+      if (!prompt) {
+        statusText.textContent = '⚠️ Please enter some content';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      statusText.innerHTML = '<span class="status-pill processing"><span class="spinner"></span>Processing...</span>';
+      responseSection.classList.add('hidden');
+
+      try {
+        const rteName = document.getElementById('rteSelect').value;
+        const response = await fetch('/api/prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt,
+            mode: currentMode,
+            selectedCards,
+            rteName
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Show response
+        responseSection.classList.remove('hidden');
+        responseContent.innerHTML = formatMarkdown(data.response);
+
+        // Handle auto-save vs manual save
+        if (data.autoSaved && data.savedFile) {
+          fileSaved.innerHTML = `✅ Saved: <code>${data.savedFile.filename}</code>`;
+          saveResponseBtn.classList.add('hidden');
+        } else {
+          fileSaved.innerHTML = '<span class="not-saved">⚠️ Not saved (Retrieve mode)</span>';
+          saveResponseBtn.classList.remove('hidden');
+          // Store for manual saving
+          lastResponse = {
+            content: data.response,
+            mode: currentMode,
+            rteName: document.getElementById('rteSelect').value
+          };
+        }
+
+        // Show extracted entities
+        if (data.extraction && (data.extraction.entities.length > 0 || data.extraction.relationships.length > 0)) {
+          extractionSection.classList.remove('hidden');
+          entityGrid.innerHTML = renderEntities(data.extraction);
+        } else {
+          extractionSection.classList.add('hidden');
+        }
+
+        statusText.innerHTML = `<span class="status-pill success">✅ Done! ${data.extraction.entities.length} entities extracted</span>`;
+
+      } catch (error) {
+        statusText.innerHTML = `<span class="status-pill error">❌ ${error.message}</span>`;
+        console.error(error);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Translation
+    document.querySelectorAll('.dir-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        translateDirection = btn.dataset.dir;
+      });
+    });
+
+    document.getElementById('translateBtn').addEventListener('click', async () => {
+      const input = document.getElementById('translateInput').value.trim();
+      if (!input) return;
+
+      document.getElementById('translateBtn').disabled = true;
+      document.getElementById('translateOutput').value = 'Translating...';
+
+      try {
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: input, direction: translateDirection })
+        });
+
+        const data = await response.json();
+        document.getElementById('translateOutput').value = data.translation || '';
+
+        // Show marked terms if any
+        if (data.markedTerms && data.markedTerms.length > 0) {
+          showMarkedTerms(data.markedTerms, data.termTranslations, data.direction);
+        }
+
+      } catch (error) {
+        document.getElementById('translateOutput').value = `Error: ${error.message}`;
+      } finally {
+        document.getElementById('translateBtn').disabled = false;
+      }
+    });
+
+    document.getElementById('viewGlossaryBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/translate/glossary');
+        const data = await response.json();
+        alert(`Glossary: ${data.count} terms\n\nSee data/domain-glossary.md for full list`);
+      } catch (error) {
+        alert('Could not load glossary');
+      }
+    });
+
+    function showMarkedTerms(terms, translations, direction) {
+      const container = document.getElementById('markedTerms');
+      const list = document.getElementById('termsList');
+
+      list.innerHTML = terms.map((term, i) => `
+        <div class="term-item" data-term="${term}" data-translation="${translations[i] || ''}" data-direction="${direction}">
+          <span>${term}</span>
+          <span>→</span>
+          <span>${translations[i] || '...'}</span>
+          <button onclick="addTerm(this)">+ Add</button>
+        </div>
+      `).join('');
+
+      container.classList.remove('hidden');
+    }
+
+    window.addTerm = async function(btn) {
+      const item = btn.closest('.term-item');
+      const term = item.dataset.term;
+      const translation = item.dataset.translation;
+      const direction = item.dataset.direction;
+
+      try {
+        await fetch('/api/translate/glossary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            terms: [term],
+            translations: [translation],
+            direction
+          })
+        });
+        btn.textContent = '✓';
+        btn.disabled = true;
+      } catch (error) {
+        alert('Failed to add term');
+      }
+    };
+
+    // Save response manually (for retrieve mode)
+    window.saveResponse = async function() {
+      if (!lastResponse) {
+        alert('No response to save');
+        return;
+      }
+
+      saveResponseBtn.disabled = true;
+      saveResponseBtn.innerHTML = '<span class="spinner"></span>Saving...';
+
+      try {
+        const response = await fetch('/api/prompt/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(lastResponse)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          fileSaved.innerHTML = `✅ Saved: <code>${data.savedFile.filename}</code>`;
+          saveResponseBtn.classList.add('hidden');
+          lastResponse = null;
+        } else {
+          throw new Error(data.error || 'Save failed');
+        }
+      } catch (error) {
+        alert('Error saving: ' + error.message);
+        saveResponseBtn.textContent = '💾 Save Response';
+        saveResponseBtn.disabled = false;
+      }
+    };
+
+    function formatMarkdown(text) {
+      return text
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function renderEntities(extraction) {
+      let html = '';
+
+      // Group entities by type
+      const byType = {};
+      extraction.entities.forEach(e => {
+        if (!byType[e.type]) byType[e.type] = [];
+        byType[e.type].push(e);
+      });
+
+      // Render entities
+      Object.entries(byType).forEach(([type, entities]) => {
+        html += `<div class="entity-group">
+          <div class="entity-type">${type}</div>
+          <div class="entity-items">
+            ${entities.map(e => `
+              <span class="entity-badge type-${type}">${e.name}${e.role ? ` (${e.role})` : ''}</span>
+            `).join('')}
+          </div>
+        </div>`;
+      });
+
+      // Render relationships
+      if (extraction.relationships.length > 0) {
+        html += `<div class="entity-group">
+          <div class="entity-type">relationships</div>
+          <div class="entity-items">
+            ${extraction.relationships.map(r => `
+              <span class="entity-badge type-relationship">${r.source} → ${r.target} (${r.type})</span>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+
+      return html;
+    }
+
+    // ============ SEARCH FUNCTIONALITY ============
+
+    // Search button handler
+    searchBtn.addEventListener('click', async () => {
+      const query = searchQuery.value.trim();
+      if (!query) {
+        alert('Please enter a search query');
+        return;
+      }
+
+      await performSearch(query);
+    });
+
+    // Open Items button handler
+    openItemsBtn.addEventListener('click', async () => {
+      await findOpenItems();
+    });
+
+    // Clear search handler
+    document.getElementById('clearSearch')?.addEventListener('click', () => {
+      searchResults.classList.add('hidden');
+      resultsList.innerHTML = '';
+      searchQuery.value = '';
+    });
+
+    async function performSearch(query) {
+      searchBtn.disabled = true;
+      searchBtn.innerHTML = '<span class="spinner"></span>Searching...';
+      resultsList.innerHTML = '<div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div>';
+      searchResults.classList.remove('hidden');
+
+      try {
+        const rte = document.getElementById('searchRte').value;
+        const dateFrom = document.getElementById('searchDateFrom').value;
+        const dateTo = document.getElementById('searchDateTo').value;
+
+        const params = new URLSearchParams({ q: query });
+        if (rte) params.append('rte', rte);
+        if (dateFrom) params.append('dateFrom', dateFrom);
+        if (dateTo) params.append('dateTo', dateTo);
+
+        const response = await fetch(`/api/search?${params}`);
+        const data = await response.json();
+
+        if (data.error) {
+          resultsList.innerHTML = `<p style="color: #ef4444;">${data.error}</p>`;
+          if (data.hint) {
+            resultsList.innerHTML += `<p style="color: #999; font-size: 0.9rem;">${data.hint}</p>`;
+          }
+          return;
+        }
+
+        renderSearchResults(data.results);
+        resultsCount.textContent = `${data.count} result${data.count !== 1 ? 's' : ''}`;
+      } catch (error) {
+        resultsList.innerHTML = `<p style="color: #ef4444;">Search failed: ${error.message}</p>`;
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = '🔍 Search';
+      }
+    }
+
+    async function findOpenItems() {
+      openItemsBtn.disabled = true;
+      openItemsBtn.innerHTML = '<span class="spinner"></span>Scanning...';
+      resultsList.innerHTML = '<div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div>';
+      searchResults.classList.remove('hidden');
+
+      try {
+        const rte = document.getElementById('searchRte').value;
+        const params = new URLSearchParams();
+        if (rte) params.append('rte', rte);
+        params.append('groupBy', 'file');
+
+        const response = await fetch(`/api/search/open-items?${params}`);
+        const data = await response.json();
+
+        if (data.error) {
+          resultsList.innerHTML = `<p style="color: #ef4444;">${data.error}</p>`;
+          return;
+        }
+
+        renderOpenItems(data.results);
+        resultsCount.textContent = `${data.results.length} file${data.results.length !== 1 ? 's' : ''} with open items`;
+      } catch (error) {
+        resultsList.innerHTML = `<p style="color: #ef4444;">Scan failed: ${error.message}</p>`;
+      } finally {
+        openItemsBtn.disabled = false;
+        openItemsBtn.textContent = '📋 Open Items';
+      }
+    }
+
+    function renderSearchResults(results) {
+      if (results.length === 0) {
+        resultsList.innerHTML = '<p style="text-align: center; color: #999;">No results found</p>';
+        return;
+      }
+
+      let html = '';
+      results.forEach(result => {
+        html += `
+          <div class="result-item" onclick="openInNavigator('${result.filepath}')">
+            <div class="result-header">
+              <span class="result-filename">${result.filename}</span>
+              <span class="result-score">${(result.score * 100).toFixed(1)}%</span>
+            </div>
+            <div class="result-meta">
+              <span class="result-rte">${result.rteName}</span>
+              <span class="result-section">${result.section}</span>
+              <span class="result-date">${result.date}</span>
+            </div>
+            <div class="result-snippet">${result.snippet}</div>
+          </div>
+        `;
+      });
+
+      resultsList.innerHTML = html;
+    }
+
+    function renderOpenItems(files) {
+      if (files.length === 0) {
+        resultsList.innerHTML = '<p style="text-align: center; color: #999;">No open items found</p>';
+        return;
+      }
+
+      let html = '';
+      files.forEach(file => {
+        html += `
+          <div class="open-items-group">
+            <div class="group-header" onclick="openInNavigator('${file.filepath}')">
+              <span class="group-filename">📄 ${file.filename}</span>
+              <span class="group-count">${file.items.length} item${file.items.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="group-items">
+              ${file.items.map(item => `
+                <div class="open-item">
+                  <div class="item-section">${item.section}</div>
+                  <div class="item-content">${item.content}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      resultsList.innerHTML = html;
+    }
+
+    function openInNavigator(filepath) {
+      // Open Navigator with file pre-selected
+      window.open(`/navigator?file=${encodeURIComponent(filepath)}`, '_blank');
+    }
+
+    // Load RTEs dynamically and apply default
+    async function loadRTEs() {
+      try {
+        const response = await fetch('/api/rte');
+        const rtes = await response.json();
+        
+        const select = document.getElementById('rteSelect');
+        select.innerHTML = '';
+        
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        
+        if (rtes && rtes.length > 0) {
+          rtes.forEach(rte => {
+            const option = document.createElement('option');
+            option.value = rte.id;
+            option.textContent = rte.name;
+            if (defaultRte && defaultRte == rte.id) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          });
+          
+          // If no default set, select first
+          if (!defaultRte && rtes.length > 0) {
+            select.value = rtes[0].id;
+          }
+        } else {
+          select.innerHTML = '<option value="">No RTEs found</option>';
+        }
+      } catch (error) {
+        console.error('Failed to load RTEs:', error);
+        document.getElementById('rteSelect').innerHTML = '<option value="">Error loading RTEs</option>';
+      }
+    }
+
+    // Initialize
+    loadRTEs();
+  </script>
+</body>
+</html>

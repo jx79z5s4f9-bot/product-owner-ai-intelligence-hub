@@ -1,0 +1,107 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define arrowhead marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+  <polygon points="0 0, 10 3, 0 6" fill="#333" />
+    </marker>
+  </defs>
+  
+  <!-- Human Actants Group Box -->
+  <g id="human-actants-group">
+    <rect x="80" y="100" width="220" height="200" rx="5" ry="5" 
+      fill="none" stroke="#999" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="190" y="90" font-family="Arial, sans-serif" font-size="14" 
+      font-weight="bold" text-anchor="middle" fill="#333">Human Actants</text>
+    
+    <!-- Product Owner Node -->
+    <circle cx="175" cy="160" r="35" fill="#90EE90" stroke="#333" stroke-width="2"/>
+    <text x="175" y="165" font-family="Arial, sans-serif" font-size="12" 
+      text-anchor="middle" fill="#000">Product Owner</text>
+  </g>
+  
+  <!-- Non-Human Actants Group Box -->
+  <g id="non-human-actants-group">
+    <rect x="550" y="100" width="220" height="350" rx="5" ry="5" 
+      fill="none" stroke="#999" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="660" y="90" font-family="Arial, sans-serif" font-size="14" 
+      font-weight="bold" text-anchor="middle" fill="#333">Non-Human Actants</text>
+    
+    <!-- LLM Node -->
+    <circle cx="650" cy="170" r="35" fill="#FFD700" stroke="#333" stroke-width="2"/>
+    <text x="650" y="175" font-family="Arial, sans-serif" font-size="12" 
+      text-anchor="middle" fill="#000">LLM</text>
+    
+    <!-- Process Descriptions Node -->
+    <circle cx="650" cy="240" r="35" fill="#FFD700" stroke="#333" stroke-width="2"/>
+    <text x="650" y="237" font-family="Arial, sans-serif" font-size="11" 
+      text-anchor="middle" fill="#000">Process</text>
+    <text x="650" y="250" font-family="Arial, sans-serif" font-size="11" 
+      text-anchor="middle" fill="#000">Descriptions</text>
+    
+    <!-- Network Architecture Node -->
+    <circle cx="650" cy="310" r="35" fill="#FFD700" stroke="#333" stroke-width="2"/>
+    <text x="650" y="307" font-family="Arial, sans-serif" font-size="11" 
+      text-anchor="middle" fill="#000">Network</text>
+    <text x="650" y="320" font-family="Arial, sans-serif" font-size="11" 
+      text-anchor="middle" fill="#000">Architecture</text>
+    
+    <!-- IT Solutions Node -->
+    <circle cx="650" cy="380" r="35" fill="#FFD700" stroke="#333" stroke-width="2"/>
+    <text x="650" y="377" font-family="Arial, sans-serif" font-size="11" 
+      text-anchor="middle" fill="#000">IT</text>
+    <text x="650" y="390" font-family="Arial, sans-serif" font-size="11" 
+      text-anchor="middle" fill="#000">Solutions</text>
+  </g>
+  
+  <!-- Central Business Context Node -->
+  <g id="business-context">
+    <rect x="300" y="220" width="200" height="80" rx="10" ry="10" 
+      fill="#ADD8E6" stroke="#333" stroke-width="2"/>
+    <text x="400" y="255" font-family="Arial, sans-serif" font-size="16" 
+      font-weight="bold" text-anchor="middle" fill="#000">Business Context</text>
+    <text x="400" y="275" font-family="Arial, sans-serif" font-size="11" 
+      text-anchor="middle" fill="#555">(Network of Relations)</text>
+  </g>
+  
+  <!-- Connection: Product Owner to Business Context -->
+  <line x1="210" y1="160" x2="300" y2="240" stroke="#333" stroke-width="2"/>
+  <text x="250" y="190" font-family="Arial, sans-serif" font-size="11" 
+    fill="#333">Influences</text>
+  
+  <!-- Connection: LLM to Business Context -->
+  <line x1="615" y1="170" x2="500" y2="230" stroke="#333" stroke-width="2" 
+    marker-end="url(#arrowhead)"/>
+  <text x="545" y="190" font-family="Arial, sans-serif" font-size="11" 
+    fill="#333">Translates to</text>
+  
+  <!-- Connection: Process Descriptions to Business Context -->
+  <line x1="615" y1="240" x2="500" y2="250" stroke="#333" stroke-width="2" 
+    marker-end="url(#arrowhead)"/>
+  
+  <!-- Connection: Network Architecture to Business Context -->
+  <line x1="615" y1="310" x2="500" y2="280" stroke="#333" stroke-width="2" 
+    marker-end="url(#arrowhead)"/>
+  
+  <!-- Connection: IT Solutions to Business Context -->
+  <line x1="615" y1="380" x2="500" y2="295" stroke="#333" stroke-width="2" 
+    marker-end="url(#arrowhead)"/>
+  
+  <!-- Feedback Loop: Business Context back to Product Owner -->
+  <path d="M 400 300 Q 400 380, 300 380 Q 175 380, 175 195" 
+    fill="none" stroke="#333" stroke-width="2" stroke-dasharray="8,4" 
+    marker-end="url(#arrowhead)"/>
+  <text x="280" y="395" font-family="Arial, sans-serif" font-size="11" 
+    fill="#333">Feedback Loop</text>
+  
+  <!-- Key Concept Annotations -->
+  <g id="annotations">
+    <text x="400" y="480" font-family="Arial, sans-serif" font-size="10" 
+      font-style="italic" text-anchor="middle" fill="#666">
+  All actants have equal agency in the network
+    </text>
+    <text x="400" y="500" font-family="Arial, sans-serif" font-size="10" 
+      font-style="italic" text-anchor="middle" fill="#666">
+  Translation processes align interests • Topology emerges from associations
+    </text>
+  </g>
+</svg>

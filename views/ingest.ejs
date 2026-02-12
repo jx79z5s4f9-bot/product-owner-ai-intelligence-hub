@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingest - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .ingest-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .ingest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .ingest-header h1 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .ingest-form {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    
+    .form-row {
+      margin-bottom: 20px;
+    }
+    
+    .form-row label {
+      display: block;
+      margin-bottom: 8px;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .form-row-inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      .form-row-inline {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .content-textarea {
+      width: 100%;
+      min-height: 300px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      padding: 16px;
+      font-size: 1rem;
+      font-family: 'SF Mono', Monaco, monospace;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    
+    .content-textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .form-select, .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.95rem;
+    }
+    
+    .form-select:focus, .form-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    /* Tag selectors */
+    .tag-section {
+      margin-bottom: 20px;
+    }
+    
+    .tag-section-title {
+      font-size: 0.9rem;
+      color: #8b949e;
+      margin-bottom: 10px;
+    }
+    
+    .tag-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      color: #8b949e;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tag-chip:hover {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+    
+    .tag-chip.selected {
+      background: #238636;
+      border-color: #238636;
+      color: white;
+    }
+    
+    .tag-chip .tag-icon {
+      font-size: 0.9rem;
+    }
+    
+    /* Custom tag inputs */
+    .custom-tag-input-wrapper {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .custom-tag-input {
+      flex: 1;
+      min-width: 150px;
+      padding: 8px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+    
+    .custom-tag-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .added-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .added-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: #1f6feb;
+      border-radius: 16px;
+      color: white;
+      font-size: 0.8rem;
+    }
+    
+    .added-tag.project {
+      background: #8957e5;
+    }
+    
+    .added-tag.person {
+      background: #db6d28;
+    }
+    
+    .added-tag .remove-tag {
+      cursor: pointer;
+      opacity: 0.7;
+      font-size: 0.9rem;
+    }
+    
+    .added-tag .remove-tag:hover {
+      opacity: 1;
+    }
+    
+    /* Recent tags */
+    .recent-tags {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .recent-tags-label {
+      color: #6e7681;
+      font-size: 0.75rem;
+      margin-right: 4px;
+    }
+    
+    .recent-tag {
+      background: rgba(48, 54, 61, 0.6);
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .recent-tag:hover {
+      background: #238636;
+      border-color: #238636;
+      color: white;
+    }
+    
+    .recent-tag.selected {
+      background: #238636;
+      border-color: #238636;
+      color: white;
+    }
+    
+    /* Autocomplete dropdown */
+    .autocomplete-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      margin-top: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+    
+    .autocomplete-dropdown.show {
+      display: block;
+    }
+    
+    .autocomplete-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .autocomplete-item:hover {
+      background: #21262d;
+    }
+    
+    .autocomplete-item .usage {
+      font-size: 0.75rem;
+      color: #6e7681;
+    }
+    
+    /* Submit section */
+    .submit-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #30363d;
+    }
+    
+    .submit-btn {
+      padding: 12px 32px;
+      background: #238636;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    
+    .submit-btn:hover {
+      background: #2ea043;
+    }
+    
+    .submit-btn:disabled {
+      background: #21262d;
+      color: #6e7681;
+      cursor: not-allowed;
+    }
+    
+    .word-count {
+      color: #6e7681;
+      font-size: 0.85rem;
+    }
+    
+    /* Success message */
+    .success-message {
+      background: #238636;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .success-message.show {
+      display: block;
+    }
+    
+    .success-message h3 {
+      margin: 0 0 8px 0;
+      color: white;
+    }
+    
+    .success-message p {
+      margin: 0;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.9rem;
+    }
+    
+    .success-message .filepath {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: rgba(0,0,0,0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-top: 8px;
+      display: inline-block;
+    }
+    
+    /* Error message */
+    .error-message {
+      background: #da3633;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    .error-message p {
+      margin: 0;
+      color: white;
+    }
+    
+    /* =====================================================
+       FILE UPLOAD ZONE - Enhanced Ingest
+       ===================================================== */
+    .upload-section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .upload-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .upload-section-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #c9d1d9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .upload-toggle-btn {
+      padding: 6px 12px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    
+    .upload-toggle-btn:hover {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+    
+    .file-drop-zone {
+      border: 2px dashed #30363d;
+      border-radius: 8px;
+      padding: 16px 20px;
+      text-align: center;
+      background: #0d1117;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .file-drop-zone:hover {
+      border-color: #58a6ff;
+      background: rgba(88, 166, 255, 0.05);
+    }
+    
+    .file-drop-zone.dragover {
+      border-color: #238636;
+      background: rgba(35, 134, 54, 0.1);
+    }
+    
+    .file-drop-zone.has-file {
+      border-color: #238636;
+      border-style: solid;
+    }
+    
+    .drop-zone-content {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .drop-zone-icon {
+      font-size: 1.5rem;
+      opacity: 0.6;
+    }
+    
+    .drop-zone-text {
+      color: #8b949e;
+      font-size: 0.95rem;
+    }
+    
+    .drop-zone-text strong {
+      color: #58a6ff;
+    }
+    
+    .drop-zone-formats {
+      color: #6e7681;
+      font-size: 0.8rem;
+    }
+    
+    .file-input-hidden {
+      display: none;
+    }
+    
+    /* File info display */
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #21262d;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+    
+    .file-info .file-icon {
+      font-size: 1.5rem;
+    }
+    
+    .file-info .file-details {
+      flex: 1;
+    }
+    
+    .file-info .file-name {
+      color: #c9d1d9;
+      font-weight: 500;
+    }
+    
+    .file-info .file-size {
+      color: #6e7681;
+      font-size: 0.8rem;
+    }
+    
+    .file-info .remove-file {
+      padding: 4px 8px;
+      background: transparent;
+      border: 1px solid #da3633;
+      color: #da3633;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    
+    .file-info .remove-file:hover {
+      background: #da3633;
+      color: white;
+    }
+    
+    /* Template Preview Panel */
+    .template-preview {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+    }
+    
+    .template-preview.show {
+      display: block;
+    }
+    
+    .template-preview h3 {
+      margin: 0 0 16px 0;
+      color: #c9d1d9;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .template-fields {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    @media (max-width: 600px) {
+      .template-fields {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .template-field {
+      padding: 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+    }
+    
+    .template-field.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .template-field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #8b949e;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+    }
+    
+    .template-field-value {
+      color: #c9d1d9;
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+    
+    .template-field-value.empty {
+      color: #6e7681;
+      font-style: italic;
+    }
+    
+    .template-field-value.tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .template-field-value .extracted-tag {
+      padding: 3px 10px;
+      background: #21262d;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: #8b949e;
+    }
+    
+    .template-field-value .extracted-tag.semantic {
+      background: rgba(35, 134, 54, 0.2);
+      color: #56d364;
+    }
+    
+    .template-field-value .extracted-tag.person {
+      background: rgba(219, 109, 40, 0.2);
+      color: #ffa657;
+    }
+    
+    /* Apply button */
+    .apply-template-btn {
+      margin-top: 16px;
+      padding: 10px 20px;
+      background: #238636;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    
+    .apply-template-btn:hover {
+      background: #2ea043;
+    }
+    
+    .apply-template-btn:disabled {
+      background: #21262d;
+      color: #6e7681;
+      cursor: not-allowed;
+    }
+    
+    /* Parsing indicator */
+    .parsing-indicator {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      color: #58a6ff;
+    }
+    
+    .parsing-indicator.show {
+      display: flex;
+    }
+    
+    .parsing-indicator .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* No Template Choice Panel */
+    .no-template-choice {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: linear-gradient(135deg, #161b22 0%, #1c2128 100%);
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .no-template-choice.show {
+      display: block;
+    }
+    
+    .no-template-choice h3 {
+      margin: 0 0 8px 0;
+      color: #f0883e;
+      font-size: 1rem;
+    }
+    
+    .no-template-choice p {
+      margin: 0 0 16px 0;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .choice-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    
+    .choice-btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .choice-btn.primary {
+      background: #238636;
+      border: none;
+      color: white;
+    }
+    
+    .choice-btn.primary:hover {
+      background: #2ea043;
+    }
+    
+    .choice-btn.secondary {
+      background: transparent;
+      border: 1px solid #58a6ff;
+      color: #58a6ff;
+    }
+    
+    .choice-btn.secondary:hover {
+      background: rgba(88, 166, 255, 0.1);
+    }
+
+    /* Import Today */
+    .import-today-section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .import-today-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .import-today-header h2 { margin: 0; font-size: 1.2rem; color: #e6edf3; }
+
+    .import-today-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .import-folder-path {
+      font-size: 0.8rem;
+      color: #484f58;
+      font-family: monospace;
+    }
+
+    .scan-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #238636, #2ea043);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .scan-btn:hover { filter: brightness(1.1); }
+    .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .import-queue-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .import-file-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      transition: border-color 0.15s;
+    }
+
+    .import-file-card.processing { border-color: #58a6ff; }
+    .import-file-card.done { border-color: #3fb950; opacity: 0.7; }
+    .import-file-card.skipped { border-color: #484f58; opacity: 0.5; }
+    .import-file-card.error { border-color: #f85149; }
+
+    .import-file-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .import-file-info { flex: 1; min-width: 0; }
+    .import-file-name {
+      font-weight: 600;
+      color: #e6edf3;
+      font-size: 0.95rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .import-file-meta {
+      font-size: 0.78rem;
+      color: #8b949e;
+      margin-top: 2px;
+    }
+    .import-file-meta .detected-type {
+      color: #58a6ff;
+      font-weight: 600;
+    }
+
+    .import-file-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .import-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: #21262d;
+      color: #c9d1d9;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .import-btn.primary {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      border-color: #238636;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .import-btn.primary:hover { filter: brightness(1.1); }
+    .import-btn:hover { background: #30363d; }
+    .import-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .import-file-status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .import-file-status.ingested { color: #3fb950; }
+    .import-file-status.skipped { color: #8b949e; }
+    .import-file-status.error { color: #f85149; }
+
+    .import-no-files {
+      text-align: center;
+      padding: 24px;
+      color: #484f58;
+      font-size: 0.95rem;
+    }
+
+    .import-no-files .empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+    .import-summary {
+      margin-top: 16px;
+      padding: 16px;
+      background: #0d1117;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+    }
+
+    .import-summary h3 { margin: 0 0 12px 0; color: #3fb950; font-size: 1rem; }
+
+    .import-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .import-summary-table th {
+      text-align: left;
+      padding: 6px 10px;
+      color: #8b949e;
+      border-bottom: 1px solid #21262d;
+      font-weight: 500;
+    }
+
+    .import-summary-table td {
+      padding: 6px 10px;
+      color: #c9d1d9;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .import-summary-table .status-cell { font-weight: 600; }
+    .import-summary-table .status-cell.success { color: #3fb950; }
+    .import-summary-table .status-cell.skipped { color: #8b949e; }
+    .import-summary-table .status-cell.error { color: #f85149; }
+
+    /* =====================================================
+       IMPORT REVIEW PANEL — Sequential review flow
+       ===================================================== */
+    .import-progress {
+      margin-top: 16px;
+      padding: 12px 0;
+    }
+
+    .import-progress-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: #8b949e;
+      margin-bottom: 6px;
+    }
+
+    .import-progress-bar {
+      height: 4px;
+      background: #21262d;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .import-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #238636, #3fb950);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .import-review-panel {
+      margin-top: 16px;
+      padding: 20px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+    }
+
+    .import-review-file-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .import-review-filename {
+      font-weight: 600;
+      color: #e6edf3;
+      font-size: 1.05rem;
+    }
+
+    .import-review-meta {
+      font-size: 0.78rem;
+      color: #484f58;
+    }
+
+    .import-review-converting {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px 20px;
+      color: #58a6ff;
+      font-size: 0.95rem;
+    }
+
+    .import-review-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .import-review-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #161b22;
+      vertical-align: middle;
+    }
+
+    .import-review-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .review-label {
+      width: 100px;
+      color: #8b949e;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .review-value {
+      color: #e6edf3;
+      font-size: 0.95rem;
+    }
+
+    .review-value .extracted-tag {
+      display: inline-block;
+      padding: 2px 10px;
+      margin: 2px 4px 2px 0;
+      background: #21262d;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      color: #8b949e;
+    }
+
+    .review-value .extracted-tag.person {
+      background: rgba(219, 109, 40, 0.15);
+      color: #ffa657;
+    }
+
+    .review-value .extracted-tag.semantic {
+      background: rgba(35, 134, 54, 0.15);
+      color: #56d364;
+    }
+
+    .review-edit {
+      width: 200px;
+    }
+
+    .review-input {
+      width: 100%;
+      padding: 6px 10px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      color: #c9d1d9;
+      font-size: 0.88rem;
+    }
+
+    .review-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+
+    .review-select {
+      cursor: pointer;
+    }
+
+    .review-content-preview {
+      margin-bottom: 20px;
+    }
+
+    .review-content-label {
+      font-size: 0.82rem;
+      color: #8b949e;
+      margin-bottom: 6px;
+    }
+
+    .review-content-text {
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 12px;
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.82rem;
+      color: #8b949e;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .import-review-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .import-review-btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .import-review-btn.approve {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: #fff;
+    }
+
+    .import-review-btn.approve:hover { filter: brightness(1.12); }
+
+    .import-review-btn.reject {
+      background: #21262d;
+      color: #8b949e;
+      border: 1px solid #30363d;
+    }
+
+    .import-review-btn.reject:hover {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+
+    .import-review-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .import-review-hint {
+      text-align: right;
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: #484f58;
+    }
+
+    .import-review-hint kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 3px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.72rem;
+      color: #8b949e;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'ingest' }) %>
+
+  <main class="ingest-container">
+    <div class="ingest-header">
+      <h1>📥 Ingest Content</h1>
+    </div>
+
+    <!-- Import Today Section -->
+    <div class="import-today-section" id="importTodaySection">
+      <div class="import-today-header">
+        <h2>📂 Import Today</h2>
+        <div class="import-today-actions">
+          <span class="import-folder-path" id="importFolderPath">~/Documents (local)/</span>
+          <button type="button" class="scan-btn" id="scanBtn" onclick="scanIncoming()">
+            🔍 Scan for files
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress bar (shown during review) -->
+      <div id="importProgress" style="display:none" class="import-progress">
+        <div class="import-progress-text">
+          <span id="importProgressLabel">Reviewing...</span>
+          <span id="importProgressCount"></span>
+        </div>
+        <div class="import-progress-bar">
+          <div class="import-progress-fill" id="importProgressFill"></div>
+        </div>
+      </div>
+
+      <!-- Review panel (one document at a time) -->
+      <div id="importReview" style="display:none" class="import-review-panel">
+        <div class="import-review-file-header">
+          <span class="import-review-filename" id="reviewFilename"></span>
+          <span class="import-review-meta" id="reviewFileMeta"></span>
+        </div>
+
+        <!-- Converting indicator -->
+        <div class="import-review-converting" id="reviewConverting" style="display:none">
+          <div class="spinner"></div>
+          <span>Converting .pages file…</span>
+        </div>
+
+        <!-- Review table -->
+        <div id="reviewFields" style="display:none">
+          <table class="import-review-table">
+            <tbody>
+              <tr>
+                <td class="review-label">📅 Date</td>
+                <td class="review-value" id="reviewDate"></td>
+                <td class="review-edit">
+                  <input type="date" id="reviewDateEdit" class="review-input">
+                </td>
+              </tr>
+              <tr>
+                <td class="review-label">📝 Title</td>
+                <td class="review-value" id="reviewTitle"></td>
+                <td class="review-edit">
+                  <input type="text" id="reviewTitleEdit" class="review-input" placeholder="Edit title...">
+                </td>
+              </tr>
+              <tr>
+                <td class="review-label">📋 Type</td>
+                <td class="review-value" id="reviewType"></td>
+                <td class="review-edit">
+                  <select id="reviewTypeEdit" class="review-input review-select"></select>
+                </td>
+              </tr>
+              <tr>
+                <td class="review-label">👥 People</td>
+                <td class="review-value" id="reviewPeople" colspan="2"></td>
+              </tr>
+              <tr>
+                <td class="review-label">🏷️ Tags</td>
+                <td class="review-value" id="reviewTags" colspan="2"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="review-content-preview">
+            <div class="review-content-label">📄 Content preview</div>
+            <div class="review-content-text" id="reviewContentPreview"></div>
+          </div>
+
+          <div class="import-review-actions">
+            <button type="button" class="import-review-btn reject" id="reviewRejectBtn" onclick="reviewReject()">
+              ✕ Skip
+            </button>
+            <button type="button" class="import-review-btn approve" id="reviewApproveBtn" onclick="reviewApprove()">
+              ✓ Approve & Import
+            </button>
+          </div>
+          <div class="import-review-hint">
+            <kbd>Enter</kbd> approve · <kbd>Esc</kbd> skip
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state / no files -->
+      <div id="importQueue" style="display:none">
+        <div class="import-queue-list" id="importQueueList"></div>
+      </div>
+
+      <!-- Post-import summary (shown after all files processed) -->
+      <div id="importSummary" style="display:none" class="import-summary">
+        <h3>✅ Import Complete</h3>
+        <div id="importSummaryContent"></div>
+      </div>
+    </div>
+
+    <!-- File Upload Section - Enhanced Ingest -->
+    <div class="upload-section">
+      <div class="upload-section-header">
+        <h2>📄 Import from File</h2>
+        <button type="button" class="upload-toggle-btn" id="toggleUploadBtn">
+          Hide
+        </button>
+      </div>
+      
+      <div id="uploadContent">
+        <div class="file-drop-zone" id="fileDropZone">
+          <div class="drop-zone-content">
+            <span class="drop-zone-icon">📁</span>
+            <p class="drop-zone-text">
+              <strong>Drop file here</strong> or click to browse
+            </p>
+            <p class="drop-zone-formats">
+              Supports: .pages, .docx, .md, .txt
+            </p>
+          </div>
+          <input type="file" class="file-input-hidden" id="fileInput" 
+                 accept=".pages,.docx,.md,.txt,.markdown">
+        </div>
+        
+        <!-- File info (shown after selection) -->
+        <div class="file-info" id="fileInfo" style="display: none;">
+          <span class="file-icon">📄</span>
+          <div class="file-details">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+          </div>
+          <button type="button" class="remove-file" id="removeFileBtn">✕ Remove</button>
+        </div>
+        
+        <!-- Parsing indicator -->
+        <div class="parsing-indicator" id="parsingIndicator">
+          <div class="spinner"></div>
+          <span>Parsing document...</span>
+        </div>
+        
+        <!-- Template Preview Panel -->
+        <div class="template-preview" id="templatePreview">
+          <h3>✨ Extracted Template Fields</h3>
+          <div class="template-fields">
+            <div class="template-field">
+              <div class="template-field-label">📅 Date</div>
+              <div class="template-field-value" id="previewDate">-</div>
+            </div>
+            <div class="template-field">
+              <div class="template-field-label">📝 Title</div>
+              <div class="template-field-value" id="previewTitle">-</div>
+            </div>
+            <div class="template-field">
+              <div class="template-field-label">📋 Document Type</div>
+              <div class="template-field-value" id="previewDocType">-</div>
+            </div>
+            <div class="template-field">
+              <div class="template-field-label">👥 Participants</div>
+              <div class="template-field-value tags" id="previewParticipants">-</div>
+            </div>
+            <div class="template-field full-width">
+              <div class="template-field-label">🏷️ Tags</div>
+              <div class="template-field-value tags" id="previewTags">-</div>
+            </div>
+            <div class="template-field full-width">
+              <div class="template-field-label">📄 Content Preview</div>
+              <div class="template-field-value" id="previewContent" style="max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap;">-</div>
+            </div>
+          </div>
+          <div class="auto-applied-notice" style="text-align: center; padding: 12px; color: #3fb950; font-size: 0.9rem;">
+            ✓ Fields applied to form below
+          </div>
+        </div>
+        
+        <!-- No Template Detected - Choice Panel -->
+        <div class="no-template-choice" id="noTemplateChoice">
+          <h3>📄 No Template Detected</h3>
+          <p>This document doesn't match the expected template format. What would you like to do?</p>
+          <div class="choice-buttons">
+            <button type="button" class="choice-btn primary" id="ingestAsIsBtn">
+              📥 Ingest Content As-Is
+            </button>
+            <button type="button" class="choice-btn secondary" id="deepAnalyzeBtn">
+              🔬 Deep Analysis
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div class="success-message" id="successMessage">
+      <h3>✓ Content saved successfully!</h3>
+      <p id="successDetails"></p>
+      <span class="filepath" id="successFilepath"></span>
+    </div>
+    
+    <div class="error-message" id="errorMessage">
+      <p id="errorDetails"></p>
+    </div>
+
+    <!-- Ingest Form -->
+    <form class="ingest-form" id="ingestForm">
+      <!-- RTE, Content Type, Date -->
+      <div class="form-row form-row-inline">
+        <div>
+          <label for="rteSelect">RTE / Context</label>
+          <select id="rteSelect" class="form-select" required>
+            <option value="">Loading...</option>
+          </select>
+        </div>
+        <div>
+          <label for="contentType">Content Type</label>
+          <select id="contentType" class="form-select" required>
+            <option value="">Loading...</option>
+          </select>
+        </div>
+        <div>
+          <label for="documentDate">Date (auto-detected)</label>
+          <input type="date" id="documentDate" class="form-input">
+        </div>
+      </div>
+
+      <!-- Title (optional) -->
+      <div class="form-row">
+        <label for="titleInput">Title (optional - auto-generated if empty)</label>
+        <input type="text" id="titleInput" class="form-input" placeholder="e.g., Sprint Planning Q2">
+      </div>
+
+      <!-- Content -->
+      <div class="form-row">
+        <label for="contentInput">Content</label>
+        <textarea 
+          id="contentInput" 
+          class="content-textarea" 
+          placeholder="Paste your meeting notes, daily log, or other content here...
+
+Example:
+## Meeting Notes - 3 February 2026
+
+Attendees: Clara, Jan, Sarah
+
+Discussion:
+- DNA-C priority for Q2
+- Portal architecture review needed
+- Clara mentioned alternative solution pattern
+
+Action items:
+- [ ] Create portal proposal
+- [ ] Schedule Q2 planning session"
+          required
+        ></textarea>
+      </div>
+
+      <!-- Semantic Tags -->
+      <div class="tag-section">
+        <div class="tag-section-title">🏷️ Semantic Tags (what type of information)</div>
+        <div class="tag-chips" id="semanticTags">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Project Tags -->
+      <div class="tag-section">
+        <div class="tag-section-title"># Project Tags</div>
+        <div class="custom-tag-input-wrapper">
+          <div class="added-tags" id="projectTagsList"></div>
+          <div class="autocomplete-wrapper">
+            <input 
+              type="text" 
+              class="custom-tag-input" 
+              id="projectTagInput" 
+              placeholder="Type project name..."
+            >
+            <div class="autocomplete-dropdown" id="projectAutocomplete"></div>
+          </div>
+        </div>
+        <div class="recent-tags" id="recentProjectTags">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Person Tags -->
+      <div class="tag-section">
+        <div class="tag-section-title">@ Person Tags</div>
+        <div class="custom-tag-input-wrapper">
+          <div class="added-tags" id="personTagsList"></div>
+          <div class="autocomplete-wrapper">
+            <input 
+              type="text" 
+              class="custom-tag-input" 
+              id="personTagInput" 
+              placeholder="Type person name..."
+            >
+            <div class="autocomplete-dropdown" id="personAutocomplete"></div>
+          </div>
+        </div>
+        <div class="recent-tags" id="recentPersonTags">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-section">
+        <span class="word-count" id="wordCount">0 words</span>
+        <button type="submit" class="submit-btn" id="submitBtn">
+          💾 Save Content
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    // State
+    let selectedSemanticTags = [];
+    let projectTags = [];
+    let personTags = [];
+    let rtes = [];
+    let contentTypes = [];
+    let semanticTagsData = [];
+
+    // DOM Elements
+    const form = document.getElementById('ingestForm');
+    const contentInput = document.getElementById('contentInput');
+    const rteSelect = document.getElementById('rteSelect');
+    const contentTypeSelect = document.getElementById('contentType');
+    const documentDateInput = document.getElementById('documentDate');
+    const titleInput = document.getElementById('titleInput');
+    const semanticTagsContainer = document.getElementById('semanticTags');
+    const projectTagInput = document.getElementById('projectTagInput');
+    const personTagInput = document.getElementById('personTagInput');
+    const projectAutocomplete = document.getElementById('projectAutocomplete');
+    const personAutocomplete = document.getElementById('personAutocomplete');
+    const projectTagsList = document.getElementById('projectTagsList');
+    const personTagsList = document.getElementById('personTagsList');
+    const wordCountEl = document.getElementById('wordCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadRTEs();
+      await loadContentTypes();
+      await loadSemanticTags();
+      await loadRecentTags();
+      setupEventListeners();
+      
+      // Set today's date as default
+      documentDateInput.value = new Date().toISOString().split('T')[0];
+    });
+
+    // Load RTEs
+    async function loadRTEs() {
+      try {
+        const res = await fetch('/api/rte');
+        const data = await res.json();
+        // API returns array directly, not wrapped
+        rtes = Array.isArray(data) ? data : (data.rtes || []);
+        
+        if (rtes.length === 0) {
+          rteSelect.innerHTML = '<option value="">No RTEs found</option>';
+          return;
+        }
+        
+        // Get default RTE from preferences
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        
+        rteSelect.innerHTML = rtes.map(rte => 
+          `<option value="${rte.id}" ${defaultRte == rte.id ? 'selected' : ''}>${rte.name}</option>`
+        ).join('');
+      } catch (err) {
+        console.error('Error loading RTEs:', err);
+        rteSelect.innerHTML = '<option value="">Error loading</option>';
+      }
+    }
+
+    // Load content types
+    async function loadContentTypes() {
+      try {
+        const res = await fetch('/api/ingest/tags/content-types');
+        const data = await res.json();
+        contentTypes = data.types || [];
+        
+        contentTypeSelect.innerHTML = contentTypes.map(type => 
+          `<option value="${type.slug}">${type.icon} ${type.name}</option>`
+        ).join('');
+      } catch (err) {
+        console.error('Error loading content types:', err);
+        contentTypeSelect.innerHTML = '<option value="log">📝 Daily Log</option>';
+      }
+    }
+
+    // Load semantic tags
+    async function loadSemanticTags() {
+      try {
+        const res = await fetch('/api/ingest/tags/semantic');
+        const data = await res.json();
+        semanticTagsData = data.tags || [];
+        
+        renderSemanticTags();
+      } catch (err) {
+        console.error('Error loading semantic tags:', err);
+      }
+    }
+
+    // Load recent tags for quick selection
+    async function loadRecentTags() {
+      try {
+        // Load recent projects
+        const projectRes = await fetch('/api/tags/recent/project?limit=10');
+        const projectData = await projectRes.json();
+        renderRecentTags('project', projectData.tags || []);
+        
+        // Load recent people
+        const personRes = await fetch('/api/tags/recent/person?limit=10');
+        const personData = await personRes.json();
+        renderRecentTags('person', personData.tags || []);
+      } catch (err) {
+        console.error('Error loading recent tags:', err);
+      }
+    }
+
+    // Render recent tag pills
+    function renderRecentTags(type, tags) {
+      const container = document.getElementById(type === 'project' ? 'recentProjectTags' : 'recentPersonTags');
+      
+      if (tags.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      
+      const currentTags = type === 'project' ? projectTags : personTags;
+      
+      container.innerHTML = `
+        <span class="recent-tags-label">Recent:</span>
+        ${tags.map(t => `
+          <span class="recent-tag ${currentTags.includes(t.value) ? 'selected' : ''}" 
+                data-value="${t.value}"
+                onclick="toggleRecentTag('${type}', '${t.value}')">
+            ${type === 'project' ? '#' : '@'}${t.value}
+          </span>
+        `).join('')}
+      `;
+    }
+
+    // Toggle a recent tag
+    function toggleRecentTag(type, value) {
+      const tagsArray = type === 'project' ? projectTags : personTags;
+      const index = tagsArray.indexOf(value);
+      
+      if (index === -1) {
+        // Add the tag
+        addTag(type, value);
+      } else {
+        // Remove the tag
+        removeTag(type, value);
+      }
+      
+      // Update recent tags display
+      renderRecentTags(type, 
+        type === 'project' ? 
+          Array.from(document.querySelectorAll('#recentProjectTags .recent-tag')).map(el => ({value: el.dataset.value})) :
+          Array.from(document.querySelectorAll('#recentPersonTags .recent-tag')).map(el => ({value: el.dataset.value}))
+      );
+    }
+
+    // Render semantic tag chips
+    function renderSemanticTags() {
+      semanticTagsContainer.innerHTML = semanticTagsData.map(tag => `
+        <div class="tag-chip ${selectedSemanticTags.includes(tag.slug) ? 'selected' : ''}" 
+             data-slug="${tag.slug}"
+             style="${selectedSemanticTags.includes(tag.slug) ? `background: ${tag.color}; border-color: ${tag.color}` : ''}"
+             title="${tag.description || tag.name}">
+          <span class="tag-icon">${tag.icon || '🏷️'}</span>
+          ${tag.name}
+        </div>
+      `).join('');
+
+      // Add click handlers
+      semanticTagsContainer.querySelectorAll('.tag-chip').forEach(chip => {
+        chip.addEventListener('click', () => toggleSemanticTag(chip.dataset.slug));
+      });
+    }
+
+    // Toggle semantic tag selection
+    function toggleSemanticTag(slug) {
+      const index = selectedSemanticTags.indexOf(slug);
+      if (index === -1) {
+        selectedSemanticTags.push(slug);
+      } else {
+        selectedSemanticTags.splice(index, 1);
+      }
+      renderSemanticTags();
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Word count
+      contentInput.addEventListener('input', updateWordCount);
+      
+      // Date auto-detection
+      contentInput.addEventListener('blur', autoDetectDate);
+      
+      // Project tag autocomplete
+      projectTagInput.addEventListener('input', () => fetchAutocomplete('projects', projectTagInput.value, projectAutocomplete));
+      projectTagInput.addEventListener('keydown', (e) => handleTagKeydown(e, 'project'));
+      projectTagInput.addEventListener('focus', () => fetchAutocomplete('projects', projectTagInput.value, projectAutocomplete));
+      
+      // Person tag autocomplete
+      personTagInput.addEventListener('input', () => fetchAutocomplete('people', personTagInput.value, personAutocomplete));
+      personTagInput.addEventListener('keydown', (e) => handleTagKeydown(e, 'person'));
+      personTagInput.addEventListener('focus', () => fetchAutocomplete('people', personTagInput.value, personAutocomplete));
+      
+      // Close dropdowns on outside click
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.autocomplete-wrapper')) {
+          projectAutocomplete.classList.remove('show');
+          personAutocomplete.classList.remove('show');
+        }
+      });
+      
+      // Form submit
+      form.addEventListener('submit', handleSubmit);
+    }
+
+    // Update word count
+    function updateWordCount() {
+      const words = contentInput.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+      wordCountEl.textContent = `${words} words`;
+    }
+
+    // Auto-detect date from content
+    function autoDetectDate() {
+      const content = contentInput.value;
+      
+      // Try ISO format first
+      const isoMatch = content.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+      if (isoMatch) {
+        documentDateInput.value = isoMatch[1];
+        return;
+      }
+      
+      // Try "3 February 2026" format
+      const dateMatch = content.match(/\b(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})\b/i);
+      if (dateMatch) {
+        const months = {
+          january: '01', february: '02', march: '03', april: '04', may: '05', june: '06',
+          july: '07', august: '08', september: '09', october: '10', november: '11', december: '12'
+        };
+        const day = dateMatch[1].padStart(2, '0');
+        const month = months[dateMatch[2].toLowerCase()];
+        const year = dateMatch[3];
+        documentDateInput.value = `${year}-${month}-${day}`;
+      }
+    }
+
+    // Fetch autocomplete suggestions
+    async function fetchAutocomplete(type, query, dropdown) {
+      const rteId = rteSelect.value;
+      
+      try {
+        const res = await fetch(`/api/ingest/tags/${type}?q=${encodeURIComponent(query)}&rteId=${rteId}`);
+        const data = await res.json();
+        
+        const existingTags = type === 'projects' ? projectTags : personTags;
+        const filteredTags = (data.tags || []).filter(t => !existingTags.includes(t.name));
+        
+        if (filteredTags.length > 0 || query.length > 0) {
+          dropdown.innerHTML = filteredTags.map(tag => `
+            <div class="autocomplete-item" data-name="${tag.name}">
+              <span>${tag.name}</span>
+              <span class="usage">${tag.usage_count || 0} uses</span>
+            </div>
+          `).join('');
+          
+          // Add "create new" option if query doesn't match exactly
+          if (query.length > 1 && !filteredTags.some(t => t.name.toLowerCase() === query.toLowerCase())) {
+            dropdown.innerHTML += `
+              <div class="autocomplete-item" data-name="${query}" data-new="true">
+                <span>+ Create "${query}"</span>
+              </div>
+            `;
+          }
+          
+          // Add click handlers
+          dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', () => {
+              addTag(type === 'projects' ? 'project' : 'person', item.dataset.name);
+              dropdown.classList.remove('show');
+            });
+          });
+          
+          dropdown.classList.add('show');
+        } else {
+          dropdown.classList.remove('show');
+        }
+      } catch (err) {
+        console.error('Autocomplete error:', err);
+      }
+    }
+
+    // Handle Enter key in tag inputs
+    function handleTagKeydown(e, type) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const input = type === 'project' ? projectTagInput : personTagInput;
+        if (input.value.trim()) {
+          addTag(type, input.value.trim());
+        }
+      }
+    }
+
+    // Add a tag
+    function addTag(type, name) {
+      const tags = type === 'project' ? projectTags : personTags;
+      const list = type === 'project' ? projectTagsList : personTagsList;
+      const input = type === 'project' ? projectTagInput : personTagInput;
+      
+      if (!tags.includes(name)) {
+        tags.push(name);
+        renderTagList(type, tags, list);
+      }
+      
+      input.value = '';
+    }
+
+    // Render tag list
+    function renderTagList(type, tags, container) {
+      container.innerHTML = tags.map(tag => `
+        <span class="added-tag ${type}">
+          ${type === 'project' ? '#' : '@'}${tag}
+          <span class="remove-tag" data-name="${tag}">×</span>
+        </span>
+      `).join('');
+      
+      // Add remove handlers
+      container.querySelectorAll('.remove-tag').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const name = btn.dataset.name;
+          const index = tags.indexOf(name);
+          if (index > -1) {
+            tags.splice(index, 1);
+            renderTagList(type, tags, container);
+          }
+        });
+      });
+    }
+
+    // Handle form submit
+    async function handleSubmit(e) {
+      e.preventDefault();
+      
+      // Hide messages
+      successMessage.classList.remove('show');
+      errorMessage.classList.remove('show');
+      
+      // Disable button
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Saving...';
+      
+      try {
+        const payload = {
+          content: contentInput.value,
+          rteId: parseInt(rteSelect.value),
+          contentType: contentTypeSelect.value,
+          date: documentDateInput.value || null,
+          title: titleInput.value || null,
+          semanticTags: selectedSemanticTags,
+          projectTags: projectTags,
+          personTags: personTags
+        };
+        
+        const res = await fetch('/api/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to save content');
+        }
+        
+        // Show success
+        document.getElementById('successDetails').textContent = 
+          `Document ID: ${data.documentId} | ${data.wordCount} words | Tags: ${
+            [...data.tags.semantic, ...data.tags.projects.map(p => '#' + p), ...data.tags.people.map(p => '@' + p)].join(', ') || 'none'
+          }`;
+        document.getElementById('successFilepath').textContent = data.filepath;
+        successMessage.classList.add('show');
+        
+        // Reset form
+        contentInput.value = '';
+        titleInput.value = '';
+        selectedSemanticTags = [];
+        projectTags = [];
+        personTags = [];
+        projectTagsList.innerHTML = '';
+        personTagsList.innerHTML = '';
+        renderSemanticTags();
+        updateWordCount();
+        documentDateInput.value = new Date().toISOString().split('T')[0];
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+      } catch (err) {
+        document.getElementById('errorDetails').textContent = err.message;
+        errorMessage.classList.add('show');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '💾 Save Content';
+      }
+    }
+
+    // =====================================================
+    // FILE UPLOAD HANDLING - Enhanced Ingest
+    // =====================================================
+    
+    // File upload state
+    let currentFile = null;
+    let parsedTemplate = null;
+    
+    // File upload elements
+    const fileDropZone = document.getElementById('fileDropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const parsingIndicator = document.getElementById('parsingIndicator');
+    const templatePreview = document.getElementById('templatePreview');
+    const toggleUploadBtn = document.getElementById('toggleUploadBtn');
+    const uploadContent = document.getElementById('uploadContent');
+    
+    // Toggle upload section visibility
+    toggleUploadBtn?.addEventListener('click', () => {
+      const isHidden = uploadContent.style.display === 'none';
+      uploadContent.style.display = isHidden ? 'block' : 'none';
+      toggleUploadBtn.textContent = isHidden ? 'Hide' : 'Show';
+    });
+    
+    // Click to browse
+    fileDropZone?.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    // File input change
+    fileInput?.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileSelection(e.target.files[0]);
+      }
+    });
+    
+    // Drag and drop
+    fileDropZone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileDropZone.classList.add('dragover');
+    });
+    
+    fileDropZone?.addEventListener('dragleave', () => {
+      fileDropZone.classList.remove('dragover');
+    });
+    
+    fileDropZone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileDropZone.classList.remove('dragover');
+      
+      if (e.dataTransfer.files.length > 0) {
+        handleFileSelection(e.dataTransfer.files[0]);
+      }
+    });
+    
+    // Remove file
+    removeFileBtn?.addEventListener('click', () => {
+      clearFileSelection();
+    });
+    
+    // Auto-apply template to form (called after parsing)
+    function applyTemplateToForm() {
+      if (!parsedTemplate) return;
+      
+      // Apply parsed values to form
+      if (parsedTemplate.date) {
+        documentDateInput.value = parsedTemplate.date;
+      }
+      
+      if (parsedTemplate.title) {
+        titleInput.value = parsedTemplate.title;
+      }
+      
+      if (parsedTemplate.content) {
+        contentInput.value = parsedTemplate.content;
+        updateWordCount();
+      }
+      
+      // Apply document type using mapping
+      if (parsedTemplate.docType) {
+        const mappedType = mapDocumentType(parsedTemplate.docType);
+        if (mappedType && contentTypeSelect.querySelector(`option[value="${mappedType}"]`)) {
+          contentTypeSelect.value = mappedType;
+        }
+      }
+      
+      // Apply participants as person tags
+      if (parsedTemplate.participants && parsedTemplate.participants.length > 0) {
+        parsedTemplate.participants.forEach(person => {
+          if (!personTags.includes(person)) {
+            personTags.push(person);
+          }
+        });
+        renderPersonTags();
+      }
+      
+      // Apply extracted tags - try to match semantic tags, otherwise add as project tags
+      if (parsedTemplate.tags && parsedTemplate.tags.length > 0) {
+        parsedTemplate.tags.forEach(tag => {
+          const cleanTag = tag.replace(/^#/, '');
+          const cleanTagLower = cleanTag.toLowerCase();
+          
+          // Check if it matches a semantic tag
+          const matchingSemanticTag = semanticTagsData.find(s => 
+            s.name.toLowerCase() === cleanTagLower
+          );
+          
+          if (matchingSemanticTag) {
+            if (!selectedSemanticTags.includes(matchingSemanticTag.name)) {
+              selectedSemanticTags.push(matchingSemanticTag.name);
+            }
+          } else {
+            // Add as project tag if not a semantic tag
+            if (!projectTags.includes(cleanTag)) {
+              projectTags.push(cleanTag);
+            }
+          }
+        });
+        renderSemanticTags();
+        renderProjectTags();
+      }
+      
+      // Scroll to form
+      document.querySelector('.ingest-form')?.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function handleFileSelection(file) {
+      // Validate file type
+      const validExtensions = ['.pages', '.docx', '.md', '.txt', '.markdown'];
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      
+      if (!validExtensions.includes(ext)) {
+        alert('Please select a .pages, .docx, .md, or .txt file');
+        return;
+      }
+      
+      currentFile = file;
+      
+      // Show file info
+      fileDropZone.classList.add('has-file');
+      fileInfo.style.display = 'flex';
+      fileName.textContent = file.name;
+      fileSize.textContent = formatFileSize(file.size);
+      
+      // Parse the file
+      parseFile(file);
+    }
+    
+    function clearFileSelection() {
+      currentFile = null;
+      parsedTemplate = null;
+      fileInput.value = '';
+      fileDropZone.classList.remove('has-file');
+      fileInfo.style.display = 'none';
+      templatePreview.classList.remove('show');
+      parsingIndicator.classList.remove('show');
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    
+    async function parseFile(file) {
+      parsingIndicator.classList.add('show');
+      templatePreview.classList.remove('show');
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const res = await fetch('/api/ingest/parse-file', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to parse file');
+        }
+        
+        parsedTemplate = await res.json();
+        displayParsedTemplate(parsedTemplate);
+        
+      } catch (err) {
+        console.error('Parse error:', err);
+        alert('Error parsing file: ' + err.message);
+        clearFileSelection();
+      } finally {
+        parsingIndicator.classList.remove('show');
+      }
+    }
+    
+    function displayParsedTemplate(data) {
+      const noTemplateChoice = document.getElementById('noTemplateChoice');
+      
+      // Check if this looks like a template - must have docType OR (participants AND tags)
+      // Just having date/title isn't enough since any doc might have those
+      const hasTemplateFields = data.docType || 
+        ((data.participants && data.participants.length > 0) && (data.tags && data.tags.length > 0));
+      
+      if (!hasTemplateFields) {
+        // No template detected - show choice panel
+        templatePreview.classList.remove('show');
+        noTemplateChoice.classList.add('show');
+        return;
+      }
+      
+      // Hide choice panel, show template preview
+      noTemplateChoice.classList.remove('show');
+      
+      // Date
+      const previewDate = document.getElementById('previewDate');
+      previewDate.textContent = data.date || '-';
+      previewDate.classList.toggle('empty', !data.date);
+      
+      // Title
+      const previewTitle = document.getElementById('previewTitle');
+      previewTitle.textContent = data.title || '-';
+      previewTitle.classList.toggle('empty', !data.title);
+      
+      // Doc Type - show mapped value
+      const previewDocType = document.getElementById('previewDocType');
+      const mappedType = mapDocumentType(data.docType);
+      previewDocType.textContent = mappedType ? `${data.docType} → ${mappedType}` : (data.docType || '-');
+      previewDocType.classList.toggle('empty', !data.docType);
+      
+      // Participants
+      const previewParticipants = document.getElementById('previewParticipants');
+      if (data.participants && data.participants.length > 0) {
+        previewParticipants.innerHTML = data.participants.map(p => 
+          `<span class="extracted-tag person">${p}</span>`
+        ).join('');
+      } else {
+        previewParticipants.innerHTML = '<span class="empty">-</span>';
+      }
+      
+      // Tags
+      const previewTags = document.getElementById('previewTags');
+      if (data.tags && data.tags.length > 0) {
+        previewTags.innerHTML = data.tags.map(t => 
+          `<span class="extracted-tag semantic">${t}</span>`
+        ).join('');
+      } else {
+        previewTags.innerHTML = '<span class="empty">-</span>';
+      }
+      
+      // Content preview
+      const previewContent = document.getElementById('previewContent');
+      if (data.content) {
+        // Show first 500 chars
+        const preview = data.content.length > 500 
+          ? data.content.substring(0, 500) + '...' 
+          : data.content;
+        previewContent.textContent = preview;
+      } else {
+        previewContent.innerHTML = '<span class="empty">No content extracted</span>';
+      }
+      
+      templatePreview.classList.add('show');
+      
+      // Auto-apply to form
+      applyTemplateToForm();
+    }
+    
+    // Document type mapping
+    function mapDocumentType(docType) {
+      if (!docType) return null;
+      const lower = docType.toLowerCase().trim();
+      const typeMap = {
+        'log the day': 'log',
+        'log': 'log',
+        'daily': 'log',
+        'daily log': 'log',
+        'meeting': 'meeting',
+        'meetings': 'meeting',
+        'bespreking': 'meeting',
+        'overleg': 'meeting',
+        'sessie': 'meeting',
+        'artifact': 'artifact',
+        'artefact': 'artifact',
+        'idea': 'idea'
+      };
+      return typeMap[lower] || null;
+    }
+    
+    // No-template choice handlers
+    document.getElementById('ingestAsIsBtn')?.addEventListener('click', () => {
+      if (!parsedTemplate) return;
+      
+      // Just apply content to the form
+      contentInput.value = parsedTemplate.content || '';
+      updateWordCount();
+      
+      // Hide choice panel
+      document.getElementById('noTemplateChoice').classList.remove('show');
+      
+      // Scroll to form
+      document.querySelector('.ingest-form')?.scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    document.getElementById('deepAnalyzeBtn')?.addEventListener('click', () => {
+      if (!parsedTemplate) return;
+      
+      // Store content in sessionStorage and redirect to analyze page
+      sessionStorage.setItem('analyzeContent', parsedTemplate.content || '');
+      sessionStorage.setItem('analyzeFilename', parsedTemplate.originalFilename || 'Uploaded Document');
+      window.location.href = '/analyze';
+    });
+    
+    // Helper to render person tags
+    function renderPersonTags() {
+      renderTagList('person', personTags, personTagsList);
+    }
+    
+    // Helper to render project tags
+    function renderProjectTags() {
+      renderTagList('project', projectTags, projectTagsList);
+    }
+  </script>
+
+  <!-- Import Today Logic -->
+  <script>
+    // =====================================================
+    // SEQUENTIAL REVIEW FLOW
+    // =====================================================
+    let importFiles = [];
+    let importResults = [];
+    let currentReviewIndex = -1;
+    let currentParsed = null;
+
+    // Keyboard shortcuts for review
+    document.addEventListener('keydown', (e) => {
+      if (currentReviewIndex < 0 || !document.getElementById('reviewFields')?.style.display !== 'none') return;
+      const reviewPanel = document.getElementById('importReview');
+      if (!reviewPanel || reviewPanel.style.display === 'none') return;
+
+      // Don't fire if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          reviewApprove();
+        }
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        reviewApprove();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        reviewReject();
+      }
+    });
+
+    async function scanIncoming() {
+      const btn = document.getElementById('scanBtn');
+      const queue = document.getElementById('importQueue');
+      const queueList = document.getElementById('importQueueList');
+      const summary = document.getElementById('importSummary');
+      const review = document.getElementById('importReview');
+      const progress = document.getElementById('importProgress');
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Scanning…';
+      summary.style.display = 'none';
+      review.style.display = 'none';
+      progress.style.display = 'none';
+      queue.style.display = 'none';
+      importResults = [];
+      currentReviewIndex = -1;
+
+      try {
+        const res = await fetch('/api/ingest/scan-incoming');
+        const data = await res.json();
+
+        importFiles = data.files || [];
+        document.getElementById('importFolderPath').textContent = data.folder || '~/Documents (local)/';
+
+        if (importFiles.length === 0) {
+          queue.style.display = 'block';
+          queueList.innerHTML = `
+            <div class="import-no-files">
+              <div class="empty-icon">📭</div>
+              <div>No .pages files found in the incoming folder.</div>
+              <div style="margin-top: 6px; font-size: 0.82rem;">Drop files in <code>~/Documents (local)/</code> and scan again.</div>
+            </div>`;
+          btn.disabled = false;
+          btn.textContent = '🔍 Scan for files';
+          return;
+        }
+
+        // Start sequential review
+        btn.disabled = false;
+        btn.textContent = '🔍 Scan for files';
+        reviewNext();
+
+      } catch (err) {
+        queue.style.display = 'block';
+        queueList.innerHTML = `<div class="import-no-files"><p style="color:#f85149">Scan failed: ${err.message}</p></div>`;
+        btn.disabled = false;
+        btn.textContent = '🔍 Scan for files';
+      }
+    }
+
+    function updateProgress() {
+      const progress = document.getElementById('importProgress');
+      const label = document.getElementById('importProgressLabel');
+      const count = document.getElementById('importProgressCount');
+      const fill = document.getElementById('importProgressFill');
+
+      const done = importResults.length;
+      const total = importFiles.length;
+      const current = currentReviewIndex + 1;
+
+      progress.style.display = 'block';
+      label.textContent = `Reviewing file ${current} of ${total}`;
+
+      const approved = importResults.filter(r => r.status === 'success').length;
+      const skipped = importResults.filter(r => r.status === 'skipped').length;
+      const failed = importResults.filter(r => r.status === 'error').length;
+      const parts = [];
+      if (approved) parts.push(`${approved} imported`);
+      if (skipped) parts.push(`${skipped} skipped`);
+      if (failed) parts.push(`${failed} failed`);
+      count.textContent = parts.length > 0 ? parts.join(' · ') : '';
+
+      fill.style.width = `${(done / total) * 100}%`;
+    }
+
+    async function reviewNext() {
+      currentReviewIndex++;
+
+      if (currentReviewIndex >= importFiles.length) {
+        // All done
+        showImportSummary();
+        return;
+      }
+
+      const file = importFiles[currentReviewIndex];
+      const review = document.getElementById('importReview');
+      const converting = document.getElementById('reviewConverting');
+      const fields = document.getElementById('reviewFields');
+
+      review.style.display = 'block';
+      converting.style.display = 'flex';
+      fields.style.display = 'none';
+
+      // Set file info
+      document.getElementById('reviewFilename').textContent = file.name;
+      document.getElementById('reviewFileMeta').textContent =
+        `${formatSize(file.size)} · modified ${new Date(file.modified).toLocaleDateString()}`;
+
+      updateProgress();
+
+      try {
+        // Parse the file
+        const res = await fetch('/api/ingest/parse-local-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filePath: file.path })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Parse failed');
+        }
+
+        currentParsed = await res.json();
+
+        // Detect type and date
+        const detectedType = mapDocumentType(currentParsed.docType) || guessTypeFromFilename(file.name) || 'log';
+        const detectedDate = currentParsed.date || extractDateFromFilename(file.name) || new Date().toISOString().split('T')[0];
+
+        // Populate review fields
+        document.getElementById('reviewDate').textContent = detectedDate;
+        document.getElementById('reviewDateEdit').value = detectedDate;
+
+        document.getElementById('reviewTitle').textContent = currentParsed.title || '(no title)';
+        document.getElementById('reviewTitleEdit').value = currentParsed.title || '';
+
+        // Type dropdown
+        const typeSelect = document.getElementById('reviewTypeEdit');
+        typeSelect.innerHTML = contentTypes.map(t =>
+          `<option value="${t.slug}" ${t.slug === detectedType ? 'selected' : ''}>${t.icon} ${t.name}</option>`
+        ).join('');
+        const typeIcon = contentTypes.find(t => t.slug === detectedType);
+        document.getElementById('reviewType').textContent = typeIcon ? `${typeIcon.icon} ${detectedType}` : detectedType;
+
+        // People
+        const peopleEl = document.getElementById('reviewPeople');
+        if (currentParsed.participants && currentParsed.participants.length > 0) {
+          peopleEl.innerHTML = currentParsed.participants.map(p =>
+            `<span class="extracted-tag person">@${p}</span>`
+          ).join('');
+        } else {
+          peopleEl.innerHTML = '<span style="color:#484f58">—</span>';
+        }
+
+        // Tags
+        const tagsEl = document.getElementById('reviewTags');
+        if (currentParsed.tags && currentParsed.tags.length > 0) {
+          tagsEl.innerHTML = currentParsed.tags.map(t =>
+            `<span class="extracted-tag semantic">${t}</span>`
+          ).join('');
+        } else {
+          tagsEl.innerHTML = '<span style="color:#484f58">—</span>';
+        }
+
+        // Content preview
+        const content = currentParsed.content || '';
+        const preview = content.length > 600 ? content.substring(0, 600) + '…' : content;
+        document.getElementById('reviewContentPreview').textContent = preview;
+
+        // Show fields
+        converting.style.display = 'none';
+        fields.style.display = 'block';
+
+      } catch (err) {
+        converting.style.display = 'none';
+        fields.style.display = 'none';
+
+        // Show error and auto-advance after a beat
+        review.innerHTML = `
+          <div class="import-review-file-header">
+            <span class="import-review-filename">${escapeHtmlImport(file.name)}</span>
+            <span style="color:#f85149;font-size:0.85rem">❌ ${escapeHtmlImport(err.message)}</span>
+          </div>
+        `;
+        importResults.push({ name: file.name, status: 'error', reason: err.message });
+        updateProgress();
+
+        // Restore review panel HTML and advance after 1.5s
+        setTimeout(() => {
+          restoreReviewPanel();
+          reviewNext();
+        }, 1500);
+      }
+    }
+
+    function restoreReviewPanel() {
+      // Re-inject the review panel content (after error replaced it)
+      const review = document.getElementById('importReview');
+      if (!review) return;
+      review.innerHTML = `
+        <div class="import-review-file-header">
+          <span class="import-review-filename" id="reviewFilename"></span>
+          <span class="import-review-meta" id="reviewFileMeta"></span>
+        </div>
+        <div class="import-review-converting" id="reviewConverting" style="display:none">
+          <div class="spinner"></div>
+          <span>Converting .pages file…</span>
+        </div>
+        <div id="reviewFields" style="display:none">
+          <table class="import-review-table">
+            <tbody>
+              <tr>
+                <td class="review-label">📅 Date</td>
+                <td class="review-value" id="reviewDate"></td>
+                <td class="review-edit"><input type="date" id="reviewDateEdit" class="review-input"></td>
+              </tr>
+              <tr>
+                <td class="review-label">📝 Title</td>
+                <td class="review-value" id="reviewTitle"></td>
+                <td class="review-edit"><input type="text" id="reviewTitleEdit" class="review-input" placeholder="Edit title..."></td>
+              </tr>
+              <tr>
+                <td class="review-label">📋 Type</td>
+                <td class="review-value" id="reviewType"></td>
+                <td class="review-edit"><select id="reviewTypeEdit" class="review-input review-select"></select></td>
+              </tr>
+              <tr>
+                <td class="review-label">👥 People</td>
+                <td class="review-value" id="reviewPeople" colspan="2"></td>
+              </tr>
+              <tr>
+                <td class="review-label">🏷️ Tags</td>
+                <td class="review-value" id="reviewTags" colspan="2"></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="review-content-preview">
+            <div class="review-content-label">📄 Content preview</div>
+            <div class="review-content-text" id="reviewContentPreview"></div>
+          </div>
+          <div class="import-review-actions">
+            <button type="button" class="import-review-btn reject" id="reviewRejectBtn" onclick="reviewReject()">✕ Skip</button>
+            <button type="button" class="import-review-btn approve" id="reviewApproveBtn" onclick="reviewApprove()">✓ Approve & Import</button>
+          </div>
+          <div class="import-review-hint"><kbd>Enter</kbd> approve · <kbd>Esc</kbd> skip</div>
+        </div>
+      `;
+    }
+
+    async function reviewApprove() {
+      const file = importFiles[currentReviewIndex];
+      const approveBtn = document.getElementById('reviewApproveBtn');
+      const rejectBtn = document.getElementById('reviewRejectBtn');
+
+      if (!currentParsed || !file) return;
+
+      // Disable buttons
+      approveBtn.disabled = true;
+      rejectBtn.disabled = true;
+      approveBtn.textContent = '⏳ Ingesting…';
+
+      // Read editable fields (user may have tweaked them)
+      const finalDate = document.getElementById('reviewDateEdit').value || new Date().toISOString().split('T')[0];
+      const finalTitle = document.getElementById('reviewTitleEdit').value || currentParsed.title || '';
+      const finalType = document.getElementById('reviewTypeEdit').value || 'log';
+
+      // Build person tags from parsed participants
+      const finalPersonTags = (currentParsed.participants || []).filter(p => p && p.length > 0);
+
+      // Build tags — semantic vs project
+      const finalSemanticTags = [];
+      const finalProjectTags = [];
+      if (currentParsed.tags && currentParsed.tags.length > 0) {
+        currentParsed.tags.forEach(t => {
+          const clean = t.replace(/^#/, '');
+          const isSemantic = semanticTagsData.some(s => s.name.toLowerCase() === clean.toLowerCase());
+          if (isSemantic) {
+            finalSemanticTags.push(clean);
+          } else {
+            finalProjectTags.push(clean);
+          }
+        });
+      }
+
+      // Get RTE
+      const rteId = parseInt(document.getElementById('rteSelect').value);
+      if (!rteId || isNaN(rteId)) {
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+        approveBtn.textContent = '✓ Approve & Import';
+        alert('Please select an RTE first (in the form below).');
+        return;
+      }
+
+      try {
+        // 1. Ingest
+        const payload = {
+          content: currentParsed.content || '',
+          rteId,
+          contentType: finalType,
+          date: finalDate,
+          title: finalTitle,
+          semanticTags: finalSemanticTags,
+          projectTags: finalProjectTags,
+          personTags: finalPersonTags
+        };
+
+        const ingestRes = await fetch('/api/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!ingestRes.ok) {
+          const err = await ingestRes.json();
+          throw new Error(err.error || 'Ingest failed');
+        }
+
+        const result = await ingestRes.json();
+
+        // 2. Archive source file
+        try {
+          const archiveRes = await fetch('/api/ingest/archive-source', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sourcePath: file.path, contentType: finalType })
+          });
+          if (!archiveRes.ok) {
+            const archErr = await archiveRes.json();
+            console.warn('[Import] Archive failed:', archErr.error);
+          }
+        } catch (archErr) {
+          console.warn('[Import] Archive network error:', archErr);
+        }
+
+        importResults.push({
+          name: file.name,
+          status: 'success',
+          filename: result.filename,
+          type: finalType
+        });
+
+      } catch (err) {
+        importResults.push({ name: file.name, status: 'error', reason: err.message });
+      }
+
+      updateProgress();
+      reviewNext();
+    }
+
+    function reviewReject() {
+      const file = importFiles[currentReviewIndex];
+      importResults.push({ name: file.name, status: 'skipped', reason: 'Manually skipped' });
+      updateProgress();
+      reviewNext();
+    }
+
+    function showImportSummary() {
+      const review = document.getElementById('importReview');
+      const progress = document.getElementById('importProgress');
+      const summary = document.getElementById('importSummary');
+      const content = document.getElementById('importSummaryContent');
+      const fill = document.getElementById('importProgressFill');
+
+      review.style.display = 'none';
+      fill.style.width = '100%';
+
+      const success = importResults.filter(r => r.status === 'success');
+      const skipped = importResults.filter(r => r.status === 'skipped');
+      const errors = importResults.filter(r => r.status === 'error');
+
+      let html = `<p style="color:#8b949e;margin-bottom:12px;">${success.length} imported · ${skipped.length} skipped · ${errors.length} failed</p>`;
+
+      if (importResults.length > 0) {
+        html += `
+          <table class="import-summary-table">
+            <thead><tr><th>File</th><th>Status</th><th>Details</th></tr></thead>
+            <tbody>
+              ${importResults.map(r => `
+                <tr>
+                  <td>${escapeHtmlImport(r.name)}</td>
+                  <td class="status-cell ${r.status === 'success' ? 'success' : r.status}">${
+                    r.status === 'success' ? '✅ Imported' :
+                    r.status === 'skipped' ? '⏭️ Skipped' :
+                    '❌ Error'
+                  }</td>
+                  <td>${escapeHtmlImport(r.filename || r.reason || '—')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
+
+      if (success.length > 0) {
+        html += `<p style="color:#3fb950;margin-top:12px;font-size:0.85rem;">
+          🎉 ${success.length} file${success.length !== 1 ? 's' : ''} ingested and source .pages archived.
+        </p>`;
+      }
+
+      content.innerHTML = html;
+      summary.style.display = 'block';
+      summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Update progress label
+      document.getElementById('importProgressLabel').textContent = 'Done';
+    }
+
+    function guessTypeFromFilename(name) {
+      const lower = name.toLowerCase();
+      if (lower.includes('meeting') || lower.includes('overleg') || lower.includes('kennismaking') || lower.includes('sessie') || lower.includes('bespreking')) return 'meeting';
+      if (lower.includes('log the day') || lower.includes('daily')) return 'log';
+      if (lower.includes('artifact') || lower.includes('architecture') || lower.includes('abbreviation')) return 'artifact';
+      if (lower.includes('idea')) return 'idea';
+      return null;
+    }
+
+    function extractDateFromFilename(name) {
+      const m = name.match(/^(\d{4})[.\-](\d{2})[.\-](\d{2})/);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+      return null;
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function escapeHtmlImport(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Translate - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .translate-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .translate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .translate-header h1 {
+      margin: 0;
+    }
+    
+    .direction-btns {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .dir-btn {
+      padding: 8px 16px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #8b949e;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .dir-btn.active {
+      background: #238636;
+      border-color: #238636;
+      color: white;
+    }
+    
+    .dir-btn:hover:not(.active) {
+      background: #21262d;
+      color: #c9d1d9;
+    }
+    
+    .translate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .translate-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .translate-panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    
+    .translate-panel label {
+      display: block;
+      margin-bottom: 10px;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .translate-panel textarea {
+      width: 100%;
+      min-height: 300px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      padding: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+    }
+    
+    .translate-panel textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .translate-panel textarea[readonly] {
+      background: #0d1117;
+      cursor: default;
+    }
+    
+    .translate-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .translate-btn {
+      padding: 12px 24px;
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .translate-btn:hover {
+      background: #2ea043;
+    }
+    
+    .translate-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .secondary-btn {
+      padding: 12px 24px;
+      background: #30363d;
+      color: #c9d1d9;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    
+    .secondary-btn:hover {
+      background: #3d444d;
+    }
+    
+    .marked-terms {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .marked-terms h3 {
+      margin: 0 0 16px;
+      color: #c9d1d9;
+    }
+    
+    .terms-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .term-chip {
+      background: rgba(88, 166, 255, 0.1);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      padding: 8px 14px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .term-original {
+      color: #58a6ff;
+      font-weight: 500;
+    }
+    
+    .term-arrow {
+      color: #6e7681;
+    }
+    
+    .term-translated {
+      color: #8b949e;
+    }
+    
+    .term-remove {
+      color: #6e7681;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    
+    .term-remove:hover {
+      color: #f85149;
+    }
+    
+    .help-text {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 24px;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .help-text code {
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #58a6ff;
+    }
+    
+    .loading-indicator {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      color: #8b949e;
+    }
+    
+    .loading-indicator.active {
+      display: flex;
+    }
+    
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'translate' }) %>
+
+  <div class="translate-container">
+    <div class="translate-header">
+      <h1>🌐 Dutch ↔ English Translator</h1>
+      <div class="direction-btns">
+        <button class="dir-btn active" data-dir="auto" onclick="setDirection('auto')">Auto-detect</button>
+        <button class="dir-btn" data-dir="nl-en" onclick="setDirection('nl-en')">NL → EN</button>
+        <button class="dir-btn" data-dir="en-nl" onclick="setDirection('en-nl')">EN → NL</button>
+      </div>
+    </div>
+    
+    <div class="translate-grid">
+      <div class="translate-panel">
+        <label>Input Text <span style="color: #6e7681;">(use <code>&&term&&</code> to mark for glossary)</span></label>
+        <textarea id="inputText" placeholder="Paste Dutch or English text here..."></textarea>
+      </div>
+      
+      <div class="translate-panel">
+        <label>Translation</label>
+        <textarea id="outputText" readonly placeholder="Translation will appear here..."></textarea>
+      </div>
+    </div>
+    
+    <div class="translate-actions">
+      <button class="translate-btn" id="translateBtn" onclick="doTranslate()">
+        🔄 Translate
+      </button>
+      <button class="secondary-btn" onclick="copyOutput(event)">📋 Copy</button>
+      <button class="secondary-btn" onclick="swapTexts()">⇄ Swap</button>
+      <div class="loading-indicator" id="loading">
+        <div class="spinner"></div>
+        <span>Translating...</span>
+      </div>
+    </div>
+    
+    <div class="marked-terms" id="markedTerms" style="display: none;">
+      <h3>📝 Marked Terms for Glossary</h3>
+      <div class="terms-list" id="termsList"></div>
+      <button class="secondary-btn" onclick="addAllToGlossary()">Add All to Glossary</button>
+    </div>
+    
+    <div class="help-text">
+      <strong>💡 Tip:</strong> Wrap terms in <code>&&term&&</code> to mark them for adding to the glossary. 
+      For example: "De <code>&&product owner&&</code> is verantwoordelijk voor de backlog."
+    </div>
+  </div>
+
+  <script>
+    let direction = 'auto';
+    let markedTerms = [];
+    
+    function setDirection(dir) {
+      direction = dir;
+      document.querySelectorAll('.dir-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.dir === dir);
+      });
+    }
+    
+    async function doTranslate() {
+      const input = document.getElementById('inputText').value.trim();
+      if (!input) return;
+      
+      const btn = document.getElementById('translateBtn');
+      const loading = document.getElementById('loading');
+      
+      btn.disabled = true;
+      loading.classList.add('active');
+      
+      try {
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: input, direction })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          document.getElementById('outputText').value = 'Error: ' + data.error;
+        } else {
+          document.getElementById('outputText').value = data.translation;
+          
+          // Show marked terms if any
+          if (data.markedTerms && data.markedTerms.length > 0) {
+            markedTerms = data.markedTerms;
+            showMarkedTerms();
+          }
+        }
+      } catch (error) {
+        document.getElementById('outputText').value = 'Error: ' + error.message;
+      } finally {
+        btn.disabled = false;
+        loading.classList.remove('active');
+      }
+    }
+    
+    function showMarkedTerms() {
+      const container = document.getElementById('markedTerms');
+      const list = document.getElementById('termsList');
+      
+      if (markedTerms.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      
+      container.style.display = 'block';
+      list.innerHTML = markedTerms.map((term, i) => `
+        <div class="term-chip">
+          <span class="term-original">${term.original}</span>
+          <span class="term-arrow">→</span>
+          <span class="term-translated">${term.translated}</span>
+          <span class="term-remove" onclick="removeTerm(${i})">×</span>
+        </div>
+      `).join('');
+    }
+    
+    function removeTerm(index) {
+      markedTerms.splice(index, 1);
+      showMarkedTerms();
+    }
+    
+    async function addAllToGlossary() {
+      if (markedTerms.length === 0) return;
+      
+      try {
+        for (const term of markedTerms) {
+          await fetch('/api/glossary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              dutch: term.direction === 'en-nl' ? term.translated : term.original,
+              english: term.direction === 'en-nl' ? term.original : term.translated,
+              context: 'Added via translate'
+            })
+          });
+        }
+        
+        alert(`Added ${markedTerms.length} term(s) to glossary!`);
+        markedTerms = [];
+        showMarkedTerms();
+      } catch (error) {
+        alert('Error adding terms: ' + error.message);
+      }
+    }
+    
+    function copyOutput(e) {
+      const output = document.getElementById('outputText');
+      output.select();
+      document.execCommand('copy');
+      
+      // Brief visual feedback
+      const btn = e ? e.target : document.querySelector('.secondary-btn');
+      const originalText = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = originalText, 1500);
+    }
+    
+    function swapTexts() {
+      const input = document.getElementById('inputText');
+      const output = document.getElementById('outputText');
+      
+      const temp = input.value;
+      input.value = output.value;
+      output.value = temp;
+      
+      // Toggle direction
+      if (direction === 'nl-en') setDirection('en-nl');
+      else if (direction === 'en-nl') setDirection('nl-en');
+    }
+    
+    // Keyboard shortcut - wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputElement = document.getElementById('inputText');
+      if (inputElement) {
+        inputElement.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && e.ctrlKey) {
+            doTranslate();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

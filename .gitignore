@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Database files (contain user data)
+*.db
+*.db-shm
+*.db-wal
+*.db.backup*
+
+# Environment & secrets
+.env
+.env.*
+
+# User data
+data/
+uploads/
+
+# macOS
+.DS_Store
+
+# Backups
+_backup*/
+
+# Personal documentation (Figma exports, venvs, etc.)
+Product ownership AI/
+
+# Logs
+*.log
+logs/
+
+# SSL certificates
+ssl/
+*.key
+*.crt
+*.pem
+
+# Editor
+.vscode/
+*.code-workspace

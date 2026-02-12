@@ -1,0 +1,140 @@
+/* PO AI Home Page Styles */
+
+.home-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: calc(100vh - 60px);
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.home-header h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  color: #c9d1d9;
+}
+
+.home-header p {
+  color: #6e7681;
+  font-size: 1rem;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 16px 24px;
+  background: #0d1117;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #58a6ff;
+}
+
+.stat-label {
+  color: #6e7681;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+/* Tile Section */
+.tile-section {
+  margin-bottom: 32px;
+}
+
+.section-label {
+  color: #8b949e;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+/* Uniform Tile Grid - all same size */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+/* Tile Card - uniform size */
+.tile {
+  background: #161b22;
+  border: 2px solid #30363d;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+}
+
+.tile:hover {
+  border-color: var(--tile-color, #58a6ff);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tile-icon {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.tile-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #c9d1d9;
+  margin-bottom: 4px;
+}
+
+.tile-desc {
+  color: #6e7681;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  flex: 1;
+}
+
+/* Color variants via CSS custom property */
+.tile[data-color="green"] { --tile-color: #3fb950; }
+.tile[data-color="blue"] { --tile-color: #58a6ff; }
+.tile[data-color="purple"] { --tile-color: #a371f7; }
+.tile[data-color="orange"] { --tile-color: #f0883e; }
+.tile[data-color="pink"] { --tile-color: #f778ba; }
+.tile[data-color="teal"] { --tile-color: #56d364; }
+.tile[data-color="yellow"] { --tile-color: #d29922; }
+.tile[data-color="red"] { --tile-color: #f85149; }
+.tile[data-color="gray"] { --tile-color: #8b949e; }
+
+/* Keyboard hint */
+.keyboard-hint {
+  text-align: center;
+  margin-top: 32px;
+  color: #6e7681;
+  font-size: 0.85rem;
+}
+
+.keyboard-hint kbd {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 0.8rem;
+  margin: 0 4px;
+}

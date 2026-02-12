@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Status - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    
+    .status-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .status-card h3 {
+      margin: 0 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    .status-indicator.online { background: #238636; box-shadow: 0 0 8px #238636; }
+    .status-indicator.offline { background: #da3633; box-shadow: 0 0 8px #da3633; }
+    .status-indicator.warning { background: #d29922; box-shadow: 0 0 8px #d29922; }
+    .status-indicator.unknown { background: #6e7681; }
+    
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    
+    .status-row:last-child { border-bottom: none; }
+    
+    .status-label { color: #8b949e; }
+    .status-value { color: #c9d1d9; font-weight: 500; }
+    
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    
+    .action-btn.primary {
+      background: #238636;
+      color: white;
+    }
+    
+    .action-btn.secondary {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+    
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .rte-select {
+      width: 100%;
+      padding: 8px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      margin-bottom: 12px;
+    }
+    
+    .model-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .model-item {
+      padding: 8px;
+      background: #0d1117;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+    }
+    
+    .model-item .name { color: #58a6ff; }
+    .model-item .size { color: #8b949e; font-size: 0.75rem; }
+    
+    .log-output {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      color: #8b949e;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .toast.success { background: #238636; }
+    .toast.error { background: #da3633; }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .refresh-indicator {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'maintenance' }) %>
+
+  <main class="container" style="padding: 20px;">
+    <h1 style="margin-bottom: 20px;">🔧 System Status & Maintenance</h1>
+    
+    <div class="status-grid">
+      <!-- Server Status -->
+      <div class="status-card">
+        <h3>
+          <span class="status-indicator online" id="serverIndicator"></span>
+          Server
+        </h3>
+        <div class="status-row">
+          <span class="status-label">Status</span>
+          <span class="status-value" id="serverStatus">Online</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Uptime</span>
+          <span class="status-value" id="serverUptime">-</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Memory</span>
+          <span class="status-value" id="serverMemory">-</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Node.js</span>
+          <span class="status-value" id="serverNode">-</span>
+        </div>
+      </div>
+      
+      <!-- Database Status -->
+      <div class="status-card">
+        <h3>
+          <span class="status-indicator unknown" id="dbIndicator"></span>
+          SQLite Database
+        </h3>
+        <div class="status-row">
+          <span class="status-label">Status</span>
+          <span class="status-value" id="dbStatus">Checking...</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">RTEs</span>
+          <span class="status-value" id="dbRtes">-</span>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn secondary" onclick="runAction('clear-cache')">Clear Cache</button>
+        </div>
+      </div>
+      
+      <!-- Vector Search Status -->
+      <div class="status-card">
+        <h3>
+          <span class="status-indicator unknown" id="vectorIndicator"></span>
+          Vector Search
+        </h3>
+        <div class="status-row">
+          <span class="status-label">Type</span>
+          <span class="status-value">SQLite FTS5</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Status</span>
+          <span class="status-value" id="vectorStatus">Checking...</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Indexed Files</span>
+          <span class="status-value" id="vectorFiles">-</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Chunks</span>
+          <span class="status-value" id="vectorChunks">-</span>
+        </div>
+      </div>
+      
+      <!-- LLM Status -->
+      <div class="status-card">
+        <h3>
+          <span class="status-indicator unknown" id="llmIndicator"></span>
+          Ollama LLMs
+        </h3>
+        <div class="status-row">
+          <span class="status-label">Status</span>
+          <span class="status-value" id="llmStatus">Checking...</span>
+        </div>
+        <div class="model-list" id="modelList">
+          <div class="model-item">Loading models...</div>
+        </div>
+      </div>
+      
+      <!-- RTE Actions -->
+      <div class="status-card" style="grid-column: span 2;">
+        <h3>📊 RTE Management</h3>
+        <select class="rte-select" id="rteSelect">
+          <option value="">Select an RTE...</option>
+        </select>
+        
+        <div id="rteStats" style="display: none;">
+          <div class="status-row">
+            <span class="status-label">Actors</span>
+            <span class="status-value" id="rteActors">-</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">Relationships</span>
+            <span class="status-value" id="rteRelationships">-</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">Documents</span>
+            <span class="status-value" id="rteDocuments">-</span>
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="action-btn primary" id="rebuildBtn" onclick="rebuildIndex()" disabled>
+            🔄 Rebuild Vector Index
+          </button>
+          <button class="action-btn primary" id="reanalyzeBtn" onclick="reanalyze()" disabled>
+            🧠 Re-analyze Entities
+          </button>
+          <button class="action-btn secondary" onclick="runAction('restart-services')">
+            🔃 Restart Services
+          </button>
+        </div>
+      </div>
+
+      <!-- Monthly Archive -->
+      <div class="status-card" style="grid-column: span 2;">
+        <h3>📦 Monthly Archive</h3>
+        <p style="color: #8b949e; font-size: 0.9rem; margin-bottom: 16px;">
+          Move previous months' files into organized folders (e.g., <code>logs/2026-02/</code>).
+          Available 7 days into each new month.
+        </p>
+
+        <div id="archivePreview" style="display: none;">
+          <div class="status-row">
+            <span class="status-label">Files to archive</span>
+            <span class="status-value" id="archiveFileCount">0</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">Status</span>
+            <span class="status-value" id="archiveStatus">-</span>
+          </div>
+          <div id="archiveMonthsList" style="margin-top: 12px;"></div>
+        </div>
+
+        <div id="archiveNoRte" style="color: #8b949e;">
+          Select an RTE above to preview archive
+        </div>
+
+        <div class="action-buttons">
+          <button class="action-btn secondary" id="previewArchiveBtn" onclick="previewArchive()" disabled>
+            👁️ Preview Archive
+          </button>
+          <button class="action-btn primary" id="executeArchiveBtn" onclick="executeArchive()" disabled>
+            📦 Archive Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Logs -->
+      <div class="status-card" style="grid-column: span 2;">
+        <h3>📜 Recent Logs</h3>
+        <div class="log-output" id="logOutput">Loading logs...</div>
+        <div class="action-buttons">
+          <button class="action-btn secondary" onclick="loadLogs()">Refresh Logs</button>
+        </div>
+      </div>
+      
+      <!-- D.4 Actor Archive Management -->
+      <div class="status-card" style="grid-column: span 2;">
+        <h3>🗄️ Actor Archive Management</h3>
+        <p style="color: #8b949e; font-size: 0.9rem; margin-bottom: 16px;">
+          Manage stale actors that haven't appeared in recent documents. Archive actors to clean up your network graph.
+        </p>
+        
+        <div id="archiveActorNoRte" style="color: #8b949e; margin-bottom: 12px;">
+          Select an RTE above to manage actor archives.
+        </div>
+        
+        <div id="archiveActorPanel" style="display: none;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+            <label style="color: #8b949e; font-size: 0.85rem;">Staleness threshold:</label>
+            <select id="stalenessSelect" class="rte-select" style="width: auto; margin-bottom: 0;">
+              <option value="90">90 days</option>
+              <option value="180" selected>180 days</option>
+              <option value="365">365 days</option>
+            </select>
+            <button class="action-btn secondary" onclick="loadStaleActors()">🔍 Find Stale Actors</button>
+          </div>
+          
+          <div id="staleActorsTable" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="font-size: 0.85rem; color: #8b949e;">
+                <input type="checkbox" id="selectAllStale" onchange="toggleSelectAllStale()"> Select all
+              </label>
+              <span style="color: #8b949e; font-size: 0.85rem;" id="staleCount">0 stale actors</span>
+            </div>
+            
+            <div id="staleActorsList" style="max-height: 350px; overflow-y: auto; border: 1px solid #30363d; border-radius: 6px;">
+              <!-- Populated by JS -->
+            </div>
+            
+            <div class="action-buttons" style="margin-top: 12px;">
+              <button class="action-btn primary" id="bulkArchiveBtn" onclick="bulkArchiveStale()" disabled>
+                🗄️ Archive Selected
+              </button>
+              <button class="action-btn secondary" onclick="loadArchivedActors()">
+                📋 View Archived
+              </button>
+            </div>
+          </div>
+          
+          <!-- Archived actors list (hidden by default) -->
+          <div id="archivedActorsSection" style="display: none; margin-top: 16px;">
+            <h4 style="color: #8b949e; font-size: 0.9rem; margin-bottom: 8px;">Archived Actors</h4>
+            <div id="archivedActorsList" style="max-height: 250px; overflow-y: auto; border: 1px solid #30363d; border-radius: 6px;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let selectedRte = null;
+    let statusData = null;
+    
+    async function loadStatus() {
+      try {
+        const response = await fetch('/api/maintenance/status');
+        statusData = await response.json();
+        updateUI(statusData);
+      } catch (error) {
+        console.error('Failed to load status:', error);
+      }
+    }
+    
+    function updateUI(data) {
+      // Server
+      document.getElementById('serverIndicator').className = 'status-indicator online';
+      document.getElementById('serverStatus').textContent = 'Online';
+      document.getElementById('serverUptime').textContent = formatUptime(data.server.uptime);
+      document.getElementById('serverMemory').textContent = formatBytes(data.server.memory.heapUsed);
+      document.getElementById('serverNode').textContent = data.server.node;
+      
+      // Database
+      const dbOnline = data.database.status === 'online';
+      document.getElementById('dbIndicator').className = `status-indicator ${dbOnline ? 'online' : 'offline'}`;
+      document.getElementById('dbStatus').textContent = dbOnline ? 'Online' : 'Error';
+      document.getElementById('dbRtes').textContent = data.rtes.length;
+      
+      // Vector Search
+      const vectorOnline = data.vectorSearch.status === 'online';
+      document.getElementById('vectorIndicator').className = `status-indicator ${vectorOnline ? 'online' : 'offline'}`;
+      document.getElementById('vectorStatus').textContent = vectorOnline ? 'Ready' : data.vectorSearch.error || 'Offline';
+      document.getElementById('vectorFiles').textContent = data.vectorSearch.stats?.files || 0;
+      document.getElementById('vectorChunks').textContent = data.vectorSearch.stats?.chunks || 0;
+      
+      // LLM
+      const llmOnline = data.llm.status === 'online';
+      document.getElementById('llmIndicator').className = `status-indicator ${llmOnline ? 'online' : 'offline'}`;
+      document.getElementById('llmStatus').textContent = llmOnline ? 'Connected' : 'Ollama not running';
+      
+      const modelList = document.getElementById('modelList');
+      if (llmOnline && data.llm.models.length > 0) {
+        modelList.innerHTML = data.llm.models.map(m => `
+          <div class="model-item">
+            <span class="name">${m.name}</span>
+            <span class="size">${formatBytes(m.size)}</span>
+          </div>
+        `).join('');
+      } else {
+        modelList.innerHTML = '<div class="model-item">No models loaded</div>';
+      }
+      
+      // RTE Select
+      const rteSelect = document.getElementById('rteSelect');
+      const defaultRte = localStorage.getItem('poai_default_rte');
+      
+      rteSelect.innerHTML = '<option value="">Select an RTE...</option>' +
+        data.rtes.map(r => `
+          <option value="${r.id}" data-actors="${r.actors}" data-rel="${r.relationships}" data-docs="${r.documents}" data-readonly="${r.readOnly}" ${defaultRte == r.id ? 'selected' : ''}>
+            ${r.name} ${r.readOnly ? '(read-only)' : ''}
+          </option>
+        `).join('');
+      
+      // Trigger change event if default RTE was selected
+      if (defaultRte) {
+        rteSelect.dispatchEvent(new Event('change'));
+      }
+    }
+    
+    document.getElementById('rteSelect').addEventListener('change', function() {
+      selectedRte = this.value;
+      const option = this.options[this.selectedIndex];
+
+      if (selectedRte) {
+        const isReadOnly = option.dataset.readonly === 'true';
+        document.getElementById('rteStats').style.display = 'block';
+        document.getElementById('rteActors').textContent = option.dataset.actors;
+        document.getElementById('rteRelationships').textContent = option.dataset.rel;
+        document.getElementById('rteDocuments').textContent = option.dataset.docs;
+
+        document.getElementById('rebuildBtn').disabled = false;
+        document.getElementById('reanalyzeBtn').disabled = isReadOnly;
+
+        // Enable archive buttons
+        document.getElementById('previewArchiveBtn').disabled = false;
+        document.getElementById('archiveNoRte').style.display = 'none';
+        document.getElementById('archivePreview').style.display = 'none';
+      } else {
+        document.getElementById('rteStats').style.display = 'none';
+        document.getElementById('rebuildBtn').disabled = true;
+        document.getElementById('reanalyzeBtn').disabled = true;
+
+        // Disable archive buttons
+        document.getElementById('previewArchiveBtn').disabled = true;
+        document.getElementById('executeArchiveBtn').disabled = true;
+        document.getElementById('archiveNoRte').style.display = 'block';
+        document.getElementById('archivePreview').style.display = 'none';
+      }
+    });
+    
+    async function rebuildIndex() {
+      if (!selectedRte) return;
+      
+      const btn = document.getElementById('rebuildBtn');
+      btn.innerHTML = '<span class="refresh-indicator">🔄</span> Rebuilding...';
+      btn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/maintenance/rebuild-index', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rteId: parseInt(selectedRte) })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showToast(`Indexed ${result.indexed} files for ${result.rteName}`, 'success');
+          loadStatus();
+        } else {
+          showToast(result.error || 'Rebuild failed', 'error');
+        }
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      } finally {
+        btn.innerHTML = '🔄 Rebuild Vector Index';
+        btn.disabled = false;
+      }
+    }
+    
+    async function reanalyze() {
+      if (!selectedRte) return;
+      
+      const btn = document.getElementById('reanalyzeBtn');
+      btn.innerHTML = '<span class="refresh-indicator">🧠</span> Analyzing...';
+      btn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/maintenance/reanalyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rteId: parseInt(selectedRte) })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showToast(`Analyzed ${result.filesProcessed} files: ${result.actors} actors, ${result.relationships} relationships`, 'success');
+          loadStatus();
+        } else {
+          showToast(result.error || 'Analysis failed', 'error');
+        }
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      } finally {
+        btn.innerHTML = '🧠 Re-analyze Entities';
+        btn.disabled = false;
+      }
+    }
+    
+    async function runAction(action) {
+      try {
+        const response = await fetch(`/api/maintenance/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showToast('Action completed successfully', 'success');
+          loadStatus();
+        } else {
+          showToast(result.error || 'Action failed', 'error');
+        }
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      }
+    }
+    
+    async function loadLogs() {
+      try {
+        const response = await fetch('/api/maintenance/logs');
+        const data = await response.json();
+        document.getElementById('logOutput').textContent = data.logs.join('\n') || 'No logs available';
+      } catch (error) {
+        document.getElementById('logOutput').textContent = 'Failed to load logs: ' + error.message;
+      }
+    }
+    
+    // Toast notifications - delegate to global POAI toast
+    function showToast(message, type) {
+      if (typeof POAI !== 'undefined' && POAI.toast) {
+        POAI.toast.show(message, type);
+      } else {
+        // Fallback
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
+    }
+    
+    function formatUptime(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return `${hours}h ${minutes}m`;
+    }
+    
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+      return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB';
+    }
+
+    // Archive functions
+    let archiveData = null;
+
+    async function previewArchive() {
+      if (!selectedRte) return;
+
+      const btn = document.getElementById('previewArchiveBtn');
+      btn.innerHTML = '<span class="refresh-indicator">👁️</span> Loading...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`/api/maintenance/archive/preview?rteId=${selectedRte}`);
+        archiveData = await response.json();
+
+        if (archiveData.error) {
+          showToast(archiveData.error, 'error');
+          return;
+        }
+
+        // Update UI
+        document.getElementById('archivePreview').style.display = 'block';
+        document.getElementById('archiveFileCount').textContent = archiveData.totalFiles;
+        document.getElementById('archiveStatus').textContent = archiveData.canArchiveMessage;
+        document.getElementById('archiveStatus').style.color = archiveData.canArchive ? '#238636' : '#d29922';
+
+        // Show months breakdown
+        const monthsList = document.getElementById('archiveMonthsList');
+        if (Object.keys(archiveData.byMonth).length > 0) {
+          monthsList.innerHTML = '<div style="color: #8b949e; margin-bottom: 8px;">Files by month:</div>' +
+            Object.entries(archiveData.byMonth).map(([month, files]) =>
+              `<div style="padding: 6px 12px; background: #21262d; border-radius: 4px; margin-bottom: 4px; font-size: 0.85rem;">
+                <strong style="color: #58a6ff;">${month}</strong>: ${files.length} file${files.length !== 1 ? 's' : ''}
+              </div>`
+            ).join('');
+        } else {
+          monthsList.innerHTML = '<div style="color: #8b949e;">No files from previous months to archive.</div>';
+        }
+
+        // Enable/disable execute button
+        document.getElementById('executeArchiveBtn').disabled = !archiveData.canArchive || archiveData.totalFiles === 0;
+
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      } finally {
+        btn.innerHTML = '👁️ Preview Archive';
+        btn.disabled = false;
+      }
+    }
+
+    async function executeArchive() {
+      if (!selectedRte || !archiveData || archiveData.totalFiles === 0) return;
+
+      const confirmed = await POAI.confirm.warning(
+        'Archive Files',
+        `Archive ${archiveData.totalFiles} file(s) from previous months? This will move files into monthly folders and update all database references. This cannot be undone automatically.`
+      );
+      if (!confirmed) return;
+
+      const btn = document.getElementById('executeArchiveBtn');
+      btn.innerHTML = '<span class="refresh-indicator">📦</span> Archiving...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('/api/maintenance/archive/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rteId: parseInt(selectedRte) })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast(`Archived ${result.moved} files. DB updates: ${result.dbUpdates}`, 'success');
+          // Refresh preview
+          previewArchive();
+        } else {
+          showToast(result.error || 'Archive failed', 'error');
+        }
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      } finally {
+        btn.innerHTML = '📦 Archive Now';
+        btn.disabled = false;
+      }
+    }
+
+    // =========================================
+    // D.4 ACTOR ARCHIVE MANAGEMENT
+    // =========================================
+    let staleActors = [];
+    
+    // Show/hide archive panel when RTE is selected
+    const origChangeHandler = document.getElementById('rteSelect').onchange;
+    document.getElementById('rteSelect').addEventListener('change', function() {
+      if (this.value) {
+        document.getElementById('archiveActorNoRte').style.display = 'none';
+        document.getElementById('archiveActorPanel').style.display = 'block';
+      } else {
+        document.getElementById('archiveActorNoRte').style.display = 'block';
+        document.getElementById('archiveActorPanel').style.display = 'none';
+      }
+    });
+    
+    async function loadStaleActors() {
+      if (!selectedRte) return;
+      
+      const days = document.getElementById('stalenessSelect').value;
+      
+      try {
+        const res = await fetch(`/api/rte/${selectedRte}/actors/stale?days=${days}`);
+        const data = await res.json();
+        staleActors = data.actors || [];
+        
+        const listEl = document.getElementById('staleActorsList');
+        const tableEl = document.getElementById('staleActorsTable');
+        
+        document.getElementById('staleCount').textContent = `${staleActors.length} stale actor${staleActors.length !== 1 ? 's' : ''}`;
+        tableEl.style.display = 'block';
+        
+        if (staleActors.length === 0) {
+          listEl.innerHTML = '<div style="padding: 16px; text-align: center; color: #8b949e;">No stale actors found 🎉</div>';
+          return;
+        }
+        
+        listEl.innerHTML = staleActors.map(actor => {
+          const lastSeen = actor.last_seen_at ? formatRelativeDate(actor.last_seen_at) : 'Never';
+          return `<div style="display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid #21262d; font-size: 0.85rem;">
+            <input type="checkbox" class="stale-cb" data-id="${actor.id}" onchange="updateBulkArchiveBtn()" style="margin-right: 10px;">
+            <div style="flex: 1;">
+              <span style="color: #c9d1d9;">${actor.name}</span>
+              <span style="color: #6e7681; margin-left: 8px; font-size: 0.75rem;">${actor.actor_type}</span>
+            </div>
+            <div style="text-align: right; min-width: 100px;">
+              <div style="color: #8b949e; font-size: 0.75rem;">${actor.team || '-'}</div>
+              <div style="color: #6e7681; font-size: 0.7rem;">Last: ${lastSeen}</div>
+              <div style="color: #6e7681; font-size: 0.7rem;">Mentions: ${actor.mention_count || 0}</div>
+            </div>
+            <button class="action-btn secondary" style="margin-left: 8px; padding: 4px 8px; font-size: 0.75rem;" onclick="archiveSingleActor(${actor.id}, '${actor.name.replace(/'/g, "\\'")}')">Archive</button>
+          </div>`;
+        }).join('');
+        
+      } catch (err) {
+        showToast('Error loading stale actors: ' + err.message, 'error');
+      }
+    }
+    
+    function formatRelativeDate(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const days = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+      if (days < 7) return `${days}d ago`;
+      if (days < 30) return `${Math.floor(days / 7)}w ago`;
+      if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+      return `${Math.floor(days / 365)}y ago`;
+    }
+    
+    function toggleSelectAllStale() {
+      const checked = document.getElementById('selectAllStale').checked;
+      document.querySelectorAll('.stale-cb').forEach(cb => cb.checked = checked);
+      updateBulkArchiveBtn();
+    }
+    
+    function updateBulkArchiveBtn() {
+      const selected = document.querySelectorAll('.stale-cb:checked').length;
+      const btn = document.getElementById('bulkArchiveBtn');
+      btn.disabled = selected === 0;
+      btn.textContent = selected > 0 ? `🗄️ Archive ${selected} Selected` : '🗄️ Archive Selected';
+    }
+    
+    async function archiveSingleActor(actorId, actorName) {
+      const confirmed = await POAI.confirm.show({
+        title: 'Archive Actor',
+        message: `Archive "${actorName}"? This will hide them from the network.`,
+        confirmText: 'Archive',
+        type: 'warning'
+      });
+      if (!confirmed) return;
+      
+      try {
+        const res = await fetch(`/api/rte/${selectedRte}/actors/archive`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actorIds: [actorId] })
+        });
+        
+        if (res.ok) {
+          showToast(`Archived "${actorName}"`, 'success');
+          loadStaleActors();
+        } else {
+          throw new Error('Archive failed');
+        }
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    }
+    
+    async function bulkArchiveStale() {
+      const selectedIds = Array.from(document.querySelectorAll('.stale-cb:checked'))
+        .map(cb => parseInt(cb.dataset.id));
+      
+      if (selectedIds.length === 0) return;
+      const confirmed = await POAI.confirm.warning('Archive Actors', `Archive ${selectedIds.length} actor(s)?`);
+      if (!confirmed) return;
+      
+      try {
+        const res = await fetch(`/api/rte/${selectedRte}/actors/archive`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actorIds: selectedIds })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          showToast(`Archived ${data.archived || selectedIds.length} actors`, 'success');
+          loadStaleActors();
+        } else {
+          throw new Error('Archive failed');
+        }
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    }
+    
+    async function loadArchivedActors() {
+      if (!selectedRte) return;
+      
+      try {
+        const res = await fetch(`/api/rte/${selectedRte}/actors/archived`);
+        const data = await res.json();
+        const actors = data.actors || [];
+        
+        const section = document.getElementById('archivedActorsSection');
+        const listEl = document.getElementById('archivedActorsList');
+        section.style.display = 'block';
+        
+        if (actors.length === 0) {
+          listEl.innerHTML = '<div style="padding: 16px; text-align: center; color: #8b949e;">No archived actors</div>';
+          return;
+        }
+        
+        listEl.innerHTML = actors.map(actor => `
+          <div style="display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid #21262d; font-size: 0.85rem;">
+            <div style="flex: 1;">
+              <span style="color: #8b949e;">${actor.name}</span>
+              <span style="color: #6e7681; margin-left: 8px; font-size: 0.75rem;">${actor.actor_type}</span>
+            </div>
+            <button class="action-btn secondary" style="padding: 4px 8px; font-size: 0.75rem;" 
+              onclick="restoreActor(${actor.id}, '${actor.name.replace(/'/g, "\\'")}')">Restore</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    }
+    
+    async function restoreActor(actorId, actorName) {
+      try {
+        const res = await fetch(`/api/rte/${selectedRte}/actors/restore`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actorIds: [actorId] })
+        });
+        
+        if (res.ok) {
+          showToast(`Restored "${actorName}"`, 'success');
+          loadArchivedActors();
+          loadStaleActors();
+        } else {
+          throw new Error('Restore failed');
+        }
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    }
+
+    // Initial load
+    loadStatus();
+    loadLogs();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadStatus, 30000);
+  </script>
+</body>
+</html>

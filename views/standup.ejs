@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Standup - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .standup-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .standup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .standup-header h1 {
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+    }
+
+    .standup-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-picker-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-picker-group label {
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+
+    .date-picker-group input[type="date"] {
+      padding: 8px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+
+    .date-nav-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .date-nav-btn:hover { background: #30363d; }
+
+    .rte-select {
+      padding: 8px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+
+    /* Stats bar */
+    .standup-stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .standup-stat {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .standup-stat .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .standup-stat .stat-label {
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+
+    .standup-stat.overdue .stat-value { color: #f85149; }
+
+    /* Sections */
+    .standup-section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .section-header:hover { background: #1c2128; }
+
+    .section-icon { font-size: 1.2rem; }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e6edf3;
+      flex: 1;
+    }
+
+    .section-count {
+      background: #30363d;
+      color: #8b949e;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .section-count.has-items { background: #238636; color: #fff; }
+    .section-count.has-blockers { background: #da3633; color: #fff; }
+
+    .section-chevron {
+      color: #8b949e;
+      transition: transform 0.2s;
+      font-size: 0.8rem;
+    }
+
+    .section-header.collapsed .section-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .section-body {
+      padding: 0;
+    }
+
+    .section-body.collapsed {
+      display: none;
+    }
+
+    .section-empty {
+      padding: 16px;
+      color: #484f58;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    /* Marker items */
+    .marker-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.9rem;
+      color: #c9d1d9;
+    }
+
+    .marker-item:last-child { border-bottom: none; }
+
+    .marker-content {
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .marker-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .marker-owner {
+      color: #58a6ff;
+      font-size: 0.8rem;
+    }
+
+    .marker-due {
+      color: #8b949e;
+      font-size: 0.8rem;
+    }
+
+    .marker-due.overdue { color: #f85149; font-weight: 600; }
+
+    .marker-severity {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .marker-severity.critical { background: #da3633; color: #fff; }
+    .marker-severity.high { background: #d29922; color: #fff; }
+    .marker-severity.medium { background: #2d6a4f; color: #fff; }
+    .marker-severity.low { background: #30363d; color: #8b949e; }
+
+    .marker-source {
+      color: #484f58;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .marker-source:hover { color: #58a6ff; }
+
+    /* Document list */
+    .doc-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.9rem;
+      color: #c9d1d9;
+    }
+
+    .doc-item:last-child { border-bottom: none; }
+
+    .doc-name {
+      color: #58a6ff;
+      text-decoration: none;
+      flex: 1;
+    }
+
+    .doc-name:hover { text-decoration: underline; }
+
+    /* Overdue section */
+    .overdue-section {
+      border-color: #da3633;
+    }
+
+    .overdue-section .section-header {
+      background: rgba(218, 54, 51, 0.1);
+    }
+
+    /* Summarize */
+    .summarize-area {
+      margin-top: 24px;
+      margin-bottom: 24px;
+    }
+
+    .summarize-btn {
+      background: linear-gradient(135deg, #6e40c9 0%, #8957e5 100%);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .summarize-btn:hover { opacity: 0.9; }
+    .summarize-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .summarize-btn .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .narrative-output {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 16px;
+      color: #c9d1d9;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+    }
+
+    .narrative-output h2,
+    .narrative-output h3 {
+      color: #e6edf3;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .narrative-output strong { color: #e6edf3; }
+
+    .narrative-output ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .narrative-output li { margin-bottom: 4px; }
+
+    .narrative-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #21262d;
+      font-size: 0.8rem;
+      color: #484f58;
+    }
+
+    /* Loading state */
+    .loading-overlay {
+      text-align: center;
+      padding: 40px;
+      color: #8b949e;
+      font-size: 0.95rem;
+    }
+
+    .loading-overlay .spinner-large {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #484f58;
+    }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .empty-state h2 {
+      color: #8b949e;
+      margin-bottom: 8px;
+    }
+
+    /* Evidence accordion */
+    .evidence-toggle {
+      background: none;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #8b949e;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .evidence-toggle:hover { color: #c9d1d9; border-color: #484f58; }
+
+    .evidence-list {
+      margin-top: 12px;
+      display: none;
+    }
+
+    .evidence-list.visible { display: block; }
+
+    .evidence-item {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: #8b949e;
+    }
+
+    .evidence-item .ev-filename {
+      color: #58a6ff;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .standup-controls { flex-wrap: wrap; }
+      .standup-stats { gap: 8px; }
+      .standup-stat { min-width: 60px; padding: 8px; }
+      .standup-stat .stat-value { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'standup' }) %>
+
+  <main class="standup-container">
+    <div class="standup-header">
+      <h1>☀️ Quick Standup</h1>
+      <div class="standup-controls">
+        <div class="date-picker-group">
+          <button class="date-nav-btn" id="prevDay" title="Previous day">◀</button>
+          <input type="date" id="standupDate">
+          <button class="date-nav-btn" id="nextDay" title="Next day">▶</button>
+        </div>
+        <select class="rte-select" id="rteFilter">
+          <option value="">All RTEs</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="standup-stats" id="statsBar">
+      <div class="standup-stat">
+        <div class="stat-value" id="statDocs">–</div>
+        <div class="stat-label">Documents</div>
+      </div>
+      <div class="standup-stat">
+        <div class="stat-value" id="statMarkers">–</div>
+        <div class="stat-label">Markers</div>
+      </div>
+      <div class="standup-stat">
+        <div class="stat-value" id="statDecisions">–</div>
+        <div class="stat-label">Decisions</div>
+      </div>
+      <div class="standup-stat">
+        <div class="stat-value" id="statActions">–</div>
+        <div class="stat-label">Actions</div>
+      </div>
+      <div class="standup-stat" id="statOverdueCard">
+        <div class="stat-value" id="statOverdue">–</div>
+        <div class="stat-label">Overdue</div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div id="standupContent">
+      <div class="loading-overlay">
+        <div class="spinner-large"></div>
+        <div>Loading standup data…</div>
+      </div>
+    </div>
+
+    <!-- Summarize -->
+    <div class="summarize-area" id="summarizeArea" style="display: none;">
+      <button class="summarize-btn" id="summarizeBtn" onclick="generateSummary()">
+        ✨ Summarize with AI
+      </button>
+      <div id="narrativeOutput"></div>
+    </div>
+  </main>
+
+  <script>
+    // =============================================
+    // State
+    // =============================================
+    let currentData = null;
+
+    // =============================================
+    // Initialize
+    // =============================================
+    (async function init() {
+      // Set date to yesterday by default
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      document.getElementById('standupDate').value = formatDate(yesterday);
+
+      // Load RTE list
+      await loadRTEs();
+
+      // Load data
+      await loadStandupData();
+
+      // Wire up controls
+      document.getElementById('standupDate').addEventListener('change', loadStandupData);
+      document.getElementById('rteFilter').addEventListener('change', loadStandupData);
+
+      document.getElementById('prevDay').addEventListener('click', () => {
+        const input = document.getElementById('standupDate');
+        const d = new Date(input.value + 'T12:00:00');
+        d.setDate(d.getDate() - 1);
+        input.value = formatDate(d);
+        loadStandupData();
+      });
+
+      document.getElementById('nextDay').addEventListener('click', () => {
+        const input = document.getElementById('standupDate');
+        const d = new Date(input.value + 'T12:00:00');
+        d.setDate(d.getDate() + 1);
+        input.value = formatDate(d);
+        loadStandupData();
+      });
+    })();
+
+    function formatDate(d) {
+      return d.toISOString().split('T')[0];
+    }
+
+    // =============================================
+    // Load RTEs
+    // =============================================
+    async function loadRTEs() {
+      try {
+        const res = await fetch('/api/rtes');
+        const data = await res.json();
+        const select = document.getElementById('rteFilter');
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        data.rtes.forEach(rte => {
+          const opt = document.createElement('option');
+          opt.value = rte.id;
+          opt.textContent = rte.name;
+          if (defaultRte && defaultRte == rte.id) opt.selected = true;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load RTEs:', err);
+      }
+    }
+
+    // =============================================
+    // Load structured data
+    // =============================================
+    async function loadStandupData() {
+      const date = document.getElementById('standupDate').value;
+      const rteId = document.getElementById('rteFilter').value;
+      const container = document.getElementById('standupContent');
+
+      container.innerHTML = `
+        <div class="loading-overlay">
+          <div class="spinner-large"></div>
+          <div>Loading standup data…</div>
+        </div>
+      `;
+
+      try {
+        const params = new URLSearchParams({ date });
+        if (rteId) params.append('rteId', rteId);
+
+        const res = await fetch(`/api/standup/data?${params}`);
+        const data = await res.json();
+        currentData = data;
+
+        // Update stats
+        updateStats(data.summary);
+
+        // Render sections
+        renderSections(data, container);
+
+        // Show summarize button if there's content
+        const summarizeArea = document.getElementById('summarizeArea');
+        if (data.summary.documentCount > 0 || data.summary.markerCount > 0) {
+          summarizeArea.style.display = 'block';
+        } else {
+          summarizeArea.style.display = 'none';
+        }
+
+        // Clear previous narrative
+        document.getElementById('narrativeOutput').innerHTML = '';
+
+      } catch (err) {
+        container.innerHTML = `<div class="section-empty">Failed to load standup data: ${err.message}</div>`;
+      }
+    }
+
+    // =============================================
+    // Update stats bar
+    // =============================================
+    function updateStats(summary) {
+      document.getElementById('statDocs').textContent = summary.documentCount;
+      document.getElementById('statMarkers').textContent = summary.markerCount;
+      document.getElementById('statDecisions').textContent = summary.decisions;
+      document.getElementById('statActions').textContent = summary.actions;
+      document.getElementById('statOverdue').textContent = summary.overdueCount;
+
+      const overdueCard = document.getElementById('statOverdueCard');
+      if (summary.overdueCount > 0) {
+        overdueCard.classList.add('overdue');
+      } else {
+        overdueCard.classList.remove('overdue');
+      }
+    }
+
+    // =============================================
+    // Render sections
+    // =============================================
+    function renderSections(data, container) {
+      if (data.summary.documentCount === 0 && data.summary.markerCount === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h2>No activity on ${data.date}</h2>
+            <p>No documents were processed and no markers were found for this date.</p>
+            <p style="color: #484f58; font-size: 0.85rem; margin-top: 8px;">Try selecting a different date or RTE.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      // Documents processed
+      html += renderDocumentsSection(data.documents);
+
+      // Overdue items (special section — always on top after docs)
+      if (data.overdue && data.overdue.length > 0) {
+        html += renderOverdueSection(data.overdue);
+      }
+
+      // Marker sections in standup order
+      const sections = [
+        { key: 'decision', icon: '✅', title: 'Decisions Made', countClass: 'has-items' },
+        { key: 'action', icon: '🎯', title: 'Actions Assigned', countClass: 'has-items' },
+        { key: 'blocker', icon: '🚧', title: 'Open Blockers', countClass: 'has-blockers' },
+        { key: 'question', icon: '❓', title: 'Open Questions', countClass: 'has-blockers' },
+        { key: 'promise', icon: '📌', title: 'Promises Made', countClass: 'has-items' },
+        { key: 'risk', icon: '🔴', title: 'Risks Flagged', countClass: 'has-blockers' },
+        { key: 'insight', icon: '💡', title: 'Insights', countClass: 'has-items' },
+        { key: 'strategic', icon: '🧭', title: 'Strategic Notes', countClass: 'has-items' },
+        { key: 'feature', icon: '⭐', title: 'Feature Requests', countClass: 'has-items' },
+      ];
+
+      for (const sec of sections) {
+        const items = data.markers[sec.key] || [];
+        if (items.length === 0) continue;
+        html += renderMarkerSection(sec, items);
+      }
+
+      container.innerHTML = html;
+
+      // Wire up section toggles
+      container.querySelectorAll('.section-header').forEach(header => {
+        header.addEventListener('click', () => {
+          header.classList.toggle('collapsed');
+          const body = header.nextElementSibling;
+          body.classList.toggle('collapsed');
+        });
+      });
+    }
+
+    // =============================================
+    // Render individual sections
+    // =============================================
+    function renderDocumentsSection(documents) {
+      if (documents.length === 0) return '';
+
+      const items = documents.map(doc => `
+        <div class="doc-item">
+          <span>📄</span>
+          <a href="#" onclick="event.preventDefault(); viewDocument('${doc.filepath}', {title:'${escapeHtml(doc.filename).replace(/'/g, "\\'")}'})" class="doc-name">${escapeHtml(doc.filename)}</a>
+        </div>
+      `).join('');
+
+      return `
+        <div class="standup-section">
+          <div class="section-header">
+            <span class="section-icon">📄</span>
+            <span class="section-title">Documents Processed</span>
+            <span class="section-count has-items">${documents.length}</span>
+            <span class="section-chevron">▼</span>
+          </div>
+          <div class="section-body">${items}</div>
+        </div>
+      `;
+    }
+
+    function renderOverdueSection(items) {
+      const rows = items.map(m => `
+        <div class="marker-item">
+          <span>${typeIcon(m.marker_type)}</span>
+          <span class="marker-content">${escapeHtml(m.marker_content)}</span>
+          <div class="marker-meta">
+            ${m.owner ? `<a href="#" class="marker-owner" onclick="event.preventDefault(); goToStakeholder('${escapeHtml(m.owner).replace(/'/g, "\\\\'")}')" title="View profile">@${escapeHtml(m.owner)}</a>` : ''}
+            <span class="marker-due overdue">⚠️ ${m.due_date}</span>
+            ${m.severity ? `<span class="marker-severity ${m.severity}">${m.severity}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="standup-section overdue-section">
+          <div class="section-header">
+            <span class="section-icon">⚠️</span>
+            <span class="section-title">Overdue Items</span>
+            <span class="section-count has-blockers">${items.length}</span>
+            <span class="section-chevron">▼</span>
+          </div>
+          <div class="section-body">${rows}</div>
+        </div>
+      `;
+    }
+
+    function renderMarkerSection(sec, items) {
+      const rows = items.map(m => `
+        <div class="marker-item">
+          <span class="marker-content">${escapeHtml(m.marker_content)}</span>
+          <div class="marker-meta">
+            ${m.owner ? `<a href="#" class="marker-owner" onclick="event.preventDefault(); goToStakeholder('${escapeHtml(m.owner).replace(/'/g, "\\\\'")}')" title="View profile">@${escapeHtml(m.owner)}</a>` : ''}
+            ${m.due_date ? `<span class="marker-due${isOverdue(m) ? ' overdue' : ''}">${m.due_date}</span>` : ''}
+            ${m.severity ? `<span class="marker-severity ${m.severity}">${m.severity}</span>` : ''}
+            ${m.source_filepath ? `<a href="#" onclick="event.preventDefault(); viewDocument('${m.source_filepath}', {highlight: \`${escapeHtml(m.marker_content).replace(/`/g, '')}\`, title:'${escapeHtml(m.source_filename).replace(/'/g, "\\'")}'})" class="marker-source" title="${escapeHtml(m.source_filename)}">📄</a>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="standup-section">
+          <div class="section-header">
+            <span class="section-icon">${sec.icon}</span>
+            <span class="section-title">${sec.title}</span>
+            <span class="section-count ${items.length > 0 ? sec.countClass : ''}">${items.length}</span>
+            <span class="section-chevron">▼</span>
+          </div>
+          <div class="section-body">${rows}</div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // AI Summary
+    // =============================================
+    async function generateSummary() {
+      const btn = document.getElementById('summarizeBtn');
+      const output = document.getElementById('narrativeOutput');
+      const date = document.getElementById('standupDate').value;
+      const rteId = document.getElementById('rteFilter').value;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating summary…';
+      output.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/standup/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date, rteId: rteId || null })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          output.innerHTML = `<div class="section-empty">Error: ${escapeHtml(data.error)}</div>`;
+          return;
+        }
+
+        // Render narrative with basic markdown conversion
+        const rendered = simpleMarkdown(data.narrative);
+
+        output.innerHTML = `
+          <div class="narrative-output">
+            ${rendered}
+            <div class="narrative-meta">
+              <span>Model: ${data.model || 'unknown'} · ${data.markers} markers · ${data.documents?.length || 0} docs</span>
+              ${data.evidence?.length > 0 ? `
+                <button class="evidence-toggle" onclick="toggleEvidence()">
+                  Show evidence (${data.evidence.length})
+                </button>
+              ` : ''}
+            </div>
+            ${data.evidence?.length > 0 ? `
+              <div class="evidence-list" id="evidenceList">
+                ${data.evidence.map(e => `
+                  <div class="evidence-item">
+                    <div class="ev-filename">${escapeHtml(e.filename)}</div>
+                    <div>${escapeHtml(e.snippet?.substring(0, 200) || '...')}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+
+      } catch (err) {
+        output.innerHTML = `<div class="section-empty">Failed to generate summary: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '✨ Summarize with AI';
+      }
+    }
+
+    function toggleEvidence() {
+      const list = document.getElementById('evidenceList');
+      list.classList.toggle('visible');
+    }
+
+    // =============================================
+    // Helpers
+    // =============================================
+    function typeIcon(type) {
+      const icons = {
+        decision: '✅', action: '🎯', blocker: '🚧', question: '❓',
+        promise: '📌', risk: '🔴', insight: '💡', strategic: '🧭',
+        feature: '⭐'
+      };
+      return icons[type] || '📎';
+    }
+
+    function isOverdue(marker) {
+      if (!marker.due_date || marker.is_resolved) return false;
+      return marker.due_date < new Date().toISOString().split('T')[0];
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Navigate to stakeholder profile by name
+    async function goToStakeholder(name) {
+      try {
+        const res = await fetch(`/api/stakeholders/lookup/${encodeURIComponent(name)}`);
+        if (res.ok) {
+          const actor = await res.json();
+          window.location.href = `/stakeholder/${actor.id}`;
+        } else {
+          alert(`No profile found for "${name}"`);
+        }
+      } catch (err) {
+        console.error('Stakeholder lookup failed:', err);
+      }
+    }
+
+    function simpleMarkdown(text) {
+      if (!text) return '';
+      return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        .replace(/<\/ul>\s*<ul>/g, '')
+        .replace(/\n/g, '<br>');
+    }
+  </script>
+  <%- include('partials/doc-viewer') %>
+</body>
+</html>

@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Risk & Action Register - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .register-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .register-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .register-header h1 {
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 20px;
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .stat-box .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .stat-box .stat-label {
+      font-size: 0.8rem;
+      color: #8b949e;
+      margin-top: 2px;
+    }
+
+    .stat-box.overdue .stat-value { color: #f85149; }
+    .stat-box.critical .stat-value { color: #f0883e; }
+    .stat-box.open .stat-value { color: #58a6ff; }
+    .stat-box.resolved .stat-value { color: #3fb950; }
+
+    /* Filters */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #161b22;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-group label {
+      color: #8b949e;
+      font-size: 0.85rem;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      padding: 4px 12px;
+      border-radius: 16px;
+      border: 1px solid #30363d;
+      background: transparent;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+
+    .filter-pill:hover { border-color: #58a6ff; color: #e6edf3; }
+    .filter-pill.active { background: #58a6ff22; border-color: #58a6ff; color: #58a6ff; }
+
+    select.filter-select {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    /* Register table */
+    .register-table-wrap {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .register-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .register-table th {
+      background: #0d1117;
+      padding: 10px 12px;
+      text-align: left;
+      color: #8b949e;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #30363d;
+      white-space: nowrap;
+    }
+
+    .register-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #21262d;
+      vertical-align: top;
+      color: #e6edf3;
+      font-size: 0.9rem;
+    }
+
+    .register-table tr:last-child td { border-bottom: none; }
+
+    .register-table tr:hover td { background: #1c2128; }
+
+    .register-table tr.overdue td { border-left: 3px solid #f85149; }
+    .register-table tr.resolved td { opacity: 0.6; }
+
+    /* Type badges */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .type-badge.risk { background: #f8514922; color: #f85149; }
+    .type-badge.action { background: #58a6ff22; color: #58a6ff; }
+    .type-badge.blocker { background: #f0883e22; color: #f0883e; }
+    .type-badge.promise { background: #d2a8ff22; color: #d2a8ff; }
+    .type-badge.decision { background: #3fb95022; color: #3fb950; }
+    .type-badge.question { background: #f0e68c22; color: #f0e68c; }
+    .type-badge.requirement { background: #79c0ff22; color: #79c0ff; }
+    .type-badge.nfr { background: #bc8cff22; color: #bc8cff; }
+    .type-badge.observation { background: #8b949e22; color: #8b949e; }
+    .type-badge.insight { background: #56d36422; color: #56d364; }
+    .type-badge.strategic { background: #ff7b7222; color: #ff7b72; }
+    .type-badge.feature { background: #79c0ff22; color: #79c0ff; }
+    .type-badge.planning { background: #d2a8ff22; color: #d2a8ff; }
+    .type-badge.priority { background: #ffa65722; color: #ffa657; }
+
+    /* Severity badges */
+    .severity-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .severity-badge.critical { background: #f8514933; color: #f85149; }
+    .severity-badge.high { background: #f0883e33; color: #f0883e; }
+    .severity-badge.medium { background: #d2992233; color: #d29922; }
+    .severity-badge.low { background: #8b949e33; color: #8b949e; }
+
+    /* Editable cells */
+    .editable {
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      min-width: 60px;
+      display: inline-block;
+    }
+
+    .editable:hover {
+      border-color: #30363d;
+      background: #0d1117;
+    }
+
+    .editable.empty {
+      color: #484f58;
+      font-style: italic;
+    }
+
+    .editable input,
+    .editable select {
+      background: #0d1117;
+      border: 1px solid #58a6ff;
+      color: #e6edf3;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+
+    /* Content cell */
+    .content-cell {
+      max-width: 400px;
+      line-height: 1.4;
+    }
+
+    .content-cell .content-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Source link */
+    .source-link {
+      color: #58a6ff;
+      text-decoration: none;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .source-link:hover { text-decoration: underline; }
+
+    /* Expand/collapse responses */
+    .expand-btn {
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 2px 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .expand-btn:hover { color: #58a6ff; }
+
+    /* Response thread row */
+    .response-row td {
+      background: #0d1117;
+      padding: 0 12px 0 48px;
+    }
+
+    .response-thread {
+      padding: 12px 0;
+    }
+
+    .response-entry {
+      display: flex;
+      gap: 12px;
+      padding: 8px 12px;
+      border-left: 2px solid #30363d;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+
+    .response-entry .response-meta {
+      color: #8b949e;
+      white-space: nowrap;
+      min-width: 100px;
+    }
+
+    .response-entry .response-type-tag {
+      font-size: 0.75rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #30363d;
+      color: #8b949e;
+    }
+
+    .response-entry .response-type-tag.mitigation { background: #3fb95022; color: #3fb950; }
+    .response-entry .response-type-tag.resolution { background: #58a6ff22; color: #58a6ff; }
+    .response-entry .response-type-tag.workaround { background: #d2992222; color: #d29922; }
+    .response-entry .response-type-tag.escalation { background: #f8514922; color: #f85149; }
+    .response-entry .response-type-tag.update { background: #8b949e22; color: #8b949e; }
+
+    .response-entry .response-body {
+      flex: 1;
+      color: #c9d1d9;
+      line-height: 1.4;
+    }
+
+    .response-entry .delete-response {
+      background: none;
+      border: none;
+      color: #484f58;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0 4px;
+    }
+
+    .response-entry .delete-response:hover { color: #f85149; }
+
+    /* Add response form */
+    .add-response-form {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      padding: 8px 0;
+    }
+
+    .add-response-form textarea {
+      flex: 1;
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      resize: vertical;
+      min-height: 36px;
+      font-family: inherit;
+    }
+
+    .add-response-form textarea:focus {
+      border-color: #58a6ff;
+      outline: none;
+    }
+
+    .add-response-form select {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .add-response-form button {
+      background: #238636;
+      border: none;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .add-response-form button:hover { background: #2ea043; }
+
+    /* Status toggle */
+    .status-toggle {
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 2px;
+      border: none;
+      background: none;
+    }
+
+    .status-toggle:hover { opacity: 0.8; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b949e;
+    }
+
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+    .empty-state h3 { color: #e6edf3; margin-bottom: 8px; }
+
+    /* Loading */
+    .loading-overlay {
+      text-align: center;
+      padding: 40px;
+      color: #8b949e;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav') %>
+
+  <div class="register-container">
+    <div class="register-header">
+      <h1>📋 Risk & Action Register</h1>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-box open">
+        <div class="stat-value" id="statOpen">-</div>
+        <div class="stat-label">Open</div>
+      </div>
+      <div class="stat-box overdue">
+        <div class="stat-value" id="statOverdue">-</div>
+        <div class="stat-label">Overdue</div>
+      </div>
+      <div class="stat-box critical">
+        <div class="stat-value" id="statCritical">-</div>
+        <div class="stat-label">Critical</div>
+      </div>
+      <div class="stat-box resolved">
+        <div class="stat-value" id="statResolved">-</div>
+        <div class="stat-label">Resolved</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Type:</label>
+        <div class="filter-pills" id="typePills"></div>
+      </div>
+
+      <div class="filter-group">
+        <label>Status:</label>
+        <div class="filter-pills">
+          <button class="filter-pill active" data-status="" onclick="setStatusFilter(this)">All</button>
+          <button class="filter-pill" data-status="0" onclick="setStatusFilter(this)">Open</button>
+          <button class="filter-pill" data-status="1" onclick="setStatusFilter(this)">Resolved</button>
+          <button class="filter-pill" data-status="overdue" onclick="setStatusFilter(this)">⚠️ Overdue</button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Severity:</label>
+        <select class="filter-select" id="severityFilter" onchange="loadItems()">
+          <option value="">All</option>
+          <option value="critical">🔴 Critical</option>
+          <option value="high">🟠 High</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="low">⚪ Low</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Owner:</label>
+        <select class="filter-select" id="ownerFilter" onchange="loadItems()">
+          <option value="">All</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>RTE:</label>
+        <select class="filter-select" id="rteFilter" onchange="loadItems()">
+          <option value="">All</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="register-table-wrap">
+      <table class="register-table">
+        <thead>
+          <tr>
+            <th style="width:32px">✓</th>
+            <th style="width:100px">Type</th>
+            <th>Content</th>
+            <th style="width:100px">Owner</th>
+            <th style="width:100px">Due</th>
+            <th style="width:80px">Severity</th>
+            <th style="width:60px">💬</th>
+            <th style="width:140px">Source</th>
+          </tr>
+        </thead>
+        <tbody id="registerBody">
+          <tr><td colspan="8" class="loading-overlay">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentItems = [];
+    let filters = {
+      type: '',
+      resolved: '',
+      overdue: '',
+      severity: '',
+      owner: '',
+      rteId: ''
+    };
+    let expandedRows = new Set();
+
+    // Type icons
+    const TYPE_ICONS = {
+      risk: '🔴', action: '🎯', blocker: '🚧', promise: '📌',
+      decision: '✅', question: '❓', requirement: '📋', nfr: '⚙️',
+      observation: '👁️', insight: '💡', strategic: '🎯', feature: '✨',
+      planning: '📅', priority: '⭐'
+    };
+
+    // Init
+    async function init() {
+      await Promise.all([loadRtes(), loadOwners(), loadStats(), loadTypes()]);
+      await loadItems();
+    }
+
+    async function loadRtes() {
+      try {
+        const res = await fetch('/api/rtes');
+        const data = await res.json();
+        const sel = document.getElementById('rteFilter');
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        data.rtes.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = r.name;
+          if (defaultRte && defaultRte == r.id) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      } catch (e) { console.error('Failed to load RTEs:', e); }
+    }
+
+    async function loadOwners() {
+      try {
+        const res = await fetch('/api/register/owners');
+        const data = await res.json();
+        const sel = document.getElementById('ownerFilter');
+        data.owners.forEach(o => {
+          const opt = document.createElement('option');
+          opt.value = o;
+          opt.textContent = o;
+          sel.appendChild(opt);
+        });
+      } catch (e) { console.error('Failed to load owners:', e); }
+    }
+
+    async function loadStats() {
+      try {
+        const rteId = document.getElementById('rteFilter').value;
+        const qs = rteId ? `?rteId=${rteId}` : '';
+        const res = await fetch(`/api/register/stats${qs}`);
+        const stats = await res.json();
+
+        document.getElementById('statOpen').textContent = stats.open;
+        document.getElementById('statOverdue').textContent = stats.overdue;
+        document.getElementById('statResolved').textContent = stats.resolved;
+
+        const critical = stats.bySeverity.find(s => s.severity === 'critical');
+        document.getElementById('statCritical').textContent = critical ? critical.count : 0;
+      } catch (e) { console.error('Failed to load stats:', e); }
+    }
+
+    async function loadTypes() {
+      try {
+        const res = await fetch('/api/register/types');
+        const data = await res.json();
+        const container = document.getElementById('typePills');
+        
+        // Actionable types that the Register focuses on
+        const ACTIONABLE = ['risk', 'action', 'blocker', 'promise'];
+        
+        // "All types" pill (shows everything including observations, insights, etc.)
+        container.innerHTML = '<button class="filter-pill" data-type="_all" onclick="setTypeFilter(this)">All types</button>';
+        
+        data.types.forEach(t => {
+          const icon = TYPE_ICONS[t.marker_type] || '📎';
+          const btn = document.createElement('button');
+          // Actionable types are shown as active by default (when no filter set)
+          const isDefault = ACTIONABLE.includes(t.marker_type) && !filters.type;
+          btn.className = 'filter-pill' + (isDefault ? ' default-type' : '');
+          btn.dataset.type = t.marker_type;
+          btn.textContent = `${icon} ${t.marker_type} (${t.count})`;
+          btn.onclick = () => setTypeFilter(btn);
+          container.appendChild(btn);
+        });
+      } catch (e) { console.error('Failed to load types:', e); }
+    }
+
+    function setTypeFilter(el) {
+      document.querySelectorAll('#typePills .filter-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      filters.type = el.dataset.type;
+      loadItems();
+    }
+
+    function setStatusFilter(el) {
+      el.parentElement.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      const val = el.dataset.status;
+      if (val === 'overdue') {
+        filters.resolved = '';
+        filters.overdue = '1';
+      } else {
+        filters.resolved = val;
+        filters.overdue = '';
+      }
+      loadItems();
+    }
+
+    async function loadItems() {
+      filters.severity = document.getElementById('severityFilter').value;
+      filters.owner = document.getElementById('ownerFilter').value;
+      filters.rteId = document.getElementById('rteFilter').value;
+
+      const params = new URLSearchParams();
+      if (filters.type) params.set('type', filters.type);
+      if (filters.resolved !== '') params.set('resolved', filters.resolved);
+      if (filters.overdue) params.set('overdue', filters.overdue);
+      if (filters.severity) params.set('severity', filters.severity);
+      if (filters.owner) params.set('owner', filters.owner);
+      if (filters.rteId) params.set('rteId', filters.rteId);
+
+      try {
+        const res = await fetch(`/api/register?${params}`);
+        const data = await res.json();
+        currentItems = data.items;
+        renderTable();
+        loadStats();
+      } catch (e) {
+        console.error('Failed to load items:', e);
+        document.getElementById('registerBody').innerHTML =
+          '<tr><td colspan="8" class="empty-state">Failed to load register data</td></tr>';
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('registerBody');
+      
+      if (currentItems.length === 0) {
+        tbody.innerHTML = `
+          <tr><td colspan="8">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <h3>No items found</h3>
+              <p>Items appear here from extracted semantic markers. Try adjusting filters or ingest documents with risks, actions, or blockers.</p>
+            </div>
+          </td></tr>`;
+        return;
+      }
+
+      let html = '';
+      currentItems.forEach(item => {
+        const isOverdue = !item.is_resolved && item.due_date && item.due_date < new Date().toISOString().split('T')[0];
+        const rowClass = item.is_resolved ? 'resolved' : (isOverdue ? 'overdue' : '');
+        const icon = TYPE_ICONS[item.marker_type] || '📎';
+        const expanded = expandedRows.has(item.id);
+
+        html += `
+          <tr class="${rowClass}" data-id="${item.id}">
+            <td>
+              <button class="status-toggle" onclick="toggleResolved(${item.id}, ${item.is_resolved ? 0 : 1})"
+                title="${item.is_resolved ? 'Mark open' : 'Mark resolved'}">
+                ${item.is_resolved ? '✅' : '⬜'}
+              </button>
+            </td>
+            <td><span class="type-badge ${item.marker_type}">${icon} ${item.marker_type}</span></td>
+            <td class="content-cell">
+              <div class="content-text">${escHtml(item.marker_content || '')}</div>
+            </td>
+            <td>
+              <span class="editable ${!item.owner ? 'empty' : ''}" 
+                onclick="editField(this, ${item.id}, 'owner', '${escAttr(item.owner || '')}')"
+                title="Click to edit">
+                ${escHtml(item.owner || '—')}
+              </span>
+              ${item.owner ? `<a href="#" onclick="event.preventDefault(); event.stopPropagation(); goToStakeholder('${escAttr(item.owner)}')" title="View profile" style="margin-left:4px;text-decoration:none;opacity:0.5;font-size:0.85em" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">👤</a>` : ''}
+            </td>
+            <td>
+              <span class="editable ${!item.due_date ? 'empty' : ''} ${isOverdue ? 'overdue-text' : ''}" 
+                onclick="editDate(this, ${item.id}, '${item.due_date || ''}')"
+                title="Click to edit">
+                ${item.due_date ? formatDate(item.due_date) : '—'}
+              </span>
+            </td>
+            <td>
+              <span class="editable" onclick="editSeverity(this, ${item.id}, '${item.severity || ''}')">
+                ${item.severity ? `<span class="severity-badge ${item.severity}">${item.severity}</span>` : '<span class="empty">—</span>'}
+              </span>
+            </td>
+            <td>
+              <button class="expand-btn" onclick="toggleResponses(${item.id})" title="Responses">
+                💬 ${item.response_count || 0} ${expanded ? '▾' : '▸'}
+              </button>
+            </td>
+            <td>
+              ${item.filename ? `<a class="source-link" href="#" onclick="event.preventDefault(); viewDocument('${item.filepath}', {highlight: \`${escHtml(item.marker_content).replace(/\`/g, '')}\`, title:'${escAttr(item.filename)}'})" title="${escAttr(item.filename)}">📄 ${escHtml(item.filename.length > 20 ? item.filename.slice(0, 18) + '…' : item.filename)}</a>` : '—'}
+            </td>
+          </tr>`;
+
+        // Response thread row (hidden by default)
+        html += `
+          <tr class="response-row" id="responses-${item.id}" style="display: ${expanded ? 'table-row' : 'none'}">
+            <td colspan="8">
+              <div class="response-thread" id="thread-${item.id}">
+                <div class="loading-overlay">Loading responses...</div>
+              </div>
+            </td>
+          </tr>`;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    // Inline editing
+    function editField(el, id, field, currentValue) {
+      if (el.querySelector('input')) return; // already editing
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = currentValue;
+      input.placeholder = field === 'owner' ? 'Assign owner...' : '';
+      el.innerHTML = '';
+      el.appendChild(input);
+      input.focus();
+      input.select();
+
+      const save = async () => {
+        const newValue = input.value.trim();
+        await updateItem(id, { [field]: newValue });
+      };
+
+      input.onblur = save;
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') save();
+        if (e.key === 'Escape') loadItems();
+      };
+    }
+
+    function editDate(el, id, currentValue) {
+      if (el.querySelector('input')) return;
+      const input = document.createElement('input');
+      input.type = 'date';
+      input.value = currentValue;
+      el.innerHTML = '';
+      el.appendChild(input);
+      input.focus();
+
+      const save = async () => {
+        await updateItem(id, { due_date: input.value || null });
+      };
+
+      input.onblur = save;
+      input.onchange = save;
+      input.onkeydown = (e) => {
+        if (e.key === 'Escape') loadItems();
+      };
+    }
+
+    function editSeverity(el, id, currentValue) {
+      if (el.querySelector('select')) return;
+      const select = document.createElement('select');
+      ['', 'low', 'medium', 'high', 'critical'].forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v || '— none —';
+        if (v === currentValue) opt.selected = true;
+        select.appendChild(opt);
+      });
+      el.innerHTML = '';
+      el.appendChild(select);
+      select.focus();
+
+      const save = async () => {
+        await updateItem(id, { severity: select.value || null });
+      };
+
+      select.onblur = save;
+      select.onchange = save;
+      select.onkeydown = (e) => {
+        if (e.key === 'Escape') loadItems();
+      };
+    }
+
+    async function updateItem(id, fields) {
+      try {
+        await fetch(`/api/register/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fields)
+        });
+        await loadItems();
+      } catch (e) {
+        console.error('Failed to update:', e);
+        alert('Failed to save changes');
+      }
+    }
+
+    async function toggleResolved(id, newValue) {
+      await updateItem(id, { is_resolved: newValue });
+    }
+
+    // Response threads
+    async function toggleResponses(id) {
+      const row = document.getElementById(`responses-${id}`);
+      if (expandedRows.has(id)) {
+        expandedRows.delete(id);
+        row.style.display = 'none';
+      } else {
+        expandedRows.add(id);
+        row.style.display = 'table-row';
+        await loadResponses(id);
+      }
+      // Update the expand button icon
+      renderTable();
+      // Re-expand the rows
+      expandedRows.forEach(eid => {
+        const r = document.getElementById(`responses-${eid}`);
+        if (r) { r.style.display = 'table-row'; loadResponses(eid); }
+      });
+    }
+
+    async function loadResponses(markerId) {
+      const container = document.getElementById(`thread-${markerId}`);
+      try {
+        const res = await fetch(`/api/register/${markerId}/responses`);
+        const data = await res.json();
+
+        let html = '';
+        if (data.responses.length > 0) {
+          data.responses.forEach(r => {
+            html += `
+              <div class="response-entry">
+                <div class="response-meta">
+                  <div>${formatDate(r.created_at)}</div>
+                  ${r.author ? `<div style="color:#c9d1d9">${escHtml(r.author)}</div>` : ''}
+                  <span class="response-type-tag ${r.response_type}">${r.response_type}</span>
+                </div>
+                <div class="response-body">${escHtml(r.response_text)}</div>
+                <button class="delete-response" onclick="deleteResponse(${r.id}, ${markerId})" title="Delete">🗑️</button>
+              </div>`;
+          });
+        } else {
+          html += '<div style="color:#484f58; padding:4px 12px; font-size:0.85rem">No responses yet</div>';
+        }
+
+        // Add response form
+        html += `
+          <div class="add-response-form">
+            <textarea id="responseText-${markerId}" placeholder="Add a response, mitigation, or update..." rows="1"></textarea>
+            <select id="responseType-${markerId}">
+              <option value="update">Update</option>
+              <option value="mitigation">Mitigation</option>
+              <option value="resolution">Resolution</option>
+              <option value="workaround">Workaround</option>
+              <option value="escalation">Escalation</option>
+            </select>
+            <button onclick="addResponse(${markerId})">💬 Add</button>
+          </div>`;
+
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div style="color:#f85149">Failed to load responses</div>';
+      }
+    }
+
+    async function addResponse(markerId) {
+      const text = document.getElementById(`responseText-${markerId}`).value.trim();
+      const type = document.getElementById(`responseType-${markerId}`).value;
+      
+      if (!text) return;
+
+      try {
+        await fetch(`/api/register/${markerId}/respond`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ response_text: text, response_type: type })
+        });
+        await loadResponses(markerId);
+        await loadItems(); // refresh response_count
+      } catch (e) {
+        console.error('Failed to add response:', e);
+      }
+    }
+
+    async function deleteResponse(responseId, markerId) {
+      if (!confirm('Delete this response?')) return;
+      try {
+        await fetch(`/api/register/response/${responseId}`, { method: 'DELETE' });
+        await loadResponses(markerId);
+        await loadItems();
+      } catch (e) {
+        console.error('Failed to delete response:', e);
+      }
+    }
+
+    // Helpers
+    function escHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Navigate to stakeholder profile by name
+    async function goToStakeholder(name) {
+      try {
+        const res = await fetch(`/api/stakeholders/lookup/${encodeURIComponent(name)}`);
+        if (res.ok) {
+          const actor = await res.json();
+          window.location.href = `/stakeholder/${actor.id}`;
+        } else {
+          alert(`No profile found for "${name}"`);
+        }
+      } catch (err) {
+        console.error('Stakeholder lookup failed:', err);
+      }
+    }
+
+    function escAttr(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    // Go
+    init();
+  </script>
+  <%- include('partials/doc-viewer') %>
+</body>
+</html>

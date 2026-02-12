@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep Analysis - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .analyze-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .analyze-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .analyze-header h1 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .analyze-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    @media (max-width: 1024px) {
+      .analyze-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .panel-body {
+      padding: 20px;
+    }
+    
+    /* Input Panel */
+    .input-section {
+      margin-bottom: 20px;
+    }
+    
+    .input-section label {
+      display: block;
+      margin-bottom: 8px;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .document-textarea {
+      width: 100%;
+      min-height: 300px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      padding: 16px;
+      font-size: 0.95rem;
+      font-family: 'SF Mono', Monaco, monospace;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    
+    .document-textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .config-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.95rem;
+    }
+    
+    .form-select:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .instructions-textarea {
+      width: 100%;
+      min-height: 80px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      padding: 12px;
+      font-size: 0.9rem;
+      resize: vertical;
+    }
+    
+    .instructions-textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .tips {
+      font-size: 0.8rem;
+      color: #6e7681;
+      margin-top: 6px;
+    }
+    
+    .tips strong {
+      color: #8b949e;
+    }
+    
+    .analyze-btn {
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+    
+    .analyze-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
+    }
+    
+    .analyze-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .analyze-btn.loading {
+      background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+    }
+    
+    /* Output Panel */
+    .output-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6e7681;
+    }
+    
+    .output-empty .icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+    
+    .output-content {
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    
+    .output-content h1, .output-content h2, .output-content h3 {
+      color: #58a6ff;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    
+    .output-content h1:first-child, .output-content h2:first-child {
+      margin-top: 0;
+    }
+    
+    .output-content ul, .output-content ol {
+      padding-left: 24px;
+    }
+    
+    .output-content li {
+      margin-bottom: 8px;
+    }
+    
+    .output-content strong {
+      color: #f0f6fc;
+    }
+    
+    .output-content code {
+      background: #21262d;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    
+    .output-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .action-btn {
+      padding: 10px 16px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+      background: #30363d;
+      border-color: #484f58;
+    }
+    
+    .action-btn.primary {
+      background: #238636;
+      border-color: #238636;
+    }
+    
+    .action-btn.primary:hover {
+      background: #2ea043;
+    }
+    
+    /* Metadata */
+    .metadata {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #30363d;
+      font-size: 0.85rem;
+      color: #8b949e;
+      flex-wrap: wrap;
+    }
+    
+    .metadata-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* Entities Panel */
+    .entities-panel {
+      margin-top: 24px;
+    }
+    
+    .entities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    
+    .entity-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .entity-card h4 {
+      margin: 0 0 12px 0;
+      font-size: 0.9rem;
+      color: #8b949e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .entity-card h4 .count {
+      background: #30363d;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+    
+    .entity-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .entity-list li {
+      padding: 6px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.9rem;
+    }
+    
+    .entity-list li:last-child {
+      border-bottom: none;
+    }
+    
+    /* File upload */
+    .file-upload {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .file-input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    
+    .file-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0d1117;
+      border: 1px dashed #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      cursor: pointer;
+    }
+    
+    .file-input:hover {
+      border-color: #58a6ff;
+    }
+    
+    .or-divider {
+      display: flex;
+      align-items: center;
+      color: #6e7681;
+      font-size: 0.9rem;
+    }
+    
+    /* Spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Import modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-overlay.show {
+      display: flex;
+    }
+    
+    .modal {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      padding: 24px;
+    }
+    
+    .modal h3 {
+      margin: 0 0 16px 0;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    /* Progress indicator */
+    .progress-info {
+      text-align: center;
+      padding: 40px 20px;
+      color: #8b949e;
+    }
+
+    .progress-info .spinner {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 16px;
+      border-width: 3px;
+    }
+
+    /* Progress table */
+    .progress-table {
+      margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .progress-table th,
+    .progress-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .progress-table th {
+      background: #21262d;
+      color: #8b949e;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .progress-table tr:hover {
+      background: #161b22;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-badge.pending {
+      background: #30363d;
+      color: #8b949e;
+    }
+
+    .status-badge.processing {
+      background: #1f6feb;
+      color: white;
+    }
+
+    .status-badge.done {
+      background: #238636;
+      color: white;
+    }
+
+    .status-badge.failed {
+      background: #da3633;
+      color: white;
+    }
+
+    .progress-bar-container {
+      background: #30363d;
+      border-radius: 4px;
+      height: 8px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #238636, #2ea043);
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #8b949e;
+      margin-top: 8px;
+    }
+
+    .progress-totals {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #30363d;
+      font-size: 0.9rem;
+    }
+
+    .progress-totals .total-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .progress-totals .total-value {
+      font-weight: 600;
+      color: #58a6ff;
+    }
+
+    .retry-btn {
+      padding: 2px 8px;
+      margin-left: 8px;
+      background: #30363d;
+      border: 1px solid #484f58;
+      border-radius: 4px;
+      color: #c9d1d9;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .retry-btn:hover {
+      background: #484f58;
+      border-color: #6e7681;
+    }
+
+    .retry-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'analyze' }) %>
+  <div class="analyze-container">
+    <div class="analyze-header">
+      <h1>📄 Deep Document Analysis</h1>
+      <a href="/" class="action-btn">← Back to Hub</a>
+    </div>
+    
+    <div class="analyze-layout">
+      <!-- Input Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>📝 Input</h2>
+        </div>
+        <div class="panel-body">
+          <div class="input-section">
+            <label>Upload or paste document</label>
+            <div class="file-upload">
+              <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept=".md,.txt,.markdown,.docx,.pages">
+              </div>
+              <span class="or-divider">or paste below</span>
+            </div>
+            <textarea id="documentContent" class="document-textarea" placeholder="Paste your document content here...
+
+Supports:
+• Architecture documents
+• Strategy documents  
+• Meeting notes
+• Requirements
+• Any Dutch or English text"></textarea>
+          </div>
+          
+          <div class="config-row">
+            <div class="input-section">
+              <label>Analysis Type</label>
+              <select id="analysisType" class="form-select">
+                <option value="architecture">🏗️ Architecture Document</option>
+                <option value="strategy">🎯 Strategy Document</option>
+                <option value="meeting">📋 Meeting Notes</option>
+                <option value="requirements">📝 Requirements</option>
+                <option value="custom">⚡ Custom</option>
+              </select>
+            </div>
+            
+            <div class="input-section">
+              <label>LLM Model</label>
+              <select id="modelSelect" class="form-select">
+                <option value="mistral:latest">Mistral (recommended for Dutch)</option>
+                <option value="deepseek-r1:7b">DeepSeek R1 7B</option>
+                <option value="gemma2:2b">Gemma 2 2B (fast)</option>
+                <option value="gemma3:4b">Gemma 3 4B</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="input-section">
+            <label>Additional Instructions (optional)</label>
+            <textarea id="customInstructions" class="instructions-textarea" placeholder="Add specific instructions for the analysis..."></textarea>
+            <div class="tips">
+              <strong>💡 Tips:</strong> "Focus on integrations between X and Y", "Ignore section about...", "Extract all API endpoints", "Summarize in English"
+            </div>
+          </div>
+          
+          <button id="analyzeBtn" class="analyze-btn">
+            <span>🔍</span>
+            <span>Analyze Document</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Output Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>📊 Analysis Result</h2>
+          <div id="outputMeta"></div>
+        </div>
+        <div class="panel-body">
+          <div id="outputEmpty" class="output-empty">
+            <div class="icon">📄</div>
+            <p>Paste or upload a document and click Analyze</p>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Analysis runs locally via Ollama - your document stays on your machine</p>
+            <button id="recoverBtn" class="action-btn" style="margin-top: 16px;">
+              🔄 Recover Last Analysis
+            </button>
+          </div>
+          
+          <div id="outputProgress" class="progress-info" style="display: none;">
+            <div class="spinner"></div>
+            <p id="progressText">Analyzing document...</p>
+            <p style="font-size: 0.85rem;">Large documents are split into chunks and analyzed separately. This may take several minutes.</p>
+            
+            <!-- Progress bar -->
+            <div class="progress-bar-container">
+              <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="progress-stats">
+              <span id="progressPercent">0%</span>
+              <span id="progressElapsed">Elapsed: 0:00</span>
+            </div>
+            
+            <!-- Chunk progress table -->
+            <div id="chunkTableContainer" style="display: none; margin-top: 20px; text-align: left;">
+              <table class="progress-table">
+                <thead>
+                  <tr>
+                    <th>Chunk</th>
+                    <th>Status</th>
+                    <th>Systems</th>
+                    <th>Actors</th>
+                    <th>Rels</th>
+                  </tr>
+                </thead>
+                <tbody id="chunkTableBody">
+                </tbody>
+              </table>
+              
+              <div class="progress-totals">
+                <div class="total-item">
+                  <span>🖥️ Systems:</span>
+                  <span id="totalSystems" class="total-value">0</span>
+                </div>
+                <div class="total-item">
+                  <span>👤 Actors:</span>
+                  <span id="totalActors" class="total-value">0</span>
+                </div>
+                <div class="total-item">
+                  <span>🔗 Relationships:</span>
+                  <span id="totalRelationships" class="total-value">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="outputResult" style="display: none;">
+            <div id="outputContent" class="output-content"></div>
+            
+            <div class="output-actions">
+              <button id="copyBtn" class="action-btn">📋 Copy</button>
+              <button id="saveBtn" class="action-btn">📥 Save as .md</button>
+              <button id="importBtn" class="action-btn primary">📤 Import to PO AI</button>
+            </div>
+            
+            <div id="metadata" class="metadata"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Extracted Entities Panel -->
+    <div id="entitiesPanel" class="entities-panel panel" style="display: none;">
+      <div class="panel-header">
+        <h2>🔗 Extracted Entities</h2>
+      </div>
+      <div class="panel-body">
+        <div class="entities-grid" id="entitiesGrid"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Import Modal -->
+  <div id="importModal" class="modal-overlay">
+    <div class="modal">
+      <h3>📤 Import to PO AI</h3>
+      <p>Import extracted entities to the knowledge graph:</p>
+      
+      <div class="input-section" style="margin-top: 16px;">
+        <label>Select RTE</label>
+        <select id="importRteSelect" class="form-select">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+      
+      <div id="importSummary" style="margin-top: 12px; font-size: 0.9rem; color: #8b949e;"></div>
+      
+      <div class="modal-actions">
+        <button id="cancelImport" class="action-btn">Cancel</button>
+        <button id="confirmImport" class="action-btn primary">Import</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentAnalysis = null;
+    let currentEntities = null;
+    let rtes = [];
+    let progressEventSource = null;
+    let progressUpdateInterval = null;
+    
+    // Elements
+    const documentContent = document.getElementById('documentContent');
+    const analysisType = document.getElementById('analysisType');
+    const modelSelect = document.getElementById('modelSelect');
+    const customInstructions = document.getElementById('customInstructions');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const fileInput = document.getElementById('fileInput');
+    
+    const outputEmpty = document.getElementById('outputEmpty');
+    const outputProgress = document.getElementById('outputProgress');
+    const outputResult = document.getElementById('outputResult');
+    const outputContent = document.getElementById('outputContent');
+    const metadata = document.getElementById('metadata');
+    const entitiesPanel = document.getElementById('entitiesPanel');
+    const entitiesGrid = document.getElementById('entitiesGrid');
+    
+    // Progress elements
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressElapsed = document.getElementById('progressElapsed');
+    const chunkTableContainer = document.getElementById('chunkTableContainer');
+    const chunkTableBody = document.getElementById('chunkTableBody');
+    const totalSystems = document.getElementById('totalSystems');
+    const totalActors = document.getElementById('totalActors');
+    const totalRelationships = document.getElementById('totalRelationships');
+
+    // Format elapsed time
+    function formatElapsed(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      if (hours > 0) {
+        return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+      } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+      }
+      return `${seconds}s`;
+    }
+
+    // Connect to SSE progress endpoint
+    function connectProgressSSE() {
+      if (progressEventSource) {
+        progressEventSource.close();
+      }
+      
+      progressEventSource = new EventSource('/api/analyze/progress');
+      
+      progressEventSource.onmessage = (event) => {
+        const progress = JSON.parse(event.data);
+        updateProgressUI(progress);
+      };
+      
+      progressEventSource.onerror = () => {
+        // Reconnect after a delay
+        setTimeout(connectProgressSSE, 2000);
+      };
+    }
+
+    // Update progress UI from SSE data
+    function updateProgressUI(progress) {
+      if (!progress.active && progress.totalChunks === 0) {
+        // No active analysis
+        return;
+      }
+      
+      // Show chunk table if we have chunks
+      if (progress.totalChunks > 1) {
+        chunkTableContainer.style.display = 'block';
+        
+        // Calculate progress percentage
+        const doneCount = progress.chunkResults.filter(c => c.status === 'done').length;
+        const pct = Math.round((doneCount / progress.totalChunks) * 100);
+        progressBar.style.width = pct + '%';
+        progressPercent.textContent = pct + '%';
+        
+        // Update elapsed time
+        progressElapsed.textContent = 'Elapsed: ' + formatElapsed(progress.elapsedMs);
+        
+        // Update chunk table
+        let html = '';
+        let sysTotal = 0, actorTotal = 0, relTotal = 0;
+        
+        for (const chunk of progress.chunkResults) {
+          const statusBadge = {
+            pending: '<span class="status-badge pending">⏳ Pending</span>',
+            processing: '<span class="status-badge processing">🔄 Processing</span>',
+            done: '<span class="status-badge done">✅ Done</span>',
+            failed: '<span class="status-badge failed">❌ Failed</span>'
+          }[chunk.status] || '<span class="status-badge pending">⏳ Pending</span>';
+          
+          // Add retry button for failed chunks (only when not actively analyzing)
+          const retryBtn = (chunk.status === 'failed' && !progress.active) 
+            ? `<button class="retry-btn" onclick="retryChunk(${chunk.chunk - 1})">🔄 Retry</button>`
+            : '';
+          
+          html += `<tr>
+            <td>${chunk.chunk}/${progress.totalChunks}</td>
+            <td>${statusBadge} ${retryBtn}</td>
+            <td>${chunk.status === 'done' ? chunk.systems : '-'}</td>
+            <td>${chunk.status === 'done' ? chunk.actors : '-'}</td>
+            <td>${chunk.status === 'done' ? chunk.relationships : '-'}</td>
+          </tr>`;
+          
+          if (chunk.status === 'done') {
+            sysTotal += chunk.systems || 0;
+            actorTotal += chunk.actors || 0;
+            relTotal += chunk.relationships || 0;
+          }
+        }
+        
+        chunkTableBody.innerHTML = html;
+        totalSystems.textContent = sysTotal;
+        totalActors.textContent = actorTotal;
+        totalRelationships.textContent = relTotal;
+        
+        // Update progress text
+        document.getElementById('progressText').textContent = 
+          `Analyzing chunk ${progress.currentChunk} of ${progress.totalChunks}...`;
+      }
+    }
+
+    // Disconnect SSE when done
+    function disconnectProgressSSE() {
+      if (progressEventSource) {
+        progressEventSource.close();
+        progressEventSource = null;
+      }
+    }
+    
+    // Retry a failed chunk
+    async function retryChunk(chunkIndex) {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '⏳ Retrying...';
+      
+      // Reconnect SSE for live updates
+      connectProgressSSE();
+      
+      try {
+        const res = await fetch('/api/analyze/retry-chunk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chunkIndex })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Retry failed');
+        }
+        
+        // Update totals display
+        totalSystems.textContent = data.totalEntities.systems;
+        totalActors.textContent = data.totalEntities.actors;
+        totalRelationships.textContent = data.totalEntities.relationships;
+        
+        console.log(`Chunk ${chunkIndex + 1} retry succeeded:`, data.entities);
+        
+      } catch (e) {
+        alert('Retry failed: ' + e.message);
+      }
+    }
+    
+    // Check for content passed from Ingest page
+    (function checkIngestRedirect() {
+      const content = sessionStorage.getItem('analyzeContent');
+      const filename = sessionStorage.getItem('analyzeFilename');
+      if (content) {
+        documentContent.value = content;
+        sessionStorage.removeItem('analyzeContent');
+        sessionStorage.removeItem('analyzeFilename');
+        // Show a notice
+        if (filename) {
+          const notice = document.createElement('div');
+          notice.className = 'ingest-notice';
+          notice.innerHTML = `📄 Content loaded from: <strong>${filename}</strong>`;
+          notice.style.cssText = 'background: #1f6feb; color: white; padding: 8px 16px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9rem;';
+          documentContent.parentElement.insertBefore(notice, documentContent);
+          setTimeout(() => notice.remove(), 5000);
+        }
+      }
+    })();
+    
+    // Load RTEs for import
+    async function loadRTEs() {
+      try {
+        const res = await fetch('/api/rte');
+        rtes = await res.json();
+        
+        const select = document.getElementById('importRteSelect');
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        select.innerHTML = rtes.map(r => 
+          `<option value="${r.id}" ${defaultRte == r.id ? 'selected' : ''}>${r.name}</option>`
+        ).join('');
+      } catch (e) {
+        console.error('Failed to load RTEs:', e);
+      }
+    }
+    
+    // File upload handler
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const ext = file.name.split('.').pop().toLowerCase();
+      
+      // For .docx and .pages, use the parse-file endpoint
+      if (ext === 'docx' || ext === 'pages') {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const res = await fetch('/api/ingest/parse-file', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Failed to parse file');
+          }
+          
+          const parsed = await res.json();
+          documentContent.value = parsed.content || '';
+        } catch (err) {
+          console.error('Parse error:', err);
+          alert('Error parsing file: ' + err.message);
+        }
+      } else {
+        // Plain text files
+        const text = await file.text();
+        documentContent.value = text;
+      }
+    });
+    
+    // Analyze button handler
+    analyzeBtn.addEventListener('click', async () => {
+      const content = documentContent.value.trim();
+      if (!content) {
+        alert('Please paste or upload a document first');
+        return;
+      }
+      
+      // Show progress
+      outputEmpty.style.display = 'none';
+      outputProgress.style.display = 'block';
+      outputResult.style.display = 'none';
+      entitiesPanel.style.display = 'none';
+      
+      // Reset progress UI
+      progressBar.style.width = '0%';
+      progressPercent.textContent = '0%';
+      progressElapsed.textContent = 'Elapsed: 0s';
+      chunkTableBody.innerHTML = '';
+      chunkTableContainer.style.display = 'none';
+      totalSystems.textContent = '0';
+      totalActors.textContent = '0';
+      totalRelationships.textContent = '0';
+      
+      // Connect to SSE for live progress updates
+      connectProgressSSE();
+      
+      analyzeBtn.disabled = true;
+      analyzeBtn.classList.add('loading');
+      analyzeBtn.innerHTML = '<div class="spinner"></div><span>Analyzing...</span>';
+      
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content,
+            analysisType: analysisType.value,
+            model: modelSelect.value,
+            customInstructions: customInstructions.value
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Analysis failed');
+        }
+        
+        currentAnalysis = data.analysis;
+        currentEntities = data.entities;
+        
+        // Render output
+        outputProgress.style.display = 'none';
+        outputResult.style.display = 'block';
+        outputContent.innerHTML = marked.parse(data.analysis);
+        
+        // Render metadata
+        const chunksInfo = data.metadata.chunks > 1 ? `<div class="metadata-item">📄 ${data.metadata.chunks} chunks</div>` : '';
+        metadata.innerHTML = `
+          <div class="metadata-item">🤖 ${data.metadata.model}</div>
+          <div class="metadata-item">⏱️ ${(data.metadata.processingTimeMs / 1000).toFixed(1)}s</div>
+          <div class="metadata-item">📥 ${data.metadata.inputLength.toLocaleString()} chars</div>
+          <div class="metadata-item">📤 ${data.metadata.outputLength.toLocaleString()} chars</div>
+          ${chunksInfo}
+        `;
+        
+        // Render entities
+        renderEntities(data.entities);
+        
+      } catch (e) {
+        outputProgress.style.display = 'none';
+        outputEmpty.style.display = 'block';
+        outputEmpty.innerHTML = `
+          <div class="icon">❌</div>
+          <p>Analysis failed</p>
+          <p style="font-size: 0.85rem; color: #f85149;">${e.message}</p>
+        `;
+      } finally {
+        // Disconnect SSE
+        disconnectProgressSSE();
+        
+        analyzeBtn.disabled = false;
+        analyzeBtn.classList.remove('loading');
+        analyzeBtn.innerHTML = '<span>🔍</span><span>Analyze Document</span>';
+      }
+    });
+    
+    // Render extracted entities
+    function renderEntities(entities) {
+      if (!entities) return;
+      
+      const sections = [];
+      
+      if (entities.systems?.length) {
+        sections.push({
+          title: '🖥️ Systems',
+          items: entities.systems.map(s => s.name)
+        });
+      }
+      
+      if (entities.actors?.length) {
+        sections.push({
+          title: '👤 Actors',
+          items: entities.actors.map(a => a.name)
+        });
+      }
+      
+      if (entities.relationships?.length) {
+        sections.push({
+          title: '🔗 Relationships',
+          items: entities.relationships.map(r => `${r.from} → ${r.to}`)
+        });
+      }
+      
+      if (entities.decisions?.length) {
+        sections.push({
+          title: '⚡ Decisions',
+          items: entities.decisions.slice(0, 5)
+        });
+      }
+      
+      if (entities.actions?.length) {
+        sections.push({
+          title: '✅ Actions',
+          items: entities.actions.slice(0, 5)
+        });
+      }
+      
+      if (sections.length === 0) {
+        entitiesPanel.style.display = 'none';
+        return;
+      }
+      
+      entitiesGrid.innerHTML = sections.map(section => `
+        <div class="entity-card">
+          <h4>${section.title} <span class="count">${section.items.length}</span></h4>
+          <ul class="entity-list">
+            ${section.items.slice(0, 8).map(item => `<li>${item}</li>`).join('')}
+            ${section.items.length > 8 ? `<li style="color: #6e7681;">+${section.items.length - 8} more</li>` : ''}
+          </ul>
+        </div>
+      `).join('');
+      
+      entitiesPanel.style.display = 'block';
+    }
+    
+    // Copy button
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      if (currentAnalysis) {
+        navigator.clipboard.writeText(currentAnalysis);
+        document.getElementById('copyBtn').textContent = '✓ Copied!';
+        setTimeout(() => {
+          document.getElementById('copyBtn').textContent = '📋 Copy';
+        }, 2000);
+      }
+    });
+    
+    // Save button
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      if (!currentAnalysis) return;
+      
+      const blob = new Blob([currentAnalysis], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analysis-${new Date().toISOString().slice(0,10)}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    
+    // Import button
+    document.getElementById('importBtn').addEventListener('click', () => {
+      if (!currentEntities) return;
+      
+      const total = (currentEntities.systems?.length || 0) + 
+                    (currentEntities.actors?.length || 0);
+      const rels = currentEntities.relationships?.length || 0;
+      
+      document.getElementById('importSummary').innerHTML = `
+        Will import: <strong>${total}</strong> actors/systems and <strong>${rels}</strong> relationships
+      `;
+      
+      document.getElementById('importModal').classList.add('show');
+    });
+    
+    // Cancel import
+    document.getElementById('cancelImport').addEventListener('click', () => {
+      document.getElementById('importModal').classList.remove('show');
+    });
+    
+    // Confirm import
+    document.getElementById('confirmImport').addEventListener('click', async () => {
+      const rteId = document.getElementById('importRteSelect').value;
+      
+      try {
+        const res = await fetch('/api/analyze/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entities: currentEntities,
+            rteId: parseInt(rteId)
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(`✓ ${data.message}`);
+          document.getElementById('importModal').classList.remove('show');
+        } else {
+          throw new Error(data.error);
+        }
+      } catch (e) {
+        alert('Import failed: ' + e.message);
+      }
+    });
+    
+    // Load marked.js for markdown rendering
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+    document.head.appendChild(script);
+    
+    // Recover last analysis button
+    document.getElementById('recoverBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/analyze/last');
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'No saved analysis found');
+        }
+        
+        currentAnalysis = data.analysis;
+        currentEntities = data.entities;
+        
+        // Render output
+        outputEmpty.style.display = 'none';
+        outputProgress.style.display = 'none';
+        outputResult.style.display = 'block';
+        outputContent.innerHTML = marked.parse(data.analysis);
+        
+        // Render metadata
+        const chunksInfo = data.metadata.chunks > 1 ? `<div class="metadata-item">📄 ${data.metadata.chunks} chunks</div>` : '';
+        const savedInfo = data.savedAt ? `<div class="metadata-item">💾 Recovered from ${new Date(data.savedAt).toLocaleString()}</div>` : '';
+        metadata.innerHTML = `
+          <div class="metadata-item">🤖 ${data.metadata.model}</div>
+          <div class="metadata-item">⏱️ ${(data.metadata.processingTimeMs / 1000).toFixed(1)}s</div>
+          <div class="metadata-item">📥 ${data.metadata.inputLength.toLocaleString()} chars</div>
+          <div class="metadata-item">📤 ${data.metadata.outputLength.toLocaleString()} chars</div>
+          ${chunksInfo}
+          ${savedInfo}
+        `;
+        
+        // Render entities
+        renderEntities(data.entities);
+        
+      } catch (e) {
+        alert('Recovery failed: ' + e.message);
+      }
+    });
+    
+    // Initialize
+    loadRTEs();
+  </script>
+</body>
+</html>

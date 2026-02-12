@@ -1,0 +1,74 @@
+<!-- Add Relationship Modal -->
+<div class="modal-overlay hidden" id="addRelationshipModal" role="dialog" aria-modal="true" aria-labelledby="addRelationshipTitle">
+  <div class="modal">
+    <h3 id="addRelationshipTitle">Add Relationship</h3>
+    <div class="form-group ds-field-group">
+      <label class="ds-field-label" for="relSourceActor">Source Actor</label>
+      <select id="relSourceActor" class="ds-select" required>
+        <option value="">Select source...</option>
+      </select>
+    </div>
+    <div class="form-group ds-field-group">
+      <label class="ds-field-label" for="relType">Relationship Type</label>
+      <select id="relType" class="ds-select">
+        <option value="works_with">works_with</option>
+        <option value="reports_to">reports_to</option>
+        <option value="manages">manages</option>
+        <option value="collaborates_with">collaborates_with</option>
+        <option value="member_of">member_of</option>
+        <option value="works_on">works_on</option>
+        <option value="owns">owns</option>
+        <option value="uses">uses</option>
+        <option value="depends_on">depends_on</option>
+        <option value="related_to">related_to</option>
+      </select>
+      <input type="text" id="relTypeCustom" class="ds-input" placeholder="Or enter custom type..." style="margin-top: 8px;">
+    </div>
+    <div class="form-group ds-field-group">
+      <label class="ds-field-label" for="relTargetActor">Target Actor</label>
+      <select id="relTargetActor" class="ds-select" required>
+        <option value="">Select target...</option>
+      </select>
+    </div>
+    <div class="form-group ds-field-group">
+      <label class="ds-field-label" for="relContext">Context (optional)</label>
+      <input type="text" id="relContext" class="ds-input" placeholder="Describe the relationship...">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="ds-btn ds-btn--secondary" onclick="closeAddRelationshipModal()">Cancel</button>
+      <button type="button" class="ds-btn ds-btn--primary" onclick="createRelationship()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Actor Modal -->
+<div class="modal-overlay hidden" id="addActorModal" role="dialog" aria-modal="true" aria-labelledby="addActorTitle">
+  <div class="modal">
+    <h3 id="addActorTitle">Add Actor</h3>
+    <div class="form-group ds-field-group">
+      <label class="ds-field-label ds-field-label--required" for="actorName">Name</label>
+      <input type="text" id="actorName" class="ds-input" placeholder="Actor name..." required>
+    </div>
+    <div class="form-group ds-field-group">
+      <label class="ds-field-label" for="actorType">Type</label>
+      <select id="actorType" class="ds-select">
+        <option value="person">Person</option>
+        <option value="role">Role</option>
+        <option value="team">Team</option>
+        <option value="system">System</option>
+        <option value="organization">Organization</option>
+        <option value="project">Project</option>
+        <option value="location">Location</option>
+        <option value="technology">Technology</option>
+      </select>
+    </div>
+    <div class="form-group ds-field-group">
+      <label class="ds-field-label" for="actorDescription">Description (optional)</label>
+      <input type="text" id="actorDescription" class="ds-input" placeholder="Brief description...">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="ds-btn ds-btn--secondary" onclick="closeAddActorModal()">Cancel</button>
+      <button type="button" class="ds-btn ds-btn--primary" onclick="createActor()">Create</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,82 @@
+<!-- PO AI Navigation Header -->
+<!-- Design System & Command Palette & RTE Selector CSS & JS -->
+<link rel="stylesheet" href="/css/design-system.css">
+<link rel="stylesheet" href="/css/command-palette.css">
+<link rel="stylesheet" href="/css/rte-selector.css">
+<script src="/js/ui-utils.js" defer></script>
+<script src="/js/command-palette.js" defer></script>
+<script src="/js/rte-selector.js" defer></script>
+
+<nav class="top-menu">
+  <!-- Left spacer for balance -->
+  <div class="menu-side"></div>
+  
+  <!-- Logo - centered, clickable to home -->
+  <a href="/" class="menu-brand" title="Home">🎯 PO AI</a>
+  
+  <!-- Right side: RTE Selector & Command Palette -->
+  <div class="menu-side menu-right">
+    <div id="globalRteSelector" class="nav-rte-selector"></div>
+    <button class="menu-btn cmd-trigger" onclick="document.querySelector('.cmd-palette-overlay').classList.add('open'); document.querySelector('.cmd-palette-input').focus();" title="Command Palette (⌘K)">
+      <span>⌘K</span>
+    </button>
+  </div>
+</nav>
+
+<style>
+  .top-menu {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .menu-brand {
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: linear-gradient(135deg, #58a6ff 0%, #a371f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .menu-brand:hover {
+    opacity: 0.8;
+  }
+  
+  .menu-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .menu-right {
+    justify-content: flex-end;
+  }
+  
+  .nav-rte-selector {
+    margin: 0;
+  }
+  
+  .cmd-trigger {
+    padding: 8px 14px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #8b949e;
+    font-size: 0.85rem;
+    font-family: 'SF Mono', Monaco, monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .cmd-trigger:hover {
+    background: #30363d;
+    color: #c9d1d9;
+    border-color: #58a6ff;
+  }
+</style>

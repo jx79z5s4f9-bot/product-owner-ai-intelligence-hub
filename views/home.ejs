@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PO AI - Intelligence Hub</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'home' }) %>
+
+  <main class="home-container">
+    <div class="home-header">
+      <h1>🎯 Intelligence Hub</h1>
+      <p>Your Product Ownership knowledge base</p>
+    </div>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="docCount"><span class="ds-skeleton ds-skeleton-stat"></span></div>
+        <div class="stat-label">Documents</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="actorCount"><span class="ds-skeleton ds-skeleton-stat"></span></div>
+        <div class="stat-label">Actors</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="tagCount"><span class="ds-skeleton ds-skeleton-stat"></span></div>
+        <div class="stat-label">Tags</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="pendingCount"><span class="ds-skeleton ds-skeleton-stat"></span></div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+    
+    <!-- 
+      TILE CONFIGURATION
+      ===================
+      To reorder tiles: Change data-order attribute (lower = first)
+      To regroup tiles: Change data-group attribute
+      To change color: Change data-color attribute
+      
+      Colors: green, blue, purple, orange, pink, teal, yellow, red, gray
+      Groups: core, knowledge, system
+    -->
+    
+    <!-- All tiles rendered from config -->
+    <div id="tileContainer"></div>
+    
+    <div class="keyboard-hint">
+      <kbd>⌘K</kbd> Command Palette • Click logo to return home
+    </div>
+  </main>
+
+  <script>
+    // =============================================
+    // TILE CONFIGURATION - Edit here to reorder!
+    // =============================================
+    const TILES = [
+      // Core Actions
+      { id: 'ingest', group: 'core', order: 1, color: 'green', icon: '📥', title: 'Ingest', desc: 'Capture notes, logs, decisions', href: '/ingest' },
+      { id: 'ask', group: 'core', order: 2, color: 'blue', icon: '❓', title: 'Ask', desc: 'Query with evidence-based answers', href: '/ask' },
+      { id: 'search', group: 'core', order: 3, color: 'orange', icon: '🔍', title: 'Search', desc: 'Find documents by tags & dates', href: '/search' },
+      { id: 'trend', group: 'core', order: 4, color: 'purple', icon: '📈', title: 'Trends', desc: 'Analyze patterns over time', href: '/trend' },
+      { id: 'analyze', group: 'core', order: 5, color: 'pink', icon: '📄', title: 'Deep Analysis', desc: 'Heavy doc processing (Dutch)', href: '/analyze' },
+      { id: 'standup', group: 'core', order: 6, color: 'yellow', icon: '☀️', title: 'Standup', desc: 'Daily activity summary', href: '/standup' },
+      
+      // Knowledge Tools
+      { id: 'navigator', group: 'knowledge', order: 10, color: 'teal', icon: '🗂️', title: 'Navigator', desc: 'Browse all documents', href: '/navigator' },
+      { id: 'network', group: 'knowledge', order: 11, color: 'blue', icon: '🕸️', title: 'Network', desc: 'Relationship graph', href: '/network' },
+      { id: 'tags', group: 'knowledge', order: 12, color: 'yellow', icon: '🏷️', title: 'Tags', desc: 'Manage categories', href: '/tags' },
+      { id: 'register', group: 'knowledge', order: 13, color: 'red', icon: '📋', title: 'Register', desc: 'Risk & action tracking', href: '/register' },
+      { id: 'stakeholders', group: 'knowledge', order: 15, color: 'orange', icon: '👥', title: 'Stakeholders', desc: 'People profiles & notes', href: '/stakeholders' },
+      { id: 'suggestions', group: 'knowledge', order: 16, color: 'orange', icon: '🧪', title: 'Suggestions', desc: 'Review relationships', href: '/suggestions' },
+      { id: 'glossary', group: 'knowledge', order: 17, color: 'teal', icon: '📖', title: 'Glossary', desc: 'Term definitions', href: '/glossary' },
+      
+      // System
+      { id: 'translate', group: 'system', order: 20, color: 'gray', icon: '🌐', title: 'Translate', desc: 'Dutch ↔ English', href: '/translate' },
+      { id: 'settings', group: 'system', order: 21, color: 'gray', icon: '⚙️', title: 'Settings', desc: 'LLM & config', href: '/settings' },
+      { id: 'maintenance', group: 'system', order: 22, color: 'gray', icon: '🔧', title: 'Maintenance', desc: 'System health', href: '/maintenance' },
+    ];
+    
+    const GROUP_LABELS = {
+      'core': '📌 Core Actions',
+      'knowledge': '🧠 Knowledge Tools',
+      'system': '⚙️ System'
+    };
+    
+    // =============================================
+    // Render tiles grouped and sorted
+    // =============================================
+    function renderTiles() {
+      const container = document.getElementById('tileContainer');
+      
+      // Group tiles
+      const groups = {};
+      TILES.forEach(tile => {
+        if (!groups[tile.group]) groups[tile.group] = [];
+        groups[tile.group].push(tile);
+      });
+      
+      // Sort each group by order
+      Object.keys(groups).forEach(group => {
+        groups[group].sort((a, b) => a.order - b.order);
+      });
+      
+      // Render in group order
+      const groupOrder = ['core', 'knowledge', 'system'];
+      let html = '';
+      
+      groupOrder.forEach(groupKey => {
+        if (!groups[groupKey]) return;
+        
+        html += `
+          <div class="tile-section">
+            <div class="section-label">${GROUP_LABELS[groupKey] || groupKey}</div>
+            <div class="tile-grid">
+              ${groups[groupKey].map(tile => `
+                <a href="${tile.href}" class="tile" data-color="${tile.color}" data-id="${tile.id}">
+                  <div class="tile-icon">${tile.icon}</div>
+                  <div class="tile-title">${tile.title}</div>
+                  <div class="tile-desc">${tile.desc}</div>
+                </a>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+    
+    // Load stats
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/settings/status');
+        const status = await res.json();
+
+        // Replace skeletons with actual values
+        POAI.skeleton.replace('#docCount', status.database?.documents || 0);
+        POAI.skeleton.replace('#actorCount', status.database?.actors || 0);
+        POAI.skeleton.replace('#tagCount', status.database?.tags || 0);
+        POAI.skeleton.replace('#pendingCount', status.extraction?.stats?.pending || 0);
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+        // Show error state
+        POAI.skeleton.replace('#docCount', '--');
+        POAI.skeleton.replace('#actorCount', '--');
+        POAI.skeleton.replace('#tagCount', '--');
+        POAI.skeleton.replace('#pendingCount', '--');
+      }
+    }
+    
+    // Initialize
+    renderTiles();
+    loadStats();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relationship Suggestions - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/swipe-cards.css">
+  <style>
+    .suggestions-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .suggestions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .suggestions-header h1 {
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .simmer-badge {
+      background: linear-gradient(135deg, #ff9500, #ff6b00);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .filters-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      background: #161b22;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+    
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .filter-group label {
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .filter-group select {
+      padding: 8px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+    }
+    
+    .type-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .type-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #30363d;
+      background: transparent;
+      color: #c9d1d9;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    
+    .type-pill:hover {
+      background: #21262d;
+    }
+    
+    .type-pill.active {
+      background: #238636;
+      border-color: #238636;
+    }
+    
+    .type-pill .count {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+    
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      padding: 16px;
+      background: #161b22;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      border: 1px solid #30363d;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #58a6ff;
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+    
+    .stat-item.highlight .stat-value {
+      color: #3fb950;
+    }
+    
+    .suggestions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .suggestion-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+    
+    .suggestion-card:hover {
+      border-color: #58a6ff;
+    }
+    
+    .suggestion-card.high-evidence {
+      border-left: 4px solid #3fb950;
+    }
+    
+    .suggestion-card.medium-evidence {
+      border-left: 4px solid #d29922;
+    }
+    
+    .suggestion-card.low-evidence {
+      border-left: 4px solid #8b949e;
+    }
+    
+    .suggestion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    
+    .relationship-display {
+      flex: 1;
+    }
+    
+    .actor-name {
+      font-weight: 600;
+      color: #c9d1d9;
+    }
+    
+    .actor-type {
+      font-size: 0.7rem;
+      color: #8b949e;
+      background: #21262d;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+    
+    .relationship-arrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      color: #8b949e;
+    }
+    
+    .relationship-type {
+      background: #1f6feb;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .evidence-badges {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    
+    .badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+    
+    .badge-evidence {
+      background: #238636;
+      color: #fff;
+    }
+    
+    .badge-confidence {
+      background: #9e6a03;
+      color: #fff;
+    }
+    
+    .badge-docs {
+      background: #21262d;
+      color: #c9d1d9;
+    }
+    
+    .context-section {
+      margin-top: 12px;
+      padding: 12px;
+      background: #0d1117;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #8b949e;
+      max-height: 100px;
+      overflow: hidden;
+      transition: max-height 0.3s;
+      border: 1px solid #21262d;
+    }
+    
+    .context-section.expanded {
+      max-height: none;
+    }
+    
+    .context-toggle {
+      color: #58a6ff;
+      cursor: pointer;
+      font-size: 0.75rem;
+      margin-top: 8px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .btn-approve {
+      background: #238636;
+      color: white;
+    }
+    
+    .btn-approve:hover {
+      background: #2ea043;
+    }
+    
+    .btn-dismiss {
+      background: #da3633;
+      color: white;
+    }
+    
+    .btn-dismiss:hover {
+      background: #f85149;
+    }
+    
+    .btn-simmer {
+      background: #9e6a03;
+      color: white;
+    }
+    
+    .btn-simmer:hover {
+      background: #bb8009;
+    }
+    
+    .btn-secondary {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+    }
+    
+    .btn-secondary:hover {
+      background: #30363d;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b949e;
+    }
+    
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    
+    .empty-state h3 {
+      color: #c9d1d9;
+      margin-bottom: 8px;
+    }
+    
+    .last-seen {
+      font-size: 0.7rem;
+      color: #6e7681;
+      margin-top: 8px;
+    }
+    
+    /* View Mode Toggle */
+    .view-mode-toggle {
+      display: flex;
+      gap: 4px;
+      background: #21262d;
+      padding: 4px;
+      border-radius: 8px;
+      margin-left: auto;
+    }
+    
+    .view-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .view-btn:hover {
+      color: #c9d1d9;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .view-btn.active {
+      background: #238636;
+      color: #fff;
+    }
+    
+    /* Swipe Container */
+    .swipe-container {
+      padding: 40px 0;
+    }
+    
+    .swipe-deck-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    
+    .swipe-controls {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+    
+    .swipe-action-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .swipe-action-btn.reject {
+      background: #f85149;
+      color: white;
+    }
+    
+    .swipe-action-btn.skip {
+      background: #8b949e;
+      color: white;
+    }
+    
+    .swipe-action-btn.accept {
+      background: #238636;
+      color: white;
+    }
+    
+    .swipe-action-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .swipe-progress {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .swipe-hints {
+      font-size: 0.75rem;
+      color: #6e7681;
+    }
+    
+    /* Approved relationships */
+    .approved-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-left: 4px solid #238636;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+    
+    .approved-card:hover {
+      border-color: #58a6ff;
+    }
+    
+    .approved-info {
+      flex: 1;
+    }
+    
+    .approved-meta {
+      font-size: 0.75rem;
+      color: #6e7681;
+      margin-top: 4px;
+    }
+    
+    .btn-revoke {
+      background: #da3633;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    
+    .btn-revoke:hover {
+      background: #f85149;
+    }
+    
+    .backfill-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .backfill-bar .btn {
+      white-space: nowrap;
+    }
+    
+    .backfill-bar .backfill-info {
+      color: #8b949e;
+      font-size: 0.85rem;
+    }
+    
+    .backfill-progress {
+      color: #d29922;
+      font-size: 0.85rem;
+    }
+    
+    .approved-count {
+      background: rgba(35, 134, 54, 0.3);
+      color: #3fb950;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'suggestions' }) %>
+  
+  <div class="suggestions-container">
+    <div class="suggestions-header">
+      <h1>
+        🧪 Relationship Suggestions
+        <span class="simmer-badge">Simmer Pattern</span>
+      </h1>
+    </div>
+    
+    <!-- Filters Bar -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>RTE:</label>
+        <select id="rteSelect" onchange="changeRte()">
+          <% rtes.forEach(rte => { %>
+            <option value="<%= rte.id %>" <%= rte.id == currentRteId ? 'selected' : '' %>>
+              <%= rte.name %>
+            </option>
+          <% }) %>
+        </select>
+      </div>
+      
+      <div class="type-pills">
+        <button class="type-pill active" data-filter="all" onclick="setFilter('all')">All Pending</button>
+        <button class="type-pill" data-filter="strong" onclick="setFilter('strong')">Strong Evidence (3+)</button>
+        <button class="type-pill" data-filter="high-conf" onclick="setFilter('high-conf')">High Confidence</button>
+        <button class="type-pill" data-filter="dismissed" onclick="setFilter('dismissed')">Dismissed</button>
+        <button class="type-pill" data-filter="approved" onclick="setFilter('approved')">✅ Approved</button>
+      </div>
+      
+      <!-- View Mode Toggle -->
+      <div class="view-mode-toggle">
+        <button class="view-btn active" data-mode="list" onclick="setViewMode('list')">
+          <span>☰</span> List
+        </button>
+        <button class="view-btn" data-mode="swipe" onclick="setViewMode('swipe')">
+          <span>🃏</span> Swipe
+        </button>
+      </div>
+    </div>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value" id="statPending">-</div>
+        <div class="stat-label">Pending</div>
+      </div>
+      <div class="stat-item highlight">
+        <div class="stat-value" id="statStrong">-</div>
+        <div class="stat-label">Strong Evidence</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statConfident">-</div>
+        <div class="stat-label">High Confidence</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statDismissed">-</div>
+        <div class="stat-label">Dismissed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statAvgEvidence">-</div>
+        <div class="stat-label">Avg Evidence</div>
+      </div>
+      <div class="stat-item highlight">
+        <div class="stat-value" id="statApproved">-</div>
+        <div class="stat-label">Approved</div>
+      </div>
+    </div>
+    
+    <!-- Backfill Bar -->
+    <div class="backfill-bar" id="backfillBar">
+      <button class="btn btn-secondary" onclick="runBackfill()" id="backfillBtn">🔄 Backfill Relationships</button>
+      <span class="backfill-info">Run relationship extraction on all existing documents (for documents ingested before this feature).</span>
+      <span class="backfill-progress" id="backfillProgress" style="display:none"></span>
+    </div>
+    
+    <!-- Suggestions List -->
+    <div id="suggestionList" class="suggestions-list">
+      <!-- Loaded dynamically -->
+    </div>
+    
+    <!-- Swipe Mode Container -->
+    <div id="swipeContainer" class="swipe-container" style="display: none;">
+      <div class="swipe-deck-wrapper">
+        <div id="swipeDeck" class="swipe-deck"></div>
+        <div class="swipe-controls">
+          <button class="swipe-action-btn reject" onclick="swipeDeck && swipeDeck.reject()">
+            <span>✕</span>
+          </button>
+          <button class="swipe-action-btn skip" onclick="swipeDeck && swipeDeck.skip()">
+            <span>↓</span>
+          </button>
+          <button class="swipe-action-btn accept" onclick="swipeDeck && swipeDeck.accept()">
+            <span>✓</span>
+          </button>
+        </div>
+        <div class="swipe-progress">
+          <span id="swipeProgress">0 / 0</span>
+          <span class="swipe-hints">← Reject | ↓ Skip | → Approve</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let currentRteId = <%= currentRteId %>;
+    let currentFilter = 'all';
+    let suggestions = [];
+    let approvedRelationships = [];
+    
+    // Override with localStorage default if set
+    (function applyDefaultRte() {
+      const defaultRte = localStorage.getItem('poai_default_rte');
+      if (defaultRte) {
+        const select = document.getElementById('rteSelect');
+        const opt = select.querySelector(`option[value="${defaultRte}"]`);
+        if (opt) {
+          select.value = defaultRte;
+          currentRteId = defaultRte;
+        }
+      }
+    })();
+    
+    async function loadSuggestions() {
+      if (currentFilter === 'approved') {
+        await loadApproved();
+        return;
+      }
+      
+      const params = new URLSearchParams();
+      if (currentFilter === 'strong') params.set('minEvidence', '3');
+      if (currentFilter === 'dismissed') params.set('includeDismissed', 'true');
+      params.set('sortBy', 'evidence');
+      
+      try {
+        const resp = await fetch(`/api/rte/${currentRteId}/suggestions?${params}`);
+        const data = await resp.json();
+        
+        suggestions = data.suggestions || [];
+        updateStats(data.stats || {});
+        renderSuggestions();
+      } catch (err) {
+        console.error('Failed to load suggestions:', err);
+      }
+      
+      // Also load approved count for the stats bar
+      loadApprovedCount();
+    }
+    
+    async function loadApprovedCount() {
+      try {
+        const resp = await fetch(`/api/rte/${currentRteId}/relationships`);
+        const data = await resp.json();
+        document.getElementById('statApproved').textContent = data.total || 0;
+      } catch (err) {
+        // ignore
+      }
+    }
+    
+    async function loadApproved() {
+      const container = document.getElementById('suggestionList');
+      const swipeContainer = document.getElementById('swipeContainer');
+      swipeContainer.style.display = 'none';
+      container.style.display = 'block';
+      
+      try {
+        const resp = await fetch(`/api/rte/${currentRteId}/relationships`);
+        const data = await resp.json();
+        
+        approvedRelationships = data.relationships || [];
+        document.getElementById('statApproved').textContent = data.total || 0;
+        renderApproved();
+      } catch (err) {
+        console.error('Failed to load approved relationships:', err);
+      }
+    }
+    
+    function renderApproved() {
+      const container = document.getElementById('suggestionList');
+      
+      if (approvedRelationships.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>No approved relationships yet</h3>
+            <p>Approve suggestions to build your relationship map</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Group by relationship type
+      const grouped = {};
+      approvedRelationships.forEach(r => {
+        const type = r.relationship_type || 'unknown';
+        if (!grouped[type]) grouped[type] = [];
+        grouped[type].push(r);
+      });
+      
+      let html = `<div style="margin-bottom:12px;color:#8b949e;font-size:0.9rem">
+        ✅ ${approvedRelationships.length} approved relationships — click 🗑️ to revoke
+      </div>`;
+      
+      for (const [type, rels] of Object.entries(grouped).sort()) {
+        html += `<div style="margin-bottom:8px;color:#58a6ff;font-weight:600;font-size:0.9rem">
+          ${type.replace(/_/g, ' ')} (${rels.length})
+        </div>`;
+        
+        html += rels.map(r => {
+          const confidence = Math.round((r.llm_confidence || 0) * 100);
+          const created = r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A';
+          
+          return `
+            <div class="approved-card" data-rel-id="${r.id}">
+              <div class="approved-info">
+                <span class="actor-name">${escapeHtml(r.source_name)}</span>
+                <span class="actor-type">${r.source_type}</span>
+                <span style="color:#8b949e"> → </span>
+                <span class="relationship-type">${r.relationship_type}</span>
+                <span style="color:#8b949e"> → </span>
+                <span class="actor-name">${escapeHtml(r.target_name)}</span>
+                <span class="actor-type">${r.target_type}</span>
+                <div class="approved-meta">
+                  Confidence: ${confidence}% · Added: ${created}
+                  ${r.context ? ` · Context: "${escapeHtml(r.context.slice(0, 100))}..."` : ''}
+                </div>
+              </div>
+              <button class="btn-revoke" onclick="revokeRelationship(${r.id})" title="Delete this relationship">🗑️ Revoke</button>
+            </div>
+          `;
+        }).join('');
+      }
+      
+      container.innerHTML = html;
+    }
+    
+    async function revokeRelationship(relId) {
+      const confirmed = await POAI.confirm.danger('Delete Relationship', 'Delete this approved relationship?');
+      if (!confirmed) return;
+      try {
+        await fetch(`/api/rte/${currentRteId}/relationships/${relId}`, { method: 'DELETE' });
+        loadApproved();
+      } catch (err) {
+        console.error('Revoke failed:', err);
+      }
+    }
+    
+    function updateStats(stats) {
+      document.getElementById('statPending').textContent = stats.pending || 0;
+      document.getElementById('statStrong').textContent = stats.strong_evidence || 0;
+      document.getElementById('statConfident').textContent = stats.high_confidence || 0;
+      document.getElementById('statDismissed').textContent = stats.dismissed || 0;
+      document.getElementById('statAvgEvidence').textContent = stats.avg_evidence || '0';
+    }
+    
+    function renderSuggestions() {
+      const container = document.getElementById('suggestionList');
+      
+      let filtered = suggestions;
+      if (currentFilter === 'high-conf') {
+        filtered = suggestions.filter(s => s.llm_confidence >= 0.7);
+      }
+      
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>No suggestions to review</h3>
+            <p>Ingest more documents or run backfill to discover relationships</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = filtered.map(s => {
+        const evidenceClass = s.evidence_count >= 3 ? 'high-evidence' : 
+                             s.evidence_count >= 2 ? 'medium-evidence' : 'low-evidence';
+        const confidence = Math.round((s.llm_confidence || 0) * 100);
+        const docCount = s.source_documents ? JSON.parse(s.source_documents || '[]').length : 0;
+        
+        let contextSamples = [];
+        try { contextSamples = JSON.parse(s.context_samples || '[]'); } catch(e) {}
+        
+        const lastSeen = s.last_seen_at ? new Date(s.last_seen_at).toLocaleDateString() : 'N/A';
+        
+        return `
+          <div class="suggestion-card ${evidenceClass}" data-id="${s.id}">
+            <div class="suggestion-header">
+              <div class="relationship-display">
+                <span class="actor-name">${escapeHtml(s.source_name)}</span>
+                <span class="actor-type">${s.source_type}</span>
+                <div class="relationship-arrow">
+                  <span>→</span>
+                  <span class="relationship-type">${s.relationship_type}</span>
+                  <span>→</span>
+                </div>
+                <span class="actor-name">${escapeHtml(s.target_name)}</span>
+                <span class="actor-type">${s.target_type}</span>
+              </div>
+              <div class="evidence-badges">
+                <span class="badge badge-evidence">🔥 ${s.evidence_count || 1} evidence</span>
+                <span class="badge badge-confidence">${confidence}%</span>
+                ${docCount > 0 ? `<span class="badge badge-docs">📄 ${docCount}</span>` : ''}
+              </div>
+            </div>
+            
+            ${contextSamples.length > 0 ? `
+              <div class="context-section" id="context-${s.id}">
+                <strong>Context:</strong><br>
+                ${contextSamples.map(c => `"${escapeHtml(c.slice(0, 200))}..."`).join('<br><br>')}
+              </div>
+              ${contextSamples.some(c => c.length > 200) ? `
+                <div class="context-toggle" onclick="toggleContext(${s.id})">Show more</div>
+              ` : ''}
+            ` : ''}
+            
+            <div class="last-seen">Last seen: ${lastSeen}</div>
+            
+            <div class="action-buttons">
+              <button class="btn btn-approve" onclick="approve(${s.id})">✓ Approve</button>
+              <button class="btn btn-simmer" onclick="letSimmer(${s.id})" title="Keep watching">🧪 Simmer</button>
+              <button class="btn btn-dismiss" onclick="dismiss(${s.id})" title="Never suggest again">✕ Never</button>
+              <button class="btn btn-secondary" onclick="reject(${s.id})" title="Delete">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+    
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.type-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+      loadSuggestions();
+    }
+    
+    function changeRte() {
+      currentRteId = document.getElementById('rteSelect').value;
+      loadSuggestions();
+    }
+    
+    function toggleContext(id) {
+      const el = document.getElementById(`context-${id}`);
+      el.classList.toggle('expanded');
+    }
+    
+    async function approve(id) {
+      try {
+        await fetch(`/api/rte/${currentRteId}/suggestions/${id}/approve`, { method: 'POST' });
+        loadSuggestions();
+      } catch (err) {
+        console.error('Approve failed:', err);
+      }
+    }
+    
+    async function dismiss(id) {
+      const confirmed = await POAI.confirm.warning('Dismiss Suggestion', 'Never suggest this relationship again?');
+      if (!confirmed) return;
+      try {
+        await fetch(`/api/rte/${currentRteId}/suggestions/${id}/dismiss`, { method: 'POST' });
+        loadSuggestions();
+      } catch (err) {
+        console.error('Dismiss failed:', err);
+      }
+    }
+    
+    async function reject(id) {
+      try {
+        await fetch(`/api/rte/${currentRteId}/suggestions/${id}/reject`, { method: 'POST' });
+        loadSuggestions();
+      } catch (err) {
+        console.error('Reject failed:', err);
+      }
+    }
+    
+    function letSimmer(id) {
+      const card = document.querySelector(`[data-id="${id}"]`);
+      card.style.opacity = '0.5';
+      setTimeout(() => card.style.opacity = '1', 1000);
+    }
+    
+    // Backfill: run relationship extraction on all existing documents
+    async function runBackfill() {
+      const btn = document.getElementById('backfillBtn');
+      const progress = document.getElementById('backfillProgress');
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Running...';
+      progress.style.display = 'inline';
+      progress.textContent = 'Processing all documents through relationship extraction...';
+      
+      try {
+        const resp = await fetch('/api/extraction/backfill-relationships', { method: 'POST' });
+        const data = await resp.json();
+        
+        if (data.success) {
+          progress.textContent = `✅ Done! ${data.processed} documents → ${data.suggestions} new suggestions${data.errors > 0 ? ` (${data.errors} errors)` : ''}`;
+          progress.style.color = '#3fb950';
+          // Reload to show new suggestions
+          setTimeout(() => loadSuggestions(), 1500);
+        } else {
+          progress.textContent = `❌ Error: ${data.error}`;
+          progress.style.color = '#f85149';
+        }
+      } catch (err) {
+        progress.textContent = `❌ Failed: ${err.message}`;
+        progress.style.color = '#f85149';
+      }
+      
+      btn.disabled = false;
+      btn.textContent = '🔄 Backfill Relationships';
+    }
+    
+    // View Mode Handling
+    let viewMode = 'list';
+    let swipeDeck = null;
+    
+    function setViewMode(mode) {
+      viewMode = mode;
+      document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      
+      const listContainer = document.getElementById('suggestionList');
+      const swipeContainer = document.getElementById('swipeContainer');
+      
+      if (mode === 'list') {
+        listContainer.style.display = 'block';
+        swipeContainer.style.display = 'none';
+        if (currentFilter === 'approved') {
+          renderApproved();
+        } else {
+          renderSuggestions();
+        }
+      } else {
+        listContainer.style.display = 'none';
+        swipeContainer.style.display = 'block';
+        initSwipeDeck();
+      }
+    }
+    
+    function initSwipeDeck() {
+      const container = document.getElementById('swipeDeck');
+      
+      let filtered = suggestions;
+      if (currentFilter === 'high-conf') {
+        filtered = suggestions.filter(s => s.llm_confidence >= 0.7);
+      }
+      
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><h3>All done!</h3><p>No more suggestions to review</p></div>';
+        return;
+      }
+      
+      // Convert suggestions to swipe card format
+      const cards = filtered.map(s => {
+        const confidence = Math.round((s.llm_confidence || 0) * 100);
+        return {
+          id: s.id,
+          title: `${s.source_name} → ${s.target_name}`,
+          subtitle: s.relationship_type,
+          details: `${s.source_type} → ${s.target_type}`,
+          evidenceCount: s.evidence_count || 1,
+          confidence: confidence,
+          contexts: JSON.parse(s.context_samples || '[]')
+        };
+      });
+      
+      swipeDeck = new SwipeableDeck(container, {
+        onAccept: (card) => {
+          approve(card.id);
+          updateSwipeProgress();
+        },
+        onReject: (card) => {
+          dismiss(card.id);
+          updateSwipeProgress();
+        },
+        onSkip: (card) => {
+          letSimmer(card.id);
+          updateSwipeProgress();
+        }
+      });
+      
+      swipeDeck.setCards(cards);
+      updateSwipeProgress();
+    }
+    
+    function updateSwipeProgress() {
+      if (!swipeDeck) return;
+      const current = swipeDeck.currentIndex + 1;
+      const total = swipeDeck.cards.length;
+      document.getElementById('swipeProgress').textContent = `${current} / ${total}`;
+    }
+    
+    // Load on init
+    loadSuggestions();
+  </script>
+  <script src="/js/swipe-cards.js"></script>
+</body>
+</html>

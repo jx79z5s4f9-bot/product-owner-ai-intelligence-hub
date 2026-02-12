@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glossary - Domain Terms</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .glossary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .glossary-header h1 {
+      color: #10b981;
+      margin: 0;
+    }
+
+    .add-form {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+
+    .add-form input {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+    }
+
+    .add-form input:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+
+    .add-form button {
+      padding: 0.6rem 1.25rem;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .glossary-table {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.3);
+      color: #10b981;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .dutch { color: #f59e0b; }
+    .english { color: #3b82f6; }
+    .context { color: #6b7280; font-size: 0.85rem; }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0.25rem;
+    }
+
+    .delete-btn:hover {
+      color: #ef4444;
+    }
+
+    .stats {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #10b981;
+      text-decoration: none;
+      margin-bottom: 1rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: #6b7280;
+      padding: 2rem;
+    }
+
+    .search-box {
+      margin-bottom: 1rem;
+    }
+
+    .search-box input {
+      width: 100%;
+      max-width: 400px;
+      padding: 0.6rem 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'glossary' }) %>
+  
+  <main class="container">
+    <div class="glossary-header">
+      <h1>📖 Domain Glossary</h1>
+    </div>
+
+    <div class="add-form">
+      <input type="text" id="dutchInput" placeholder="Dutch term">
+      <input type="text" id="englishInput" placeholder="English translation">
+      <input type="text" id="contextInput" placeholder="Context (optional)">
+      <button onclick="addTerm()">+ Add Term</button>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Search terms..." oninput="filterTerms()">
+    </div>
+
+    <div class="stats" id="stats">Loading...</div>
+
+    <div class="glossary-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Dutch</th>
+            <th>English</th>
+            <th>Context</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="glossaryBody">
+          <tr><td colspan="4" class="empty-msg">Loading glossary...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    let allEntries = [];
+
+    document.addEventListener('DOMContentLoaded', loadGlossary);
+
+    async function loadGlossary() {
+      try {
+        const response = await fetch('/api/glossary');
+        const data = await response.json();
+        allEntries = data.entries || [];
+        renderTable(allEntries);
+        document.getElementById('stats').textContent = `${allEntries.length} terms in glossary`;
+      } catch (error) {
+        document.getElementById('glossaryBody').innerHTML =
+          `<tr><td colspan="4" class="empty-msg">Error loading glossary: ${error.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(entries) {
+      const tbody = document.getElementById('glossaryBody');
+
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">No terms found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = entries.map(entry => `
+        <tr>
+          <td class="dutch">${escapeHtml(entry.dutch)}</td>
+          <td class="english">${escapeHtml(entry.english)}</td>
+          <td class="context">${escapeHtml(entry.context || '-')}</td>
+          <td>
+            <button class="delete-btn" onclick="deleteTerm('${escapeHtml(entry.dutch).replace(/'/g, "\\'")}')">×</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterTerms() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allEntries.filter(e =>
+        e.dutch.toLowerCase().includes(query) ||
+        e.english.toLowerCase().includes(query) ||
+        (e.context && e.context.toLowerCase().includes(query))
+      );
+      renderTable(filtered);
+    }
+
+    async function addTerm() {
+      const dutch = document.getElementById('dutchInput').value.trim();
+      const english = document.getElementById('englishInput').value.trim();
+      const context = document.getElementById('contextInput').value.trim();
+
+      if (!dutch || !english) {
+        alert('Please enter both Dutch and English terms');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/glossary/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dutch, english, context })
+        });
+
+        if (response.ok) {
+          document.getElementById('dutchInput').value = '';
+          document.getElementById('englishInput').value = '';
+          document.getElementById('contextInput').value = '';
+          loadGlossary();
+        } else {
+          const data = await response.json();
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('Error adding term: ' + error.message);
+      }
+    }
+
+    async function deleteTerm(dutch) {
+      const confirmed = await POAI.confirm.danger('Delete Term', `Delete "${dutch}"?`);
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch('/api/glossary/entry', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dutch })
+        });
+
+        if (response.ok) {
+          loadGlossary();
+        } else {
+          alert('Failed to delete term');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Add term on Enter key
+    document.getElementById('englishInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') addTerm();
+    });
+  </script>
+</body>
+</html>

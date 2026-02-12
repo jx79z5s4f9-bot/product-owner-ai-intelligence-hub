@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stakeholder Profile - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .profile-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .back-link {
+      color: #58a6ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .back-link:hover { text-decoration: underline; }
+
+    /* Profile header */
+    .profile-header {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .profile-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .profile-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+      color: #e6edf3;
+    }
+
+    .profile-avatar.stakeholder { background: #f0883e; }
+
+    .profile-info { flex: 1; }
+
+    .profile-name {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #e6edf3;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stakeholder-toggle {
+      background: none;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: #8b949e;
+      transition: all 0.15s;
+    }
+
+    .stakeholder-toggle:hover { border-color: #f0883e; color: #f0883e; }
+    .stakeholder-toggle.active {
+      background: #f0883e26;
+      border-color: #f0883e;
+      color: #f0883e;
+    }
+
+    .profile-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+      color: #8b949e;
+    }
+
+    .profile-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Editable fields */
+    .profile-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .profile-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-label {
+      font-size: 0.75rem;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .field-value {
+      padding: 6px 10px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      cursor: text;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+    }
+
+    .field-value:hover { border-color: #30363d; }
+
+    .field-value input {
+      background: none;
+      border: none;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .field-value .placeholder { color: #484f58; font-style: italic; }
+
+    /* Notes section */
+    .notes-section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .notes-section h2 {
+      font-size: 1.1rem;
+      color: #e6edf3;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .notes-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .notes-textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+
+    .notes-hint {
+      font-size: 0.75rem;
+      color: #484f58;
+      margin-top: 6px;
+    }
+
+    /* Stats bar */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .stat-card .sv { font-size: 1.4rem; font-weight: 700; color: #e6edf3; }
+    .stat-card .sl { font-size: 0.75rem; color: #8b949e; margin-top: 2px; }
+
+    /* Tabs */
+    .profile-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #21262d;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #8b949e;
+      font-size: 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover { color: #c9d1d9; }
+    .tab-btn.active {
+      color: #58a6ff;
+      border-bottom-color: #58a6ff;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Document list */
+    .doc-list { list-style: none; padding: 0; margin: 0; }
+
+    .doc-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.9rem;
+    }
+
+    .doc-row:last-child { border-bottom: none; }
+
+    .doc-row a {
+      color: #58a6ff;
+      text-decoration: none;
+      flex: 1;
+    }
+
+    .doc-row a:hover { text-decoration: underline; }
+
+    .doc-date { color: #484f58; font-size: 0.8rem; }
+
+    /* Relationships */
+    .rel-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.9rem;
+    }
+
+    .rel-row:last-child { border-bottom: none; }
+
+    .rel-type {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: #21262d;
+      color: #8b949e;
+    }
+
+    .rel-name {
+      color: #58a6ff;
+      text-decoration: none;
+      flex: 1;
+    }
+
+    .rel-name:hover { text-decoration: underline; }
+
+    .rel-strength {
+      color: #484f58;
+      font-size: 0.8rem;
+    }
+
+    /* Co-mentioned */
+    .co-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .co-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #c9d1d9;
+      text-decoration: none;
+      transition: border-color 0.15s;
+    }
+
+    .co-chip:hover { border-color: #58a6ff; }
+
+    .co-count {
+      font-size: 0.7rem;
+      color: #484f58;
+    }
+
+    /* Topics */
+    .topic-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .topic-tag {
+      padding: 4px 10px;
+      background: #23863626;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      color: #3fb950;
+    }
+
+    /* Markers */
+    .marker-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.9rem;
+    }
+
+    .marker-row:last-child { border-bottom: none; }
+
+    .marker-type-icon { flex-shrink: 0; }
+
+    .marker-text {
+      flex: 1;
+      color: #c9d1d9;
+      line-height: 1.4;
+    }
+
+    .marker-text.resolved { text-decoration: line-through; color: #484f58; }
+
+    .marker-src {
+      color: #484f58;
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+
+    .marker-src:hover { color: #58a6ff; }
+
+    /* Section labels inside tabs */
+    .section-label {
+      font-size: 0.8rem;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      margin-top: 20px;
+    }
+
+    .section-label:first-child { margin-top: 0; }
+
+    /* Loading / empty */
+    .loading-overlay {
+      text-align: center;
+      padding: 60px;
+      color: #8b949e;
+    }
+
+    .spinner-large {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tab-empty {
+      padding: 24px;
+      text-align: center;
+      color: #484f58;
+      font-style: italic;
+    }
+
+    /* Save indicator */
+    .save-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #238636;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .save-indicator.visible { opacity: 1; }
+
+    @media (max-width: 600px) {
+      .profile-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'stakeholders' }) %>
+
+  <main class="profile-container">
+    <a href="/stakeholders" class="back-link">← Back to Stakeholders</a>
+
+    <div id="profileContent">
+      <div class="loading-overlay">
+        <div class="spinner-large"></div>
+        <div>Loading profile…</div>
+      </div>
+    </div>
+
+    <div class="save-indicator" id="saveIndicator">✓ Saved</div>
+  </main>
+
+  <script>
+    const ACTOR_ID = window.location.pathname.split('/').pop();
+    let profileData = null;
+    let saveTimeout = null;
+
+    // =============================================
+    // Init
+    // =============================================
+    (async function init() {
+      await loadProfile();
+    })();
+
+    // =============================================
+    // Load profile
+    // =============================================
+    async function loadProfile() {
+      const container = document.getElementById('profileContent');
+
+      try {
+        const res = await fetch(`/api/stakeholders/${ACTOR_ID}`);
+        if (!res.ok) throw new Error('Actor not found');
+        profileData = await res.json();
+        renderProfile(profileData, container);
+      } catch (err) {
+        container.innerHTML = `
+          <div class="loading-overlay">
+            <p>❌ ${err.message}</p>
+            <a href="/stakeholders" class="back-link">← Back to Stakeholders</a>
+          </div>
+        `;
+      }
+    }
+
+    // =============================================
+    // Render profile
+    // =============================================
+    function renderProfile(data, container) {
+      const a = data.actor;
+      const initial = a.name.charAt(0).toUpperCase();
+      const isStakeholder = a.is_stakeholder;
+
+      container.innerHTML = `
+        <!-- Header -->
+        <div class="profile-header">
+          <div class="profile-top">
+            <div class="profile-avatar ${isStakeholder ? 'stakeholder' : ''}">${initial}</div>
+            <div class="profile-info">
+              <div class="profile-name">
+                ${escapeHtml(a.name)}
+                <button class="stakeholder-toggle ${isStakeholder ? 'active' : ''}"
+                        onclick="toggleStakeholder()" id="stakeholderBtn">
+                  ${isStakeholder ? '⭐ Stakeholder' : '☆ Mark as Stakeholder'}
+                </button>
+              </div>
+              <div class="profile-meta">
+                <span>💬 ${a.mention_count || 0} mentions</span>
+                ${a.last_seen_at ? `<span>🕐 Last seen ${a.last_seen_at.split('T')[0]}</span>` : ''}
+                ${a.created_at ? `<span>📅 First seen ${a.created_at.split('T')[0]}</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-fields">
+            <div class="profile-field">
+              <span class="field-label">Role</span>
+              <div class="field-value">
+                <input type="text" value="${escapeHtml(a.role || '')}"
+                       placeholder="e.g. Product Owner"
+                       onchange="saveField('role', this.value)">
+              </div>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Team</span>
+              <div class="field-value">
+                <input type="text" value="${escapeHtml(a.team || '')}"
+                       placeholder="e.g. Platform"
+                       onchange="saveField('team', this.value)">
+              </div>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Organization</span>
+              <div class="field-value">
+                <input type="text" value="${escapeHtml(a.organization || '')}"
+                       placeholder="e.g. My Product"
+                       onchange="saveField('organization', this.value)">
+              </div>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Description</span>
+              <div class="field-value">
+                <input type="text" value="${escapeHtml(a.description || '')}"
+                       placeholder="Short description"
+                       onchange="saveField('description', this.value)">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="notes-section">
+          <h2>📝 Notes</h2>
+          <textarea class="notes-textarea" id="notesArea"
+                    placeholder="Add personal notes about this stakeholder…"
+                    oninput="autoSaveNotes()">${escapeHtml(a.notes || '')}</textarea>
+          <div class="notes-hint">Notes auto-save as you type</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="sv">${data.stats.documentCount}</div>
+            <div class="sl">Documents</div>
+          </div>
+          <div class="stat-card">
+            <div class="sv">${data.stats.relationshipCount}</div>
+            <div class="sl">Relationships</div>
+          </div>
+          <div class="stat-card">
+            <div class="sv">${data.stats.markerCount}</div>
+            <div class="sl">Markers</div>
+          </div>
+          <div class="stat-card">
+            <div class="sv">${data.stats.openMarkers}</div>
+            <div class="sl">Open Items</div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="profile-tabs">
+          <button class="tab-btn active" onclick="switchTab('documents', this)">📄 Documents (${data.documents.length})</button>
+          <button class="tab-btn" onclick="switchTab('connections', this)">🕸️ Connections (${data.coMentioned.length})</button>
+          <button class="tab-btn" onclick="switchTab('relationships', this)">🔗 Relationships (${data.relationships.length})</button>
+          <button class="tab-btn" onclick="switchTab('markers', this)">📌 Markers (${data.markers.length})</button>
+          <button class="tab-btn" onclick="switchTab('topics', this)">🏷️ Topics (${data.topics.length})</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-documents">
+          ${renderDocuments(data.documents)}
+        </div>
+        <div class="tab-panel" id="tab-connections">
+          ${renderConnections(data.coMentioned)}
+        </div>
+        <div class="tab-panel" id="tab-relationships">
+          ${renderRelationships(data.relationships, a.id)}
+        </div>
+        <div class="tab-panel" id="tab-markers">
+          ${renderMarkers(data.markers)}
+        </div>
+        <div class="tab-panel" id="tab-topics">
+          ${renderTopics(data.topics)}
+        </div>
+      `;
+
+      // Update page title
+      document.title = `${a.name} - Stakeholder - PO AI`;
+    }
+
+    // =============================================
+    // Tab rendering
+    // =============================================
+    function renderDocuments(docs) {
+      if (!docs.length) return '<div class="tab-empty">No documents found.</div>';
+
+      return `<ul class="doc-list">${docs.map(d => `
+        <li class="doc-row">
+          <span>📄</span>
+          <a href="#" onclick="event.preventDefault(); viewDocument('${d.filepath}', {title:'${escapeHtml(d.filename).replace(/'/g, "\\'")}'})">${escapeHtml(d.filename)}</a>
+          <span class="doc-date">${d.document_date || ''}</span>
+        </li>
+      `).join('')}</ul>`;
+    }
+
+    function renderConnections(people) {
+      if (!people.length) return '<div class="tab-empty">No co-mentioned people found.</div>';
+
+      return `
+        <div class="section-label">People who appear in the same documents</div>
+        <div class="co-grid">${people.map(p => `
+          <a href="${p.actor_id ? `/stakeholder/${p.actor_id}` : '#'}" class="co-chip">
+            ${escapeHtml(p.name)}
+            <span class="co-count">${p.shared_docs} docs</span>
+          </a>
+        `).join('')}</div>
+      `;
+    }
+
+    function renderRelationships(rels, actorId) {
+      if (!rels.length) return '<div class="tab-empty">No relationships found.</div>';
+
+      return rels.map(r => {
+        const isSource = r.from_id === actorId;
+        const otherName = isSource ? r.to_name : r.from_name;
+        const otherId = isSource ? r.to_id : r.from_id;
+        const direction = isSource ? '→' : '←';
+
+        return `
+          <div class="rel-row">
+            <span class="rel-type">${r.relationship_type}</span>
+            <span>${direction}</span>
+            <a href="/stakeholder/${otherId}" class="rel-name">${escapeHtml(otherName)}</a>
+            ${r.rel_description ? `<span class="doc-date">${escapeHtml(r.rel_description)}</span>` : ''}
+            <span class="rel-strength">${Math.round((r.llm_confidence || 0) * 100)}%</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderMarkers(markers) {
+      if (!markers.length) return '<div class="tab-empty">No markers found in associated documents.</div>';
+
+      return markers.map(m => `
+        <div class="marker-row">
+          <span class="marker-type-icon">${typeIcon(m.marker_type)}</span>
+          <span class="marker-text ${m.is_resolved ? 'resolved' : ''}">${escapeHtml(m.marker_content)}</span>
+          ${m.source_filepath ? `<a href="#" onclick="event.preventDefault(); viewDocument('${m.source_filepath}', {highlight: \`${escapeHtml(m.marker_content).replace(/`/g, '')}\`, title:'${escapeHtml(m.source_filename).replace(/'/g, "\\'")}'})" class="marker-src">📄</a>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function renderTopics(topics) {
+      if (!topics.length) return '<div class="tab-empty">No topics found.</div>';
+
+      return `
+        <div class="section-label">Semantic topics from their documents</div>
+        <div class="topic-grid">${topics.map(t => `
+          <span class="topic-tag">${escapeHtml(t.topic)} (${t.count})</span>
+        `).join('')}</div>
+      `;
+    }
+
+    // =============================================
+    // Tabs
+    // =============================================
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    // =============================================
+    // Save fields
+    // =============================================
+    async function saveField(field, value) {
+      try {
+        const body = {};
+        body[field] = value || null;
+        await fetch(`/api/stakeholders/${ACTOR_ID}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        showSaved();
+      } catch (err) {
+        console.error('Save failed:', err);
+      }
+    }
+
+    function autoSaveNotes() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        const notes = document.getElementById('notesArea').value;
+        saveField('notes', notes);
+      }, 800);
+    }
+
+    async function toggleStakeholder() {
+      const newVal = !profileData.actor.is_stakeholder;
+      try {
+        await fetch(`/api/stakeholders/${ACTOR_ID}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_stakeholder: newVal })
+        });
+        profileData.actor.is_stakeholder = newVal ? 1 : 0;
+
+        const btn = document.getElementById('stakeholderBtn');
+        const avatar = document.querySelector('.profile-avatar');
+
+        if (newVal) {
+          btn.classList.add('active');
+          btn.textContent = '⭐ Stakeholder';
+          avatar.classList.add('stakeholder');
+        } else {
+          btn.classList.remove('active');
+          btn.textContent = '☆ Mark as Stakeholder';
+          avatar.classList.remove('stakeholder');
+        }
+        showSaved();
+      } catch (err) {
+        console.error('Toggle failed:', err);
+      }
+    }
+
+    function showSaved() {
+      const indicator = document.getElementById('saveIndicator');
+      indicator.classList.add('visible');
+      setTimeout(() => indicator.classList.remove('visible'), 1500);
+    }
+
+    // =============================================
+    // Helpers
+    // =============================================
+    function typeIcon(type) {
+      const icons = {
+        decision: '✅', action: '🎯', blocker: '🚧', question: '❓',
+        promise: '📌', risk: '🔴', insight: '💡', strategic: '🧭', feature: '⭐'
+      };
+      return icons[type] || '📎';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+  <%- include('partials/doc-viewer') %>
+</body>
+</html>

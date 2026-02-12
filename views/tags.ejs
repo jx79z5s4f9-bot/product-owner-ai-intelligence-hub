@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tag Manager - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .tags-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .tags-header h1 {
+      color: #10b981;
+      margin: 0;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-badge {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      color: #10b981;
+    }
+
+    /* Tabs */
+    .tag-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tag-tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      color: #a0a0a0;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tag-tab:last-child {
+      border-right: none;
+    }
+
+    .tag-tab:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+    }
+
+    .tag-tab.active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .tag-tab .count {
+      margin-left: 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.2rem 0.5rem;
+      border-radius: 10px;
+      font-size: 0.75rem;
+    }
+
+    /* Tab content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Action bar */
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .selection-info {
+      color: #a0a0a0;
+      font-size: 0.9rem;
+    }
+
+    .selection-info strong {
+      color: #10b981;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .action-btn.danger {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+
+    .action-btn.danger:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .action-btn.primary {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #10b981;
+    }
+
+    /* Filter bar for Tags tab */
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.4rem 0.8rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      color: #a0a0a0;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+    }
+
+    .filter-btn.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #10b981;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.4rem 0.8rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      color: #e0e0e0;
+      font-size: 0.85rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+
+    /* Tags table */
+    .tags-table {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.3);
+      color: #10b981;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    td {
+      color: #e0e0e0;
+      font-size: 0.9rem;
+    }
+
+    /* Checkbox */
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #10b981;
+    }
+
+    /* Tag name - editable */
+    .tag-name {
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .tag-name:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .tag-name.editing {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .tag-name input {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: inherit;
+      width: 100%;
+      outline: none;
+    }
+
+    /* Metadata cells - editable */
+    .meta-cell {
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      color: #a0a0a0;
+      transition: background 0.2s;
+      min-width: 80px;
+    }
+
+    .meta-cell:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .meta-cell.has-value {
+      color: #e0e0e0;
+    }
+
+    .meta-cell input, .meta-cell select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e0e0e0;
+      font-size: 0.85rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    /* Doc count badge */
+    .doc-count {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Type badge with dropdown */
+    .type-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .type-badge:hover {
+      filter: brightness(1.2);
+    }
+
+    .type-badge.project {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+
+    .type-badge.system {
+      background: rgba(168, 85, 247, 0.2);
+      color: #a855f7;
+    }
+
+    .type-badge.organization {
+      background: rgba(249, 115, 22, 0.2);
+      color: #f97316;
+    }
+
+    .type-badge.location {
+      background: rgba(236, 72, 153, 0.2);
+      color: #ec4899;
+    }
+
+    .type-badge.technology {
+      background: rgba(20, 184, 166, 0.2);
+      color: #14b8a6;
+    }
+
+    .type-select {
+      padding: 0.25rem 0.5rem;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    /* Inline type dropdown */
+    .type-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .type-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #1a1a2e;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      min-width: 140px;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .type-dropdown.show {
+      display: block;
+    }
+
+    .type-dropdown-item {
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: #e0e0e0;
+    }
+
+    .type-dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .type-dropdown-item:first-child {
+      border-radius: 8px 8px 0 0;
+    }
+
+    .type-dropdown-item:last-child {
+      border-radius: 0 0 8px 8px;
+    }
+
+    .type-dropdown-item.selected {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #707070;
+    }
+
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Modal - uses design-system .hidden pattern */
+    .modal-overlay .modal {
+      /* local sizing overrides */
+    }
+
+    .modal {
+      background: #1a1a2e;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      min-width: 400px;
+      max-width: 500px;
+    }
+
+    .modal h3 {
+      margin: 0 0 1rem 0;
+      color: #10b981;
+    }
+
+    .modal-body {
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-body label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #a0a0a0;
+      font-size: 0.9rem;
+    }
+
+    .modal-body input, .modal-body select {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-body input:focus, .modal-body select:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .merge-source-list {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .merge-source-item {
+      display: inline-block;
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      margin: 0.25rem;
+      font-size: 0.85rem;
+    }
+
+    .merge-source-item .type-indicator {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-left: 0.25rem;
+    }
+
+    .merge-arrow {
+      display: block;
+      text-align: center;
+      color: #10b981;
+      font-size: 1.5rem;
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav') %>
+  
+  <div class="container">
+    <div class="tags-header">
+      <h1>🏷️ Tag Manager</h1>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Simplified Tabs: People | Tags | Semantic -->
+    <div class="tag-tabs">
+      <button class="tag-tab active" data-tab="people">
+        👥 People <span class="count" id="countPeople">0</span>
+      </button>
+      <button class="tag-tab" data-tab="tags">
+        🏷️ Tags <span class="count" id="countTags">0</span>
+      </button>
+      <button class="tag-tab" data-tab="semantic">
+        🎯 Semantic <span class="count" id="countSemantic">0</span>
+      </button>
+    </div>
+
+    <!-- People Tab -->
+    <div class="tab-content active" id="tab-people">
+      <div class="action-bar">
+        <div class="selection-info">
+          <span id="peopleSelected">0</span> selected
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn" onclick="openBulkAssignModal()" id="btnAssignPeople" disabled>
+            📋 Assign Org/Team/Role
+          </button>
+          <button class="action-btn" onclick="movePeopleToTags()" id="btnMoveToTags" disabled>
+            🏷️ Move to Tags
+          </button>
+          <button class="action-btn" onclick="openMergeModal('person')" id="btnMergePeople" disabled>
+            🔀 Merge
+          </button>
+          <button class="action-btn danger" onclick="deleteSelected('person')" id="btnDeletePeople" disabled>
+            🗑️ Delete
+          </button>
+        </div>
+      </div>
+
+      <div class="tags-table">
+        <table>
+          <thead>
+            <tr>
+              <th width="40"><input type="checkbox" id="selectAllPeople" onchange="toggleSelectAll('people')"></th>
+              <th>Name</th>
+              <th>Organization</th>
+              <th>Team</th>
+              <th>Role</th>
+              <th width="80">Docs</th>
+            </tr>
+          </thead>
+          <tbody id="peopleTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tags Tab (Projects + Systems + Organizations combined) -->
+    <div class="tab-content" id="tab-tags">
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" onclick="filterTags('all')">All</button>
+        <button class="filter-btn" data-filter="project" onclick="filterTags('project')">📁 Projects</button>
+        <button class="filter-btn" data-filter="system" onclick="filterTags('system')">💻 Systems</button>
+        <button class="filter-btn" data-filter="organization" onclick="filterTags('organization')">🏢 Organizations</button>
+        <button class="filter-btn" data-filter="location" onclick="filterTags('location')">📍 Locations</button>
+        <button class="filter-btn" data-filter="technology" onclick="filterTags('technology')">⚙️ Technologies</button>
+        <input type="text" class="search-input" id="tagSearch" placeholder="🔍 Search tags..." oninput="filterTags()">
+      </div>
+
+      <div class="action-bar">
+        <div class="selection-info">
+          <span id="tagsSelected">0</span> selected
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn" onclick="openChangeTypeModal()" id="btnChangeType" disabled>
+            🔄 Change Type
+          </button>
+          <button class="action-btn" onclick="openMergeModal('tags')" id="btnMergeTags" disabled>
+            🔀 Merge
+          </button>
+          <button class="action-btn danger" onclick="deleteSelectedTags()" id="btnDeleteTags" disabled>
+            🗑️ Delete
+          </button>
+        </div>
+      </div>
+
+      <div class="tags-table">
+        <table>
+          <thead>
+            <tr>
+              <th width="40"><input type="checkbox" id="selectAllTags" onchange="toggleSelectAll('tags')"></th>
+              <th>Name</th>
+              <th width="120">Type</th>
+              <th width="80">Docs</th>
+              <th width="120">Last Used</th>
+            </tr>
+          </thead>
+          <tbody id="tagsTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Semantic Tab -->
+    <div class="tab-content" id="tab-semantic">
+      <div class="action-bar">
+        <div class="selection-info">
+          Semantic tags define concepts to extract (decisions, risks, actions, etc.)
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn primary" onclick="openAddSemanticModal()">
+            ➕ Add Tag
+          </button>
+          <button class="action-btn danger" onclick="deleteSelectedSemantic()" id="btnDeleteSemantic" disabled>
+            🗑️ Delete
+          </button>
+        </div>
+      </div>
+
+      <div class="tags-table">
+        <table>
+          <thead>
+            <tr>
+              <th width="40"><input type="checkbox" id="selectAllSemantic" onchange="toggleSelectAll('semantic')"></th>
+              <th>Tag</th>
+              <th>Description</th>
+              <th width="80">Usage</th>
+            </tr>
+          </thead>
+          <tbody id="semanticTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Semantic Tag Modal -->
+  <div class="modal-overlay hidden" id="addSemanticModal">
+    <div class="modal">
+      <h3>➕ Add Semantic Tag</h3>
+      <div class="modal-body">
+        <label for="newSemanticName">Tag Name:</label>
+        <input type="text" id="newSemanticName" placeholder="e.g., decision, risk, action-item">
+        
+        <label for="newSemanticDesc">Description (optional):</label>
+        <input type="text" id="newSemanticDesc" placeholder="e.g., Important decisions made">
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeAddSemanticModal()">Cancel</button>
+        <button class="action-btn primary" onclick="executeAddSemantic()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merge Modal -->
+  <div class="modal-overlay hidden" id="mergeModal">
+    <div class="modal">
+      <h3>🔀 Merge Tags</h3>
+      <div class="modal-body">
+        <label>These tags will be merged:</label>
+        <div class="merge-source-list" id="mergeSourceList"></div>
+        
+        <div class="merge-arrow">↓</div>
+        
+        <label for="mergeTarget">Into this tag:</label>
+        <input type="text" id="mergeTarget" placeholder="Target tag name">
+        
+        <div id="mergeTypeRow">
+          <label for="mergeTargetType">As type:</label>
+          <select id="mergeTargetType">
+            <option value="project">📁 Project</option>
+            <option value="system">💻 System</option>
+            <option value="organization">🏢 Organization</option>
+            <option value="location">📍 Location</option>
+            <option value="technology">⚙️ Technology</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeMergeModal()">Cancel</button>
+        <button class="action-btn primary" onclick="executeMerge()">Merge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Type Modal -->
+  <div class="modal-overlay hidden" id="changeTypeModal">
+    <div class="modal">
+      <h3>🔄 Change Type</h3>
+      <div class="modal-body">
+        <label>Selected tags: <span id="changeTypeCount">0</span></label>
+        <div class="merge-source-list" id="changeTypeList"></div>
+        
+        <label for="newTypeSelect">Change to:</label>
+        <select id="newTypeSelect">
+          <option value="project">📁 Project</option>
+          <option value="system">💻 System</option>
+          <option value="organization">🏢 Organization</option>
+          <option value="location">📍 Location</option>
+          <option value="technology">⚙️ Technology</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeChangeTypeModal()">Cancel</button>
+        <button class="action-btn primary" onclick="executeChangeType()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Assign Modal (People) -->
+  <div class="modal-overlay hidden" id="bulkAssignModal">
+    <div class="modal">
+      <h3>📋 Assign Org/Team/Role</h3>
+      <div class="modal-body">
+        <p style="color: #a0a0a0; font-size: 0.9rem; margin-bottom: 1rem;">
+          Leave fields blank to keep existing values.
+        </p>
+        
+        <label for="bulkOrg">Organization:</label>
+        <input type="text" id="bulkOrg" placeholder="e.g., Politie" list="orgSuggestions">
+        <datalist id="orgSuggestions"></datalist>
+        
+        <label for="bulkTeam">Team:</label>
+        <input type="text" id="bulkTeam" placeholder="e.g., DNA-C team" list="teamSuggestions">
+        <datalist id="teamSuggestions"></datalist>
+        
+        <label for="bulkRole">Role:</label>
+        <input type="text" id="bulkRole" placeholder="e.g., Architect" list="roleSuggestions">
+        <datalist id="roleSuggestions"></datalist>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeBulkAssignModal()">Cancel</button>
+        <button class="action-btn primary" onclick="executeBulkAssign()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let allTags = { people: [], projects: [], systems: [], organizations: [], locations: [], technologies: [], semantic: [] };
+    let combinedTags = []; // Merged view of projects + systems + organizations + locations + technologies
+    let filteredTags = []; // After filtering
+    let selectedPeople = new Set();
+    let selectedTags = new Set(); // For the combined Tags tab - stores {value, type} as JSON string
+    let selectedSemantic = new Set();
+    let currentTab = 'people';
+    let activeFilters = new Set(['project', 'system', 'organization', 'location', 'technology']);
+    const ALL_TAG_TYPES = ['project', 'system', 'organization', 'location', 'technology'];
+    let mergeContext = null; // 'person' or 'tags'
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTags();
+      loadSuggestions();
+      
+      // Tab switching
+      document.querySelectorAll('.tag-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.dataset.tab;
+          switchTab(tabName);
+        });
+      });
+    });
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      
+      // Update tab buttons
+      document.querySelectorAll('.tag-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      
+      // Update content
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    async function loadTags() {
+      try {
+        const [tagsRes, semanticRes] = await Promise.all([
+          fetch('/api/tags'),
+          fetch('/api/tags/semantic')
+        ]);
+        
+        allTags = await tagsRes.json();
+        const semanticDefs = await semanticRes.json();
+        allTags.semanticDefs = semanticDefs;
+        
+        // Combine projects, systems, organizations, locations, technologies into one array with type info
+        combinedTags = [
+          ...allTags.projects.map(t => ({ ...t, type: 'project' })),
+          ...allTags.systems.map(t => ({ ...t, type: 'system' })),
+          ...allTags.organizations.map(t => ({ ...t, type: 'organization' })),
+          ...(allTags.locations || []).map(t => ({ ...t, type: 'location' })),
+          ...(allTags.technologies || []).map(t => ({ ...t, type: 'technology' }))
+        ].sort((a, b) => a.value.localeCompare(b.value));
+        
+        filterTags(); // Apply current filter
+        renderPeopleTable();
+        renderSemanticTable();
+        updateCounts();
+        updateStats();
+      } catch (err) {
+        console.error('Failed to load tags:', err);
+      }
+    }
+
+    async function loadSuggestions() {
+      try {
+        const [orgsRes, teamsRes, rolesRes] = await Promise.all([
+          fetch('/api/tags/organizations'),
+          fetch('/api/tags/teams'),
+          fetch('/api/tags/roles')
+        ]);
+        
+        const orgs = await orgsRes.json();
+        const teams = await teamsRes.json();
+        const roles = await rolesRes.json();
+        
+        document.getElementById('orgSuggestions').innerHTML = 
+          orgs.organizations.map(o => `<option value="${o}">`).join('');
+        document.getElementById('teamSuggestions').innerHTML = 
+          teams.teams.map(t => `<option value="${t}">`).join('');
+        document.getElementById('roleSuggestions').innerHTML = 
+          roles.roles.map(r => `<option value="${r}">`).join('');
+      } catch (err) {
+        console.error('Failed to load suggestions:', err);
+      }
+    }
+
+    function updateCounts() {
+      document.getElementById('countPeople').textContent = allTags.people.length;
+      document.getElementById('countTags').textContent = combinedTags.length;
+      document.getElementById('countSemantic').textContent = (allTags.semanticDefs || []).length;
+    }
+
+    function updateStats() {
+      const projectCount = allTags.projects.length;
+      const systemCount = allTags.systems.length;
+      const orgCount = allTags.organizations.length;
+      const semanticCount = (allTags.semanticDefs || []).length;
+      const total = allTags.people.length + projectCount + systemCount + orgCount + semanticCount;
+      
+      document.getElementById('statsRow').innerHTML = `
+        <span class="stat-badge">👥 ${allTags.people.length} People</span>
+        <span class="stat-badge">📁 ${projectCount} Projects</span>
+        <span class="stat-badge">💻 ${systemCount} Systems</span>
+        <span class="stat-badge">🏢 ${orgCount} Orgs</span>
+        <span class="stat-badge">🎯 ${semanticCount} Semantic</span>
+        <span class="stat-badge" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); color: #3b82f6;">
+          📊 ${total} Total
+        </span>
+      `;
+    }
+
+    // Filter tags (multi-select)
+    function filterTags(filter) {
+      if (filter) {
+        if (filter === 'all') {
+          // If all are already active, deselect all; otherwise select all
+          if (activeFilters.size === ALL_TAG_TYPES.length) {
+            activeFilters.clear();
+          } else {
+            activeFilters = new Set(ALL_TAG_TYPES);
+          }
+        } else {
+          // Toggle individual filter
+          if (activeFilters.has(filter)) {
+            activeFilters.delete(filter);
+          } else {
+            activeFilters.add(filter);
+          }
+        }
+        // Update filter button states
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          const f = btn.dataset.filter;
+          if (f === 'all') {
+            btn.classList.toggle('active', activeFilters.size === ALL_TAG_TYPES.length);
+          } else {
+            btn.classList.toggle('active', activeFilters.has(f));
+          }
+        });
+      }
+      
+      const searchTerm = document.getElementById('tagSearch')?.value?.toLowerCase() || '';
+      
+      filteredTags = combinedTags.filter(t => {
+        const matchesFilter = activeFilters.size === 0 || activeFilters.has(t.type);
+        const matchesSearch = !searchTerm || t.value.toLowerCase().includes(searchTerm);
+        return matchesFilter && matchesSearch;
+      });
+      
+      renderTagsTable();
+    }
+
+    // Render People Table
+    function renderPeopleTable() {
+      const tbody = document.getElementById('peopleTableBody');
+      
+      if (allTags.people.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="icon">👥</div>No people tags yet</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = allTags.people.map((p, idx) => `
+        <tr>
+          <td><input type="checkbox" class="people-checkbox" data-index="${idx}" ${selectedPeople.has(p.value) ? 'checked' : ''}></td>
+          <td>
+            <span class="tag-name" data-action="edit" data-type="person" data-index="${idx}">${escapeHtml(p.value)}</span>
+            <a href="#" onclick="event.preventDefault(); goToStakeholder('${escapeHtml(p.value).replace(/'/g, "\\'")}')" title="View profile" style="margin-left:6px;text-decoration:none;opacity:0.5;font-size:0.85em" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">👤</a>
+          </td>
+          <td>
+            <span class="meta-cell ${p.organization ? 'has-value' : ''}" 
+                  data-action="meta-edit" data-index="${idx}" data-field="organization">
+              ${escapeHtml(p.organization) || '—'}
+            </span>
+          </td>
+          <td>
+            <span class="meta-cell ${p.team ? 'has-value' : ''}"
+                  data-action="meta-edit" data-index="${idx}" data-field="team">
+              ${escapeHtml(p.team) || '—'}
+            </span>
+          </td>
+          <td>
+            <span class="meta-cell ${p.role ? 'has-value' : ''}"
+                  data-action="meta-edit" data-index="${idx}" data-field="role">
+              ${escapeHtml(p.role) || '—'}
+            </span>
+          </td>
+          <td><span class="doc-count">${p.docCount}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Render combined Tags Table
+    function renderTagsTable() {
+      const tbody = document.getElementById('tagsTableBody');
+      
+      if (filteredTags.length === 0) {
+        const msg = activeFilters.size === ALL_TAG_TYPES.length ? 'No tags yet' : `No matching tags for selected types`;
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><div class="icon">🏷️</div>${msg}</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = filteredTags.map((t, idx) => {
+        const key = JSON.stringify({ value: t.value, type: t.type });
+        const isSelected = selectedTags.has(key);
+        const typeIcon = t.type === 'project' ? '📁' : t.type === 'system' ? '💻' : t.type === 'organization' ? '🏢' : t.type === 'location' ? '📍' : t.type === 'technology' ? '⚙️' : '🏷️';
+
+        return `
+          <tr>
+            <td><input type="checkbox" class="tag-checkbox" data-index="${idx}" ${isSelected ? 'checked' : ''}></td>
+            <td>
+              <span class="tag-name" data-action="edit" data-type="${t.type}" data-index="${idx}">${escapeHtml(t.value)}</span>
+            </td>
+            <td>
+              <div class="type-dropdown-wrapper">
+                <span class="type-badge ${t.type}" data-action="type-dropdown" data-index="${idx}" title="Click to change type">
+                  ${typeIcon} ${capitalize(t.type)}
+                </span>
+                <div class="type-dropdown" data-dropdown-index="${idx}">
+                  <div class="type-dropdown-item ${t.type === 'project' ? 'selected' : ''}" data-action="select-type" data-index="${idx}" data-new-type="project">📁 Project</div>
+                  <div class="type-dropdown-item ${t.type === 'system' ? 'selected' : ''}" data-action="select-type" data-index="${idx}" data-new-type="system">💻 System</div>
+                  <div class="type-dropdown-item ${t.type === 'organization' ? 'selected' : ''}" data-action="select-type" data-index="${idx}" data-new-type="organization">🏢 Organization</div>
+                  <div class="type-dropdown-item ${t.type === 'location' ? 'selected' : ''}" data-action="select-type" data-index="${idx}" data-new-type="location">📍 Location</div>
+                  <div class="type-dropdown-item ${t.type === 'technology' ? 'selected' : ''}" data-action="select-type" data-index="${idx}" data-new-type="technology">⚙️ Technology</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="doc-count">${t.docCount}</span></td>
+            <td style="color: #707070; font-size: 0.85rem;">${formatDate(t.lastUsed)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderSemanticTable() {
+      const tbody = document.getElementById('semanticTableBody');
+      const defs = allTags.semanticDefs || [];
+      
+      if (defs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="empty-state"><div class="icon">🎯</div>No semantic tags defined. Click "Add Tag" to create one.</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = defs.map((t, idx) => `
+        <tr>
+          <td><input type="checkbox" class="semantic-checkbox" data-index="${idx}" ${selectedSemantic.has(t.name) ? 'checked' : ''}></td>
+          <td><span class="tag-name">${escapeHtml(t.name)}</span></td>
+          <td style="color: #a0a0a0; font-size: 0.85rem;">${escapeHtml(t.description) || '—'}</td>
+          <td><span class="doc-count">${t.usage_count || 0}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Selection handling (via event delegation - no inline handlers)
+    // People table delegation
+    document.getElementById('peopleTableBody').addEventListener('change', function(e) {
+      const checkbox = e.target.closest('.people-checkbox');
+      if (!checkbox) return;
+      const idx = parseInt(checkbox.dataset.index);
+      const person = allTags.people[idx];
+      if (!person) return;
+      togglePeopleSelection(person.value);
+    });
+    document.getElementById('peopleTableBody').addEventListener('dblclick', function(e) {
+      const el = e.target.closest('[data-action="edit"]');
+      if (el) {
+        const idx = parseInt(el.dataset.index);
+        const person = allTags.people[idx];
+        if (person) startEdit(el, 'person', person.value);
+        return;
+      }
+      const metaEl = e.target.closest('[data-action="meta-edit"]');
+      if (metaEl) {
+        const idx = parseInt(metaEl.dataset.index);
+        const person = allTags.people[idx];
+        const field = metaEl.dataset.field;
+        if (person) startMetaEdit(metaEl, person.value, field, person[field] || '');
+      }
+    });
+
+    // Tags table delegation
+    document.getElementById('tagsTableBody').addEventListener('change', function(e) {
+      const checkbox = e.target.closest('.tag-checkbox');
+      if (!checkbox) return;
+      const idx = parseInt(checkbox.dataset.index);
+      const tag = filteredTags[idx];
+      if (!tag) return;
+      const key = JSON.stringify({ value: tag.value, type: tag.type });
+      toggleTagSelection(key);
+    });
+    document.getElementById('tagsTableBody').addEventListener('dblclick', function(e) {
+      const el = e.target.closest('[data-action="edit"]');
+      if (el) {
+        const idx = parseInt(el.dataset.index);
+        const tag = filteredTags[idx];
+        if (tag) startEdit(el, tag.type, tag.value);
+      }
+    });
+    document.getElementById('tagsTableBody').addEventListener('click', function(e) {
+      const dropdownToggle = e.target.closest('[data-action="type-dropdown"]');
+      if (dropdownToggle) {
+        const idx = parseInt(dropdownToggle.dataset.index);
+        const tag = filteredTags[idx];
+        if (tag) toggleTypeDropdown(dropdownToggle, tag.value, tag.type);
+        return;
+      }
+      const typeSelect = e.target.closest('[data-action="select-type"]');
+      if (typeSelect) {
+        const idx = parseInt(typeSelect.dataset.index);
+        const tag = filteredTags[idx];
+        const newType = typeSelect.dataset.newType;
+        if (tag) selectType(tag.value, tag.type, newType);
+      }
+    });
+
+    // Semantic table delegation
+    document.getElementById('semanticTableBody').addEventListener('change', function(e) {
+      const checkbox = e.target.closest('.semantic-checkbox');
+      if (!checkbox) return;
+      const idx = parseInt(checkbox.dataset.index);
+      const defs = allTags.semanticDefs || [];
+      const tag = defs[idx];
+      if (!tag) return;
+      toggleSemanticSelection(tag.name);
+    });
+
+    function togglePeopleSelection(value) {
+      if (selectedPeople.has(value)) {
+        selectedPeople.delete(value);
+      } else {
+        selectedPeople.add(value);
+      }
+      updatePeopleSelectionUI();
+    }
+
+    function toggleTagSelection(keyStr) {
+      if (selectedTags.has(keyStr)) {
+        selectedTags.delete(keyStr);
+      } else {
+        selectedTags.add(keyStr);
+      }
+      updateTagsSelectionUI();
+    }
+
+    function toggleSemanticSelection(name) {
+      if (selectedSemantic.has(name)) {
+        selectedSemantic.delete(name);
+      } else {
+        selectedSemantic.add(name);
+      }
+      updateSemanticSelectionUI();
+    }
+
+    function toggleSelectAll(tabType) {
+      if (tabType === 'people') {
+        const checkbox = document.getElementById('selectAllPeople');
+        if (checkbox.checked) {
+          allTags.people.forEach(p => selectedPeople.add(p.value));
+        } else {
+          selectedPeople.clear();
+        }
+        renderPeopleTable();
+        updatePeopleSelectionUI();
+      } else if (tabType === 'tags') {
+        const checkbox = document.getElementById('selectAllTags');
+        if (checkbox.checked) {
+          filteredTags.forEach(t => {
+            selectedTags.add(JSON.stringify({ value: t.value, type: t.type }));
+          });
+        } else {
+          selectedTags.clear();
+        }
+        renderTagsTable();
+        updateTagsSelectionUI();
+      } else if (tabType === 'semantic') {
+        const checkbox = document.getElementById('selectAllSemantic');
+        if (checkbox.checked) {
+          (allTags.semanticDefs || []).forEach(t => selectedSemantic.add(t.name));
+        } else {
+          selectedSemantic.clear();
+        }
+        renderSemanticTable();
+        updateSemanticSelectionUI();
+      }
+    }
+
+    function updatePeopleSelectionUI() {
+      const count = selectedPeople.size;
+      document.getElementById('peopleSelected').textContent = count;
+      document.getElementById('btnAssignPeople').disabled = count === 0;
+      document.getElementById('btnMoveToTags').disabled = count === 0;
+      document.getElementById('btnMergePeople').disabled = count < 2;
+      document.getElementById('btnDeletePeople').disabled = count === 0;
+    }
+
+    function updateTagsSelectionUI() {
+      const count = selectedTags.size;
+      document.getElementById('tagsSelected').textContent = count;
+      document.getElementById('btnChangeType').disabled = count === 0;
+      document.getElementById('btnMergeTags').disabled = count < 2;
+      document.getElementById('btnDeleteTags').disabled = count === 0;
+    }
+
+    function updateSemanticSelectionUI() {
+      const count = selectedSemantic.size;
+      document.getElementById('btnDeleteSemantic').disabled = count === 0;
+    }
+
+    // Type dropdown functionality
+    let activeDropdown = null;
+
+    function toggleTypeDropdown(badge, value, currentType) {
+      // Close any open dropdown
+      closeAllDropdowns();
+
+      const dropdown = badge.nextElementSibling;
+      if (dropdown) {
+        dropdown.classList.add('show');
+        activeDropdown = dropdown;
+      }
+
+      // Stop event propagation
+      event.stopPropagation();
+    }
+
+    function closeAllDropdowns() {
+      document.querySelectorAll('.type-dropdown.show').forEach(d => d.classList.remove('show'));
+      activeDropdown = null;
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.type-dropdown-wrapper')) {
+        closeAllDropdowns();
+      }
+    });
+
+    async function selectType(value, currentType, newType) {
+      closeAllDropdowns();
+
+      if (currentType === newType) return; // No change needed
+
+      try {
+        const res = await fetch('/api/tags/change-type', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            values: [value],
+            fromType: currentType,
+            toType: newType
+          })
+        });
+
+        if (res.ok) {
+          loadTags();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to change type');
+        }
+      } catch (err) {
+        console.error('Change type error:', err);
+        alert('Failed to change type');
+      }
+    }
+
+    // Change Type Modal
+    function openChangeTypeModal() {
+      const selected = getSelectedTagsInfo();
+      if (selected.length === 0) return;
+      
+      document.getElementById('changeTypeCount').textContent = selected.length;
+      document.getElementById('changeTypeList').innerHTML = selected.map(s => 
+        `<span class="merge-source-item">${escapeHtml(s.value)}<span class="type-indicator">(${s.type})</span></span>`
+      ).join('');
+      
+      document.getElementById('changeTypeModal').classList.remove('hidden');
+    }
+
+    function closeChangeTypeModal() {
+      document.getElementById('changeTypeModal').classList.add('hidden');
+    }
+
+    async function executeChangeType() {
+      const newType = document.getElementById('newTypeSelect').value;
+      const selected = getSelectedTagsInfo();
+
+      // Group by current type for batch operations
+      const byType = {};
+      selected.forEach(s => {
+        if (!byType[s.type]) byType[s.type] = [];
+        byType[s.type].push(s.value);
+      });
+
+      try {
+        let totalChanged = 0;
+        let errors = [];
+
+        for (const [fromType, values] of Object.entries(byType)) {
+          if (fromType === newType) continue; // Skip if already correct type
+
+          const res = await fetch('/api/tags/change-type', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              values,
+              fromType,
+              toType: newType
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            errors.push(data.error || `Failed to change ${fromType} tags`);
+          } else {
+            totalChanged += data.changed || 0;
+          }
+        }
+
+        closeChangeTypeModal();
+        selectedTags.clear();
+
+        if (errors.length > 0) {
+          alert(`Changed ${totalChanged} tag(s).\n\nErrors:\n${errors.join('\n')}`);
+        }
+
+        loadTags();
+      } catch (err) {
+        console.error('Change type error:', err);
+        alert('Failed to change type: ' + err.message);
+      }
+    }
+
+    function getSelectedTagsInfo() {
+      return Array.from(selectedTags).map(keyStr => JSON.parse(keyStr));
+    }
+
+    // Move people to Tags (as organization by default)
+    async function movePeopleToTags() {
+      const selected = Array.from(selectedPeople);
+      if (selected.length === 0) return;
+      
+      const names = selected.join(', ');
+      const confirmed = await POAI.confirm.show({
+        title: 'Move to Tags',
+        message: `Move ${selected.length} people to Tags?\n\n${names}\n\nThey will become Organizations (you can change type after).`,
+        confirmText: 'Move',
+        type: 'warning'
+      });
+      if (!confirmed) return;
+      
+      try {
+        const res = await fetch('/api/tags/change-type', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            values: selected,
+            fromType: 'person',
+            toType: 'organization'
+          })
+        });
+        
+        if (res.ok) {
+          selectedPeople.clear();
+          loadTags();
+          switchTab('tags');
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Move failed');
+        }
+      } catch (err) {
+        console.error('Move to tags error:', err);
+        alert('Move failed');
+      }
+    }
+
+    // Inline editing
+    function startEdit(element, type, oldValue) {
+      if (element.querySelector('input')) return;
+      
+      const currentText = element.textContent;
+      element.innerHTML = `<input type="text" value="${escapeHtml(currentText)}" onblur="finishEdit(this, '${type}', '${escapeJs(oldValue)}')" onkeydown="handleEditKey(event, this, '${type}', '${escapeJs(oldValue)}')">`;
+      element.classList.add('editing');
+      element.querySelector('input').focus();
+      element.querySelector('input').select();
+    }
+
+    function handleEditKey(event, input, type, oldValue) {
+      if (event.key === 'Enter') {
+        finishEdit(input, type, oldValue);
+      } else if (event.key === 'Escape') {
+        input.parentElement.innerHTML = oldValue;
+        input.parentElement.classList.remove('editing');
+      }
+    }
+
+    async function finishEdit(input, type, oldValue) {
+      const newValue = input.value.trim();
+      const parent = input.parentElement;
+      
+      if (!newValue || newValue === oldValue) {
+        parent.innerHTML = escapeHtml(oldValue);
+        parent.classList.remove('editing');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/tags/rename', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, oldValue, newValue })
+        });
+        
+        if (res.ok) {
+          parent.innerHTML = escapeHtml(newValue);
+          parent.classList.remove('editing');
+          loadTags();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to rename');
+          parent.innerHTML = escapeHtml(oldValue);
+          parent.classList.remove('editing');
+        }
+      } catch (err) {
+        console.error('Rename error:', err);
+        parent.innerHTML = escapeHtml(oldValue);
+        parent.classList.remove('editing');
+      }
+    }
+
+    // Person metadata editing
+    function startMetaEdit(element, personName, field, currentValue) {
+      if (element.querySelector('input')) return;
+      
+      element.innerHTML = `<input type="text" value="${escapeHtml(currentValue)}" 
+        onblur="finishMetaEdit(this, '${escapeJs(personName)}', '${field}')"
+        onkeydown="handleMetaEditKey(event, this, '${escapeJs(personName)}', '${field}', '${escapeJs(currentValue)}')">`;
+      element.querySelector('input').focus();
+    }
+
+    function handleMetaEditKey(event, input, personName, field, oldValue) {
+      if (event.key === 'Enter') {
+        finishMetaEdit(input, personName, field);
+      } else if (event.key === 'Escape') {
+        input.parentElement.innerHTML = escapeHtml(oldValue) || '—';
+        input.parentElement.className = `meta-cell ${oldValue ? 'has-value' : ''}`;
+      }
+    }
+
+    async function finishMetaEdit(input, personName, field) {
+      const newValue = input.value.trim();
+      const parent = input.parentElement;
+      
+      try {
+        const body = {};
+        body[field] = newValue || null;
+        
+        const res = await fetch(`/api/tags/person/${encodeURIComponent(personName)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        if (res.ok) {
+          parent.innerHTML = escapeHtml(newValue) || '—';
+          parent.className = `meta-cell ${newValue ? 'has-value' : ''}`;
+          loadSuggestions();
+        } else {
+          parent.innerHTML = '—';
+        }
+      } catch (err) {
+        console.error('Meta edit error:', err);
+        parent.innerHTML = '—';
+      }
+    }
+
+    // Merge modal
+    function openMergeModal(context) {
+      mergeContext = context;
+      
+      let items = [];
+      if (context === 'person') {
+        items = Array.from(selectedPeople).map(v => ({ value: v, type: 'person' }));
+      } else {
+        items = getSelectedTagsInfo();
+      }
+      
+      if (items.length < 2) {
+        alert('Select at least 2 tags to merge');
+        return;
+      }
+      
+      document.getElementById('mergeSourceList').innerHTML = items.map(s => 
+        `<span class="merge-source-item">${escapeHtml(s.value)}${s.type !== 'person' ? `<span class="type-indicator">(${s.type})</span>` : ''}</span>`
+      ).join('');
+      
+      document.getElementById('mergeTarget').value = items[0].value;
+      
+      // Show/hide type selector based on context
+      const typeRow = document.getElementById('mergeTypeRow');
+      if (context === 'person') {
+        typeRow.style.display = 'none';
+      } else {
+        typeRow.style.display = 'block';
+        document.getElementById('mergeTargetType').value = items[0].type;
+      }
+      
+      document.getElementById('mergeModal').classList.remove('hidden');
+    }
+
+    function closeMergeModal() {
+      document.getElementById('mergeModal').classList.add('hidden');
+      mergeContext = null;
+    }
+
+    async function executeMerge() {
+      const targetValue = document.getElementById('mergeTarget').value.trim();
+      if (!targetValue) {
+        alert('Enter a target tag name');
+        return;
+      }
+      
+      const targetType = mergeContext === 'person' ? 'person' : document.getElementById('mergeTargetType').value;
+      
+      let sourceItems = [];
+      if (mergeContext === 'person') {
+        sourceItems = Array.from(selectedPeople).filter(v => v !== targetValue).map(v => ({ value: v, type: 'person' }));
+      } else {
+        sourceItems = getSelectedTagsInfo().filter(s => !(s.value === targetValue && s.type === targetType));
+      }
+      
+      if (sourceItems.length === 0) {
+        alert('No sources to merge');
+        return;
+      }
+      
+      try {
+        // Group sources by type for batch merge
+        const byType = {};
+        sourceItems.forEach(s => {
+          if (!byType[s.type]) byType[s.type] = [];
+          byType[s.type].push(s.value);
+        });
+
+        let totalMerged = 0;
+        let errors = [];
+
+        for (const [type, values] of Object.entries(byType)) {
+          const res = await fetch('/api/tags/merge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type,
+              sourceValues: values,
+              targetValue,
+              targetType
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            errors.push(data.error || `Failed to merge ${type} tags`);
+          } else {
+            totalMerged += data.merged || 0;
+          }
+        }
+
+        closeMergeModal();
+        selectedPeople.clear();
+        selectedTags.clear();
+
+        if (errors.length > 0) {
+          alert(`Merged ${totalMerged} tag occurrence(s).\n\nErrors:\n${errors.join('\n')}`);
+        }
+
+        loadTags();
+      } catch (err) {
+        console.error('Merge error:', err);
+        alert('Merge failed: ' + err.message);
+      }
+    }
+
+    // Bulk assign modal (people)
+    function openBulkAssignModal() {
+      document.getElementById('bulkOrg').value = '';
+      document.getElementById('bulkTeam').value = '';
+      document.getElementById('bulkRole').value = '';
+      document.getElementById('bulkAssignModal').classList.remove('hidden');
+    }
+
+    function closeBulkAssignModal() {
+      document.getElementById('bulkAssignModal').classList.add('hidden');
+    }
+
+    async function executeBulkAssign() {
+      const names = Array.from(selectedPeople);
+      const organization = document.getElementById('bulkOrg').value.trim() || null;
+      const team = document.getElementById('bulkTeam').value.trim() || null;
+      const role = document.getElementById('bulkRole').value.trim() || null;
+      
+      if (!organization && !team && !role) {
+        alert('Enter at least one value');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/tags/person/bulk', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ names, organization, team, role })
+        });
+        
+        if (res.ok) {
+          closeBulkAssignModal();
+          loadTags();
+          loadSuggestions();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Assign failed');
+        }
+      } catch (err) {
+        console.error('Bulk assign error:', err);
+        alert('Assign failed');
+      }
+    }
+
+    // Semantic tags
+    function openAddSemanticModal() {
+      document.getElementById('newSemanticName').value = '';
+      document.getElementById('newSemanticDesc').value = '';
+      document.getElementById('addSemanticModal').classList.remove('hidden');
+      document.getElementById('newSemanticName').focus();
+    }
+
+    function closeAddSemanticModal() {
+      document.getElementById('addSemanticModal').classList.add('hidden');
+    }
+
+    async function executeAddSemantic() {
+      const name = document.getElementById('newSemanticName').value.trim();
+      const description = document.getElementById('newSemanticDesc').value.trim();
+      
+      if (!name) {
+        alert('Tag name is required');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/tags/semantic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description })
+        });
+        
+        if (res.ok) {
+          closeAddSemanticModal();
+          loadTags();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to add tag');
+        }
+      } catch (err) {
+        console.error('Add semantic tag error:', err);
+        alert('Failed to add tag');
+      }
+    }
+
+    async function deleteSelectedSemantic() {
+      const selected = Array.from(selectedSemantic);
+      if (selected.length === 0) return;
+
+      const confirmed = await POAI.confirm.danger('Delete Semantic Tags', `Delete ${selected.length} semantic tag(s)?`);
+      if (!confirmed) return;
+
+      let errors = [];
+      let successCount = 0;
+
+      for (const name of selected) {
+        try {
+          // First try without force
+          let res = await fetch(`/api/tags/semantic/${encodeURIComponent(name)}`, { method: 'DELETE' });
+          let data = await res.json();
+
+          // If tag is in use, ask for confirmation and retry with force
+          if (!res.ok && data.requiresForce) {
+            const forceConfirm = await POAI.confirm.danger(
+              'Tag In Use',
+              `"${name}" is used in ${data.usage} document(s). Delete it anyway? This will remove the tag from all those documents.`
+            );
+
+            if (forceConfirm) {
+              res = await fetch(`/api/tags/semantic/${encodeURIComponent(name)}?force=true`, { method: 'DELETE' });
+              data = await res.json();
+              if (res.ok) {
+                successCount++;
+                console.log(`Deleted "${name}" from ${data.removedFromDocuments} documents`);
+              } else {
+                errors.push(`${name}: ${data.error}`);
+              }
+            }
+          } else if (res.ok) {
+            successCount++;
+          } else {
+            errors.push(`${name}: ${data.error}`);
+          }
+        } catch (err) {
+          console.error('Delete error:', err);
+          errors.push(`${name}: ${err.message}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        alert(`Deleted ${successCount} tag(s).\n\nErrors:\n${errors.join('\n')}`);
+      }
+
+      selectedSemantic.clear();
+      loadTags();
+    }
+
+    // Delete selected people
+    async function deleteSelected(type) {
+      const selected = Array.from(selectedPeople);
+      if (selected.length === 0) return;
+      
+      const confirmed = await POAI.confirm.danger('Delete Person Tags', `Delete ${selected.length} person tag(s)? This will remove them from all documents.`);
+      if (!confirmed) return;
+      
+      try {
+        for (const value of selected) {
+          await fetch('/api/tags', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'person', value })
+          });
+        }
+        selectedPeople.clear();
+        loadTags();
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('Delete failed');
+      }
+    }
+
+    // Delete selected tags
+    async function deleteSelectedTags() {
+      const selected = getSelectedTagsInfo();
+      if (selected.length === 0) return;
+      
+      const confirmed = await POAI.confirm.danger('Delete Tags', `Delete ${selected.length} tag(s)? This will remove them from all documents.`);
+      if (!confirmed) return;
+      
+      try {
+        for (const { value, type } of selected) {
+          await fetch('/api/tags', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, value })
+          });
+        }
+        selectedTags.clear();
+        loadTags();
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('Delete failed');
+      }
+    }
+
+    // Helpers
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString();
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Navigate to stakeholder profile by name
+    async function goToStakeholder(name) {
+      try {
+        const res = await fetch(`/api/stakeholders/lookup/${encodeURIComponent(name)}`);
+        if (res.ok) {
+          const actor = await res.json();
+          window.location.href = `/stakeholder/${actor.id}`;
+        } else {
+          alert(`No profile found for "${name}"`);
+        }
+      } catch (err) {
+        console.error('Stakeholder lookup failed:', err);
+      }
+    }
+
+    function escapeJs(str) {
+      if (!str) return '';
+      return str
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t')
+        .replace(/`/g, '\\`')
+        .replace(/\$/g, '\\$');
+    }
+  </script>
+</body>
+</html>

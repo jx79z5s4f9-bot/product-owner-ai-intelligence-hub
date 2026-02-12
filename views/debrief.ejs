@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debrief - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .debrief-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .debrief-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    
+    .debrief-header h1 {
+      margin: 0;
+    }
+    
+    .new-debrief-btn {
+      padding: 10px 20px;
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    
+    .new-debrief-btn:hover {
+      background: #2ea043;
+    }
+    
+    .rte-filter {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .rte-filter select {
+      padding: 8px 16px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+    
+    .debrief-form {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 30px;
+      display: none;
+    }
+    
+    .debrief-form.active {
+      display: block;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #c9d1d9;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.95rem;
+    }
+    
+    .form-group textarea {
+      min-height: 200px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .form-actions button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    
+    .btn-primary {
+      background: #238636;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+    
+    .debrief-list {
+      display: grid;
+      gap: 16px;
+    }
+    
+    .debrief-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .debrief-card:hover {
+      border-color: #58a6ff;
+      transform: translateY(-2px);
+    }
+    
+    .debrief-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    
+    .debrief-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #c9d1d9;
+    }
+    
+    .debrief-date {
+      font-size: 0.8rem;
+      color: #6e7681;
+    }
+    
+    .debrief-rte {
+      display: inline-block;
+      background: #21262d;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-bottom: 12px;
+    }
+    
+    .debrief-summary {
+      color: #8b949e;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .debrief-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .debrief-tag {
+      background: rgba(88, 166, 255, 0.1);
+      color: #58a6ff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+    }
+    
+    .no-debriefs {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b949e;
+    }
+    
+    .debrief-detail {
+      display: none;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .debrief-detail.active {
+      display: block;
+    }
+    
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    
+    .detail-title {
+      font-size: 1.5rem;
+      color: #c9d1d9;
+    }
+    
+    .detail-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .detail-actions button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    
+    .detail-content {
+      color: #8b949e;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+    
+    .extracted-entities {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #21262d;
+    }
+    
+    .extracted-entities h4 {
+      color: #c9d1d9;
+      margin-bottom: 12px;
+    }
+    
+    .entity-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .entity-chip {
+      background: #21262d;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+    }
+    
+    .entity-chip.person { border-left: 3px solid #58a6ff; }
+    .entity-chip.team { border-left: 3px solid #238636; }
+    .entity-chip.system { border-left: 3px solid #a371f7; }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'debrief' }) %>
+
+  <div class="debrief-container">
+    <div class="debrief-header">
+      <h1>📝 Session Debrief</h1>
+      <button class="new-debrief-btn" onclick="showForm()">+ New Debrief</button>
+    </div>
+    
+    <div class="rte-filter">
+      <select id="rteFilter" onchange="loadDebriefs()">
+        <option value="">All RTEs</option>
+      </select>
+    </div>
+    
+    <!-- New Debrief Form -->
+    <div class="debrief-form" id="debriefForm">
+      <div class="form-group">
+        <label>RTE</label>
+        <select id="formRte">
+          <option value="">Select RTE...</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="formTitle" placeholder="Brief description of the session...">
+      </div>
+      
+      <div class="form-group">
+        <label>Debrief Content</label>
+        <textarea id="formContent" placeholder="What did you discuss? Key decisions? Action items? Discoveries?
+
+The system will automatically extract:
+- People mentioned
+- Teams and departments
+- Systems and tools
+- Key topics and concepts"></textarea>
+      </div>
+      
+      <div class="form-actions">
+        <button class="btn-primary" onclick="saveDebrief()">💾 Save & Extract Entities</button>
+        <button class="btn-secondary" onclick="hideForm()">Cancel</button>
+      </div>
+    </div>
+    
+    <!-- Debrief Detail View -->
+    <div class="debrief-detail" id="debriefDetail">
+      <div class="detail-header">
+        <div>
+          <div class="detail-title" id="detailTitle"></div>
+          <div class="debrief-rte" id="detailRte"></div>
+          <div class="debrief-date" id="detailDate"></div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-secondary" onclick="closeDetail()">← Back</button>
+        </div>
+      </div>
+      
+      <div class="detail-content" id="detailContent"></div>
+      
+      <div class="extracted-entities" id="extractedEntities">
+        <h4>🔍 Extracted Entities</h4>
+        <div class="entity-list" id="entityList"></div>
+      </div>
+    </div>
+    
+    <!-- Debrief List -->
+    <div class="debrief-list" id="debriefList">
+      <div class="no-debriefs">
+        <h3>No debriefs yet</h3>
+        <p>Create your first session debrief to start building your knowledge graph</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let debriefs = [];
+    let rtes = [];
+    
+    async function init() {
+      // Load RTEs
+      try {
+        const response = await fetch('/api/rte');
+        rtes = await response.json();
+        
+        const filterSelect = document.getElementById('rteFilter');
+        const formSelect = document.getElementById('formRte');
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        
+        rtes.filter(r => !r.readOnly).forEach(rte => {
+          const option1 = document.createElement('option');
+          option1.value = rte.id;
+          option1.textContent = rte.name;
+          if (defaultRte && defaultRte == rte.id) {
+            option1.selected = true;
+          }
+          filterSelect.appendChild(option1);
+          
+          const option2 = document.createElement('option');
+          option2.value = rte.id;
+          option2.textContent = rte.name;
+          if (defaultRte && defaultRte == rte.id) {
+            option2.selected = true;
+          }
+          formSelect.appendChild(option2);
+        });
+      } catch (error) {
+        console.error('Failed to load RTEs:', error);
+      }
+      
+      loadDebriefs();
+    }
+    
+    async function loadDebriefs() {
+      const rteId = document.getElementById('rteFilter').value;
+      
+      try {
+        let url = '/api/debriefs';
+        if (rteId) url += `?rteId=${rteId}`;
+        
+        const response = await fetch(url);
+        debriefs = await response.json();
+        
+        renderDebriefList();
+      } catch (error) {
+        console.error('Failed to load debriefs:', error);
+        debriefs = [];
+        renderDebriefList();
+      }
+    }
+    
+    function renderDebriefList() {
+      const container = document.getElementById('debriefList');
+      
+      if (debriefs.length === 0) {
+        container.innerHTML = `
+          <div class="no-debriefs">
+            <h3>No debriefs yet</h3>
+            <p>Create your first session debrief to start building your knowledge graph</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = debriefs.map(d => {
+        const rte = rtes.find(r => r.id === d.rteId);
+        const date = new Date(d.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        const tags = d.entities ? d.entities.slice(0, 3).map(e => e.name) : [];
+        
+        return `
+          <div class="debrief-card" onclick="showDetail(${d.id})">
+            <div class="debrief-card-header">
+              <div class="debrief-title">${d.title}</div>
+              <div class="debrief-date">${date}</div>
+            </div>
+            <div class="debrief-rte">${rte?.name || 'Unknown RTE'}</div>
+            <div class="debrief-summary">${d.content.substring(0, 200)}...</div>
+            ${tags.length > 0 ? `
+              <div class="debrief-tags">
+                ${tags.map(t => `<span class="debrief-tag">${t}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function showForm() {
+      document.getElementById('debriefForm').classList.add('active');
+    }
+    
+    function hideForm() {
+      document.getElementById('debriefForm').classList.remove('active');
+      document.getElementById('formTitle').value = '';
+      document.getElementById('formContent').value = '';
+    }
+    
+    async function saveDebrief() {
+      const rteId = document.getElementById('formRte').value;
+      const title = document.getElementById('formTitle').value.trim();
+      const content = document.getElementById('formContent').value.trim();
+      
+      if (!rteId || !title || !content) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/debriefs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rteId: parseInt(rteId), title, content })
+        });
+        
+        if (response.ok) {
+          hideForm();
+          loadDebriefs();
+        } else {
+          const error = await response.json();
+          alert('Failed to save: ' + (error.message || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Failed to save: ' + error.message);
+      }
+    }
+    
+    function showDetail(id) {
+      const debrief = debriefs.find(d => d.id === id);
+      if (!debrief) return;
+      
+      const rte = rtes.find(r => r.id === debrief.rteId);
+      const date = new Date(debrief.createdAt).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      document.getElementById('detailTitle').textContent = debrief.title;
+      document.getElementById('detailRte').textContent = rte?.name || 'Unknown RTE';
+      document.getElementById('detailDate').textContent = date;
+      document.getElementById('detailContent').textContent = debrief.content;
+      
+      // Render entities
+      const entityList = document.getElementById('entityList');
+      if (debrief.entities && debrief.entities.length > 0) {
+        entityList.innerHTML = debrief.entities.map(e => `
+          <span class="entity-chip ${e.type}">${e.name}</span>
+        `).join('');
+        document.getElementById('extractedEntities').style.display = 'block';
+      } else {
+        document.getElementById('extractedEntities').style.display = 'none';
+      }
+      
+      document.getElementById('debriefDetail').classList.add('active');
+      document.getElementById('debriefList').style.display = 'none';
+    }
+    
+    function closeDetail() {
+      document.getElementById('debriefDetail').classList.remove('active');
+      document.getElementById('debriefList').style.display = 'grid';
+    }
+    
+    init();
+  </script>
+</body>
+</html>

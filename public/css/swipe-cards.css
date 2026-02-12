@@ -1,0 +1,364 @@
+/* ============================================
+   Swipeable Card Deck Styles
+   For suggestion review workflows
+   ============================================ */
+
+.swipe-mode-toggle {
+  display: flex;
+  gap: 8px;
+  background: #21262d;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.swipe-mode-toggle button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8b949e;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.swipe-mode-toggle button.active {
+  background: #30363d;
+  color: #f0f6fc;
+}
+
+/* Swipe Container */
+.swipe-container {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  min-height: 500px;
+}
+
+.swipe-container.active {
+  display: flex;
+}
+
+.swipe-instructions {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.swipe-instructions .reject {
+  color: #f85149;
+}
+
+.swipe-instructions .accept {
+  color: #3fb950;
+}
+
+/* Card Deck */
+.swipe-deck {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 350px;
+  perspective: 1000px;
+}
+
+.swipe-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #161b22;
+  border: 2px solid #30363d;
+  border-radius: 16px;
+  padding: 24px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+  transform-origin: center center;
+}
+
+.swipe-card:active {
+  cursor: grabbing;
+}
+
+/* Stacked cards behind */
+.swipe-card:nth-child(2) {
+  transform: scale(0.95) translateY(10px);
+  opacity: 0.7;
+}
+
+.swipe-card:nth-child(3) {
+  transform: scale(0.9) translateY(20px);
+  opacity: 0.4;
+}
+
+.swipe-card:nth-child(n+4) {
+  display: none;
+}
+
+/* Card being dragged */
+.swipe-card.dragging {
+  transition: none;
+  z-index: 100;
+}
+
+/* Swipe indicators */
+.swipe-card .swipe-indicator {
+  position: absolute;
+  top: 20px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.swipe-card .swipe-indicator.reject {
+  left: 20px;
+  background: #f85149;
+  color: white;
+  transform: rotate(-15deg);
+}
+
+.swipe-card .swipe-indicator.accept {
+  right: 20px;
+  background: #3fb950;
+  color: white;
+  transform: rotate(15deg);
+}
+
+.swipe-card.swiping-left .swipe-indicator.reject,
+.swipe-card.swiping-right .swipe-indicator.accept {
+  opacity: 1;
+}
+
+/* Card content */
+.swipe-card-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-align: center;
+}
+
+.swipe-relationship {
+  margin-top: 20px;
+}
+
+.swipe-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #f0f6fc;
+  line-height: 1.4;
+}
+
+.swipe-from, .swipe-to {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #f0f6fc;
+}
+
+.swipe-arrow {
+  font-size: 1.5rem;
+  margin: 12px 0;
+  color: #58a6ff;
+}
+
+.swipe-type {
+  display: inline-block;
+  background: #21262d;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #8b949e;
+  margin-top: 8px;
+}
+
+.swipe-details {
+  font-size: 0.8rem;
+  color: #6e7681;
+  margin-top: 8px;
+}
+
+.swipe-context {
+  margin-top: 16px;
+  padding: 12px;
+  background: #0d1117;
+  border-radius: 8px;
+  text-align: left;
+  flex-shrink: 0;
+  max-height: 100px;
+  overflow: hidden;
+}
+
+.swipe-context-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6e7681;
+  margin-bottom: 4px;
+}
+
+.swipe-context-text {
+  font-size: 0.85rem;
+  color: #8b949e;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.swipe-evidence {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #30363d;
+}
+
+.swipe-evidence-label {
+  font-size: 0.8rem;
+  color: #6e7681;
+  margin-bottom: 8px;
+}
+
+.swipe-evidence-bar {
+  height: 8px;
+  background: #21262d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.swipe-evidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f85149, #f0883e, #3fb950);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.swipe-count {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #8b949e;
+  margin-top: 8px;
+}
+
+/* Progress dots */
+.swipe-progress {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.swipe-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #30363d;
+  transition: background 0.3s ease;
+}
+
+.swipe-progress-dot.processed {
+  background: #3fb950;
+}
+
+.swipe-progress-dot.rejected {
+  background: #f85149;
+}
+
+.swipe-progress-dot.current {
+  background: #58a6ff;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
+}
+
+/* Action buttons below card */
+.swipe-actions {
+  display: flex;
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.swipe-action-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swipe-action-btn.reject {
+  border-color: #f85149;
+  color: #f85149;
+}
+
+.swipe-action-btn.reject:hover {
+  background: #f85149;
+  color: white;
+}
+
+.swipe-action-btn.accept {
+  border-color: #3fb950;
+  color: #3fb950;
+}
+
+.swipe-action-btn.accept:hover {
+  background: #3fb950;
+  color: white;
+}
+
+.swipe-action-btn.skip {
+  width: 50px;
+  height: 50px;
+  font-size: 1.2rem;
+  border-color: #6e7681;
+  color: #6e7681;
+}
+
+.swipe-action-btn.skip:hover {
+  background: #6e7681;
+  color: white;
+}
+
+/* Empty deck state */
+.swipe-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #8b949e;
+}
+
+.swipe-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.swipe-empty h3 {
+  color: #c9d1d9;
+  margin-bottom: 8px;
+}
+
+/* Keyboard hints */
+.swipe-keyboard-hints {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 0.8rem;
+  color: #6e7681;
+}
+
+.swipe-keyboard-hints kbd {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: 'SF Mono', Monaco, monospace;
+  margin-right: 4px;
+}

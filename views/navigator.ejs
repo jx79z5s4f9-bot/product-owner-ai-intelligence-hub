@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navigator - Browse Files</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .navigator-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .navigator-header h1 {
+      margin: 0;
+      color: #10b981;
+    }
+
+    .rte-selector {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .rte-selector label {
+      color: #999;
+    }
+
+    .rte-select {
+      padding: 0.5rem 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 6px;
+      color: #10b981;
+      font-size: 1rem;
+      cursor: pointer;
+      min-width: 200px;
+    }
+
+    .rte-select:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+
+    .file-browser {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .file-count {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .file-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .tree-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tree-item.folder {
+      color: #f59e0b;
+      font-weight: 500;
+    }
+
+    .tree-item.file {
+      color: #e0e0e0;
+    }
+
+    .tree-icon {
+      flex-shrink: 0;
+      width: 20px;
+      text-align: center;
+    }
+
+    .tree-name {
+      flex-grow: 1;
+      cursor: pointer;
+    }
+
+    .tree-name:hover {
+      color: #10b981;
+    }
+
+    .tree-size {
+      color: #666;
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+    }
+
+    .tree-actions {
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .tree-item:hover .tree-actions {
+      opacity: 1;
+    }
+
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .action-btn:hover {
+      opacity: 1;
+    }
+
+    .action-btn.edit:hover {
+      color: #10b981;
+    }
+
+    .action-btn.delete:hover {
+      color: #ef4444;
+    }
+
+    /* Indentation levels */
+    .depth-0 { padding-left: 0.75rem; }
+    .depth-1 { padding-left: 2rem; }
+    .depth-2 { padding-left: 3.5rem; }
+    .depth-3 { padding-left: 5rem; }
+    .depth-4 { padding-left: 6.5rem; }
+
+    .loading-msg, .empty-msg, .error-msg {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .error-msg {
+      color: #ef4444;
+    }
+
+    /* Editor Modal - uses design-system.css .modal-overlay + .hidden pattern */
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.85);
+    }
+
+    .modal-box {
+      background: #1a1a1a;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      color: #10b981;
+    }
+
+    .modal-body {
+      flex-grow: 1;
+      padding: 1rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-textarea {
+      flex-grow: 1;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #e0e0e0;
+      padding: 1rem;
+      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      resize: none;
+      min-height: 400px;
+    }
+
+    .editor-textarea:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn {
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #999;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #10b981;
+      text-decoration: none;
+      margin-bottom: 1rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'navigator' }) %>
+  
+  <main class="container">
+    <div class="navigator-header">
+      <h1>🗂️ Navigator</h1>
+      <div class="rte-selector">
+        <label for="rteSelect">RTE:</label>
+        <select id="rteSelect" class="rte-select">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+    </div>
+
+    <section class="file-browser">
+      <div class="file-count" id="fileCount">Select an RTE to browse files</div>
+      <div class="file-tree" id="fileTree">
+        <p class="loading-msg">Loading RTEs...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Editor Modal -->
+  <div class="modal-overlay hidden" id="editorModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="editorTitle">Edit File</h3>
+        <button class="btn btn-secondary" onclick="closeEditor()">✕</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="editorContent" class="editor-textarea"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditor()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveFile()">💾 Save</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="hidden" id="currentFilepath">
+
+  <script>
+    let currentRte = null;
+    let allFiles = [];
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadRtes();
+
+      // Auto-open document if ?file= query param is present
+      const urlParams = new URLSearchParams(window.location.search);
+      const fileParam = urlParams.get('file');
+      if (fileParam) {
+        openEditor(fileParam);
+      }
+    });
+
+    // RTE selector change handler
+    document.getElementById('rteSelect').addEventListener('change', function() {
+      if (this.value) {
+        loadFiles(this.value);
+      }
+    });
+
+    async function loadRtes() {
+      try {
+        // Fetch both navigator data (has file counts) and main RTE data (has IDs)
+        const [navResponse, rteResponse] = await Promise.all([
+          fetch('/api/navigator/rtes'),
+          fetch('/api/rte')
+        ]);
+        const navData = await navResponse.json();
+        const rteData = await rteResponse.json();
+        const select = document.getElementById('rteSelect');
+        const defaultRteId = localStorage.getItem('poai_default_rte');
+
+        if (!navData.rtes || navData.rtes.length === 0) {
+          select.innerHTML = '<option value="">No RTEs found</option>';
+          document.getElementById('fileTree').innerHTML = '<p class="empty-msg">No RTE folders found in ProductOwnerAI/rte/</p>';
+          document.getElementById('fileCount').textContent = 'No RTEs available';
+          return;
+        }
+
+        // Build a map from RTE name to ID for matching default
+        const rteList = Array.isArray(rteData) ? rteData : (rteData.rtes || []);
+        const nameToId = new Map(rteList.map(r => [r.name.toLowerCase(), r.id]));
+
+        // Find default RTE name from ID
+        let defaultRteName = null;
+        if (defaultRteId) {
+          const defaultRteObj = rteList.find(r => r.id == defaultRteId);
+          if (defaultRteObj) defaultRteName = defaultRteObj.name;
+        }
+
+        select.innerHTML = navData.rtes.map(rte =>
+          `<option value="${rte.name}" ${defaultRteName && rte.name.toLowerCase() === defaultRteName.toLowerCase() ? 'selected' : ''}>${rte.name} (${rte.fileCount} files)</option>`
+        ).join('');
+
+        // Use default RTE if set and exists, otherwise first RTE
+        const defaultExists = defaultRteName && navData.rtes.some(r => r.name.toLowerCase() === defaultRteName.toLowerCase());
+        currentRte = defaultExists ? defaultRteName : navData.rtes[0].name;
+        select.value = currentRte;
+        loadFiles(currentRte);
+
+      } catch (error) {
+        console.error('Failed to load RTEs:', error);
+        document.getElementById('rteSelect').innerHTML = '<option value="">Error loading RTEs</option>';
+        document.getElementById('fileTree').innerHTML = `<p class="error-msg">Failed to load: ${error.message}</p>`;
+      }
+    }
+
+    async function loadFiles(rteName) {
+      currentRte = rteName;
+      document.getElementById('fileTree').innerHTML = '<p class="loading-msg">Loading files...</p>';
+      document.getElementById('fileCount').textContent = `Loading ${rteName}...`;
+
+      try {
+        const response = await fetch(`/api/navigator/tree?rteName=${encodeURIComponent(rteName)}`);
+        const data = await response.json();
+
+        if (data.error) {
+          document.getElementById('fileTree').innerHTML = `<p class="error-msg">${data.error}</p>`;
+          document.getElementById('fileCount').textContent = 'Error loading files';
+          return;
+        }
+
+        allFiles = flattenTree(data.tree);
+        const fileCount = allFiles.filter(f => f.type === 'file').length;
+        const folderCount = allFiles.filter(f => f.type === 'folder').length;
+
+        document.getElementById('fileCount').textContent = `${rteName}: ${fileCount} files in ${folderCount} folders`;
+        renderTree(allFiles);
+
+      } catch (error) {
+        console.error('Failed to load files:', error);
+        document.getElementById('fileTree').innerHTML = `<p class="error-msg">Failed to load files: ${error.message}</p>`;
+        document.getElementById('fileCount').textContent = 'Error';
+      }
+    }
+
+    function flattenTree(node, depth = 0) {
+      let items = [];
+
+      if (node.type === 'folder') {
+        // Add folder itself (skip root)
+        if (depth > 0) {
+          items.push({
+            type: 'folder',
+            name: node.name,
+            path: node.path,
+            depth: depth - 1
+          });
+        }
+
+        // Add children
+        if (node.children && node.children.length > 0) {
+          node.children.forEach(child => {
+            items = items.concat(flattenTree(child, depth + 1));
+          });
+        }
+      } else {
+        items.push({
+          type: 'file',
+          name: node.name,
+          path: node.path,
+          size: node.size,
+          depth: Math.max(0, depth - 1)
+        });
+      }
+
+      return items;
+    }
+
+    function renderTree(items) {
+      const container = document.getElementById('fileTree');
+
+      if (items.length === 0) {
+        container.innerHTML = '<p class="empty-msg">No files found in this RTE</p>';
+        return;
+      }
+
+      const html = items.map(item => {
+        const depthClass = `depth-${Math.min(item.depth, 4)}`;
+
+        if (item.type === 'folder') {
+          return `
+            <div class="tree-item folder ${depthClass}">
+              <span class="tree-icon">📁</span>
+              <span class="tree-name">${escapeHtml(item.name)}</span>
+            </div>
+          `;
+        } else {
+          const safePath = escapeHtml(item.path).replace(/'/g, "\\'");
+          const safeName = escapeHtml(item.name).replace(/'/g, "\\'");
+          return `
+            <div class="tree-item file ${depthClass}">
+              <span class="tree-icon">📄</span>
+              <span class="tree-name" onclick="openEditor('${safePath}')">${escapeHtml(item.name)}</span>
+              <span class="tree-size">${formatSize(item.size)}</span>
+              <div class="tree-actions">
+                <button class="action-btn edit" onclick="openEditor('${safePath}')" title="Edit">✏️</button>
+                <button class="action-btn delete" onclick="deleteFile('${safePath}', '${safeName}')" title="Delete">×</button>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      container.innerHTML = html;
+    }
+
+    async function openEditor(filepath) {
+      const modal = document.getElementById('editorModal');
+      const textarea = document.getElementById('editorContent');
+      const title = document.getElementById('editorTitle');
+
+      document.getElementById('currentFilepath').value = filepath;
+      title.textContent = filepath.split('/').pop();
+      textarea.value = 'Loading...';
+      modal.classList.remove('hidden');
+
+      try {
+        const response = await fetch(`/api/navigator/file?filepath=${encodeURIComponent(filepath)}`);
+        const data = await response.json();
+
+        if (data.error) {
+          textarea.value = `Error: ${data.error}`;
+        } else {
+          textarea.value = data.content;
+        }
+      } catch (error) {
+        textarea.value = `Failed to load file: ${error.message}`;
+      }
+    }
+
+    async function saveFile() {
+      const filepath = document.getElementById('currentFilepath').value;
+      const content = document.getElementById('editorContent').value;
+
+      try {
+        const response = await fetch('/api/navigator/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filepath, content })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          closeEditor();
+          // Refresh file list to show updated size
+          loadFiles(currentRte);
+        } else {
+          alert('Failed to save: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Error saving file: ' + error.message);
+      }
+    }
+
+    async function deleteFile(filepath, filename) {
+      const confirmed = await POAI.confirm.danger('Delete File', `Delete "${filename}"?`);
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch('/api/navigator/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filepath })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          loadFiles(currentRte);
+        } else {
+          alert('Failed to delete: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Error deleting file: ' + error.message);
+      }
+    }
+
+    function closeEditor() {
+      document.getElementById('editorModal').classList.add('hidden');
+    }
+
+    function formatSize(bytes) {
+      if (!bytes) return '';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeEditor();
+      }
+    });
+
+    // Close modal on background click
+    document.getElementById('editorModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeEditor();
+      }
+    });
+  </script>
+</body>
+</html>

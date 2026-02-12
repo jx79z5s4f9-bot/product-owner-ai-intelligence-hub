@@ -1,0 +1,329 @@
+<!--
+  Shared read-only document viewer modal.
+  Include this partial in any page that needs to show document content.
+  
+  Usage:
+    include('partials/doc-viewer')
+    
+  Then call from JS:
+    viewDocument(filepath, { highlight: 'text to find', title: 'My Doc' })
+    viewDocumentById(documentId, { highlight: 'optional text' })
+-->
+
+<!-- Document Viewer Modal -->
+<div class="modal hidden" id="docViewerModal" onclick="if(event.target===this)closeDocViewer()">
+  <div class="modal-content doc-viewer-modal">
+    <div class="modal-header">
+      <h3 id="docViewerTitle">Document</h3>
+      <div class="doc-viewer-actions">
+        <a id="docViewerOpenNav" href="#" class="doc-viewer-nav-link" title="Open in Navigator">✏️ Edit</a>
+        <button class="close-btn" onclick="closeDocViewer()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body doc-viewer-body">
+      <div id="docViewerLoading" class="doc-viewer-loading">
+        <div class="spinner-large"></div>
+        <div>Loading document…</div>
+      </div>
+      <div id="docViewerContent" class="doc-viewer-content" style="display:none"></div>
+      <div id="docViewerError" class="doc-viewer-error" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .doc-viewer-modal {
+    max-width: 900px;
+    width: 90%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .doc-viewer-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+
+  .doc-viewer-modal .modal-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #e6edf3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doc-viewer-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .doc-viewer-nav-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    transition: all 0.15s;
+  }
+
+  .doc-viewer-nav-link:hover {
+    color: #58a6ff;
+    border-color: #58a6ff;
+    text-decoration: none;
+  }
+
+  .doc-viewer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    min-height: 300px;
+  }
+
+  .doc-viewer-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: #8b949e;
+    gap: 12px;
+  }
+
+  .doc-viewer-content {
+    padding: 1.25rem 1.5rem;
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    tab-size: 4;
+  }
+
+  /* YAML frontmatter styling */
+  .doc-viewer-content .frontmatter {
+    color: #8b949e;
+    background: rgba(0,0,0,0.2);
+    border-left: 3px solid #30363d;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.78rem;
+  }
+
+  /* Highlighted passage */
+  .doc-viewer-content .highlight-match {
+    background: rgba(227, 179, 65, 0.25);
+    border: 1px solid rgba(227, 179, 65, 0.5);
+    border-radius: 3px;
+    padding: 1px 2px;
+    scroll-margin-top: 80px;
+  }
+
+  /* Markdown headings */
+  .doc-viewer-content .md-heading {
+    color: #58a6ff;
+    font-weight: 700;
+  }
+
+  /* Semantic tags in content */
+  .doc-viewer-content .semantic-tag {
+    color: #f0883e;
+    font-weight: 600;
+  }
+
+  .doc-viewer-error {
+    padding: 40px;
+    text-align: center;
+    color: #f85149;
+  }
+
+  .doc-viewer-error .error-icon { font-size: 2rem; margin-bottom: 8px; }
+
+  /* Spinner (reused) */
+  .doc-viewer-loading .spinner-large {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #30363d;
+    border-top-color: #58a6ff;
+    border-radius: 50%;
+    animation: doc-spin 0.8s linear infinite;
+  }
+
+  @keyframes doc-spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .doc-viewer-modal { width: 98%; max-height: 92vh; }
+    .doc-viewer-content { font-size: 0.75rem; padding: 1rem; }
+  }
+</style>
+
+<script>
+  /**
+   * Open the read-only document viewer modal.
+   * @param {string} filepath - Full filesystem path to the .md file
+   * @param {object} opts
+   * @param {string} [opts.highlight] - Text to find and highlight in the document
+   * @param {string} [opts.title] - Override title (defaults to filename)
+   */
+  async function viewDocument(filepath, opts = {}) {
+    const modal = document.getElementById('docViewerModal');
+    const titleEl = document.getElementById('docViewerTitle');
+    const contentEl = document.getElementById('docViewerContent');
+    const loadingEl = document.getElementById('docViewerLoading');
+    const errorEl = document.getElementById('docViewerError');
+    const navLink = document.getElementById('docViewerOpenNav');
+
+    // Reset
+    contentEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    loadingEl.style.display = 'flex';
+    modal.classList.remove('hidden');
+
+    // Set title
+    titleEl.textContent = opts.title || filepath.split('/').pop();
+
+    // Set "Open in Navigator" link
+    navLink.href = `/navigator?file=${encodeURIComponent(filepath)}`;
+
+    try {
+      const res = await fetch(`/api/navigator/file?filepath=${encodeURIComponent(filepath)}`);
+      if (!res.ok) {
+        const errData = await res.text();
+        throw new Error(errData || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      loadingEl.style.display = 'none';
+
+      // Render content with syntax highlighting
+      const rendered = renderDocContent(data.content, opts.highlight);
+      contentEl.innerHTML = rendered;
+      contentEl.style.display = 'block';
+
+      // Scroll to highlight if present
+      if (opts.highlight) {
+        setTimeout(() => {
+          const mark = contentEl.querySelector('.highlight-match');
+          if (mark) mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+
+    } catch (err) {
+      loadingEl.style.display = 'none';
+      errorEl.innerHTML = `<div class="error-icon">⚠️</div><p>${escapeDocHtml(err.message)}</p>`;
+      errorEl.style.display = 'block';
+    }
+  }
+
+  /**
+   * Open viewer by document database ID (resolves filepath first).
+   * @param {number} documentId
+   * @param {object} opts - Same as viewDocument
+   */
+  async function viewDocumentById(documentId, opts = {}) {
+    try {
+      const res = await fetch(`/api/navigator/doc/${documentId}`);
+      if (!res.ok) throw new Error('Document not found');
+      const data = await res.json();
+      await viewDocument(data.filepath, { title: data.filename, ...opts });
+    } catch (err) {
+      // Fallback: show error in modal
+      const modal = document.getElementById('docViewerModal');
+      const loadingEl = document.getElementById('docViewerLoading');
+      const errorEl = document.getElementById('docViewerError');
+      document.getElementById('docViewerTitle').textContent = 'Document';
+      loadingEl.style.display = 'none';
+      errorEl.innerHTML = `<div class="error-icon">⚠️</div><p>Could not load document: ${escapeDocHtml(err.message)}</p>`;
+      errorEl.style.display = 'block';
+      modal.classList.remove('hidden');
+    }
+  }
+
+  /**
+   * Close the viewer modal
+   */
+  function closeDocViewer() {
+    document.getElementById('docViewerModal').classList.add('hidden');
+  }
+
+  /**
+   * Render document content with optional highlighting and light formatting
+   */
+  function renderDocContent(content, highlightText) {
+    // Split frontmatter from body
+    let frontmatter = '';
+    let body = content;
+
+    const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+    if (fmMatch) {
+      frontmatter = fmMatch[1];
+      body = content.slice(fmMatch[0].length);
+    }
+
+    // Escape HTML
+    body = escapeDocHtml(body);
+    frontmatter = escapeDocHtml(frontmatter);
+
+    // Light syntax coloring for markdown headings
+    body = body.replace(/^(#{1,4}\s.*)$/gm, '<span class="md-heading">$1</span>');
+
+    // Highlight semantic tags like [#risk], [#action]
+    body = body.replace(/\[#(\w+)\]/g, '<span class="semantic-tag">[#$1]</span>');
+
+    // Highlight the quoted passage if provided
+    if (highlightText) {
+      const escaped = escapeDocHtml(highlightText);
+      // Try exact match first, then fuzzy (first 60 chars)
+      let idx = body.indexOf(escaped);
+      if (idx === -1 && escaped.length > 60) {
+        idx = body.indexOf(escaped.substring(0, 60));
+      }
+      if (idx !== -1) {
+        const matchLen = idx !== -1 && body.indexOf(escaped) !== -1 ? escaped.length : 60;
+        const before = body.substring(0, idx);
+        const match = body.substring(idx, idx + matchLen);
+        const after = body.substring(idx + matchLen);
+        body = before + '<span class="highlight-match">' + match + '</span>' + after;
+      }
+    }
+
+    let html = '';
+    if (frontmatter) {
+      html += `<div class="frontmatter">---\n${frontmatter}\n---</div>`;
+    }
+    html += body;
+    return html;
+  }
+
+  function escapeDocHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('docViewerModal');
+      if (modal && !modal.classList.contains('hidden')) {
+        closeDocViewer();
+      }
+    }
+  });
+</script>

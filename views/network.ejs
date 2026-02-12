@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relationship Network - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  <style>
+    body {
+      overflow: hidden;
+    }
+    
+    .network-container {
+      display: flex;
+      height: calc(100vh - 50px); /* Account for nav bar */
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 300px;
+      background: #161b22;
+      border-right: 1px solid #30363d;
+      padding: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    
+    .sidebar h1 {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+      color: #58a6ff;
+    }
+    
+    .sidebar h2 {
+      font-size: 0.9rem;
+      margin: 16px 0 8px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Controls */
+    .controls {
+      margin-bottom: 16px;
+    }
+    
+    .control-group {
+      margin-bottom: 12px;
+    }
+    
+    .control-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+    
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+    
+    select:focus, input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    button {
+      padding: 8px 16px;
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    button:hover {
+      background: #2ea043;
+    }
+    
+    button.secondary {
+      background: #30363d;
+    }
+    
+    button.secondary:hover {
+      background: #484f58;
+    }
+    
+    /* Legend */
+    .legend {
+      margin-top: 16px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+    }
+    
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    /* Stats */
+    .stats {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 16px;
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+    }
+    
+    .stat-value {
+      color: #58a6ff;
+      font-weight: 600;
+    }
+    
+    /* Node details */
+    .node-details {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 16px;
+      display: none;
+    }
+    
+    .node-details.active {
+      display: block;
+    }
+    
+    .node-details h3 {
+      font-size: 1rem;
+      color: #58a6ff;
+      margin-bottom: 8px;
+    }
+    
+    .node-details p {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+    
+    .node-details .label {
+      color: #8b949e;
+    }
+    
+    /* Graph container */
+    .graph-container {
+      flex: 1;
+      position: relative;
+    }
+    
+    #cy {
+      width: 100%;
+      height: 100%;
+      background: #0d1117;
+    }
+    
+    /* Loading overlay */
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .loading .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Toolbar */
+    .toolbar {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    
+    .toolbar button {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+    
+    /* Search results */
+    .search-results {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+    
+    .search-result {
+      padding: 8px;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    
+    .search-result:hover {
+      background: #30363d;
+    }
+    
+    .search-result .type {
+      color: #8b949e;
+      font-size: 0.75rem;
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #8b949e;
+    }
+
+    .empty-state h2 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+      color: #c9d1d9;
+    }
+
+    /* Modal styles - uses design-system.css .modal-overlay + .hidden pattern */
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    .modal {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 24px;
+      width: 450px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal h3 {
+      color: #58a6ff;
+      margin-bottom: 16px;
+      font-size: 1.2rem;
+    }
+
+    .modal .form-group {
+      margin-bottom: 16px;
+    }
+
+    .modal label {
+      display: block;
+      font-size: 0.85rem;
+      color: #8b949e;
+      margin-bottom: 6px;
+    }
+
+    .modal select, .modal input {
+      width: 100%;
+      padding: 10px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+
+    /* Range slider styling */
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: #30363d;
+      border-radius: 3px;
+      outline: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #58a6ff;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .slider-value {
+      display: inline-block;
+      min-width: 30px;
+      text-align: center;
+      color: #58a6ff;
+      font-weight: bold;
+    }
+    
+    /* Edge tooltip */
+    .edge-tooltip {
+      position: absolute;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #c9d1d9;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 300px;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    
+    .edge-tooltip.visible {
+      display: block;
+    }
+    
+    .edge-tooltip .tooltip-label {
+      color: #58a6ff;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .edge-tooltip .tooltip-context {
+      color: #8b949e;
+      font-style: italic;
+    }
+    
+    .edge-tooltip .tooltip-meta {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #6e7681;
+    }
+    
+    /* Focus mode indicator */
+    .focus-mode-indicator {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #238636;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      display: none;
+      z-index: 100;
+    }
+    
+    .focus-mode-indicator.active {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .focus-mode-indicator button {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      margin: 0;
+    }
+    
+    /* Enhanced node details panel */
+    .node-details .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    
+    .node-details .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .node-details .connections-list {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+    
+    .node-details .connection-item {
+      padding: 4px 0;
+      cursor: pointer;
+      color: #8b949e;
+    }
+    
+    .node-details .connection-item:hover {
+      color: #58a6ff;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #30363d;
+    }
+
+    .action-buttons button {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+    }
+
+    .success-msg {
+      color: #3fb950;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+    
+    /* View selector buttons */
+    .view-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    
+    .view-btn {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .view-btn:hover {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+    
+    .view-btn.active {
+      background: #238636;
+      border-color: #238636;
+      color: white;
+    }
+    
+    /* Edge detail modal */
+    .edge-detail-panel {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      width: 340px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    
+    .edge-detail-panel.active {
+      display: block;
+    }
+    
+    .edge-detail-panel h4 {
+      color: #58a6ff;
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+    
+    .edge-detail-panel .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.85rem;
+    }
+    
+    .edge-detail-panel .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .edge-detail-panel .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #8b949e;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+      margin: 0;
+    }
+    
+    .edge-detail-panel .close-btn:hover {
+      color: #c9d1d9;
+    }
+    
+    .edge-detail-panel .source-link {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #21262d;
+      border-radius: 4px;
+      color: #58a6ff;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    
+    .edge-detail-panel .source-link:hover {
+      background: #30363d;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'network' }) %>
+  
+  <div class="network-container">
+    <!-- Sidebar -->
+    <%- include('partials/network-sidebar') %>
+    
+    <!-- Graph -->
+    <%- include('partials/network-graph') %>
+  </div>
+
+  <!-- Modals -->
+  <%- include('partials/network-modals') %>
+
+  <script>
+    let cy = null;
+    let currentRteId = null;
+    let selectedNode = null;
+    let currentLayout = 'cose';
+    let activeActorTypes = []; // Empty until user selects a view
+    let focusMode = false;
+    let focusNodeId = null;
+    let degreeThreshold = 0;
+    let confidenceThreshold = 0;
+    
+    // Get selected actor types from checkboxes
+    function getSelectedActorTypes() {
+      const checkboxes = document.querySelectorAll('#actorTypeFilters input[type="checkbox"]:checked');
+      return Array.from(checkboxes).map(cb => cb.value);
+    }
+    
+    // Update filters and reload graph
+    function updateFilters() {
+      activeActorTypes = getSelectedActorTypes();
+      // Only load if graph has been initialized
+      if (graphLoaded) {
+        loadGraph();
+      }
+    }
+    
+    // Select all actor types
+    function selectAllTypes() {
+      document.querySelectorAll('#actorTypeFilters input[type="checkbox"]').forEach(cb => cb.checked = true);
+      updateFilters();
+    }
+    
+    // Deselect all actor types
+    function selectNoTypes() {
+      document.querySelectorAll('#actorTypeFilters input[type="checkbox"]').forEach(cb => cb.checked = false);
+      updateFilters();
+    }
+
+    // Track if graph has been loaded
+    let graphLoaded = false;
+
+    // Show empty state (before any view is selected)
+    function showEmptyState() {
+      const container = document.getElementById('cy');
+      // Hide loading indicator
+      document.getElementById('loading').style.display = 'none';
+      // Only show if graph hasn't been loaded yet
+      if (!graphLoaded && container) {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #8b949e; text-align: center; padding: 2rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🕸️</div>
+            <h2 style="color: #c9d1d9; margin: 0 0 0.5rem 0;">Select a View to Load</h2>
+            <p style="margin: 0 0 1.5rem 0; max-width: 400px;">Choose a view preset from the sidebar to load the network graph. This saves resources by only loading what you need.</p>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+              <button onclick="loadView('overview')" style="padding: 0.5rem 1rem; background: #238636; border: none; border-radius: 6px; color: white; cursor: pointer;">🌐 Load Overview</button>
+              <button onclick="loadView('people')" style="padding: 0.5rem 1rem; background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; cursor: pointer;">👥 People & Teams</button>
+              <button onclick="loadView('systems')" style="padding: 0.5rem 1rem; background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; cursor: pointer;">🖥️ Systems</button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Hide empty state and reinitialize cytoscape
+    function hideEmptyState() {
+      if (!graphLoaded) {
+        graphLoaded = true;
+        // Clear the empty state HTML
+        const container = document.getElementById('cy');
+        container.innerHTML = '';
+        // Reinitialize Cytoscape on the now-empty container
+        initCytoscape();
+      }
+    }
+
+    // Initialize Cytoscape
+    function initCytoscape() {
+      cy = cytoscape({
+        container: document.getElementById('cy'),
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'label': 'data(label)',
+              'background-color': 'data(color)',
+              'width': 'data(size)',
+              'height': 'data(size)',
+              'font-size': '12px',
+              'color': '#c9d1d9',
+              'text-valign': 'bottom',
+              'text-margin-y': 8,
+              'text-outline-color': '#0d1117',
+              'text-outline-width': 2
+            }
+          },
+          {
+            selector: 'node:selected',
+            style: {
+              'border-width': 3,
+              'border-color': '#58a6ff'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 2,
+              'line-color': 'data(color)',
+              'target-arrow-color': 'data(color)',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'opacity': 0.7
+            }
+          },
+          {
+            selector: 'edge:selected',
+            style: {
+              'width': 4,
+              'opacity': 1
+            }
+          },
+          {
+            selector: '.highlighted',
+            style: {
+              'background-color': '#58a6ff',
+              'line-color': '#58a6ff',
+              'target-arrow-color': '#58a6ff',
+              'opacity': 1
+            }
+          },
+          {
+            selector: '.faded',
+            style: {
+              'opacity': 0.2
+            }
+          },
+          {
+            selector: '.search-highlight',
+            style: {
+              'border-width': 4,
+              'border-color': '#10b981',
+              'border-style': 'solid'
+            }
+          },
+          // C.12 Compound (parent) node styles
+          {
+            selector: ':parent',
+            style: {
+              'background-color': '#21262d',
+              'background-opacity': 0.6,
+              'border-width': 2,
+              'border-color': '#30363d',
+              'border-style': 'dashed',
+              'label': 'data(label)',
+              'text-valign': 'top',
+              'text-halign': 'center',
+              'font-size': '14px',
+              'color': '#8b949e',
+              'text-margin-y': -8,
+              'padding': '20px',
+              'shape': 'round-rectangle'
+            }
+          }
+        ],
+        minZoom: 0.2,
+        maxZoom: 3,
+        wheelSensitivity: 0.2
+      });
+      
+      // Event handlers
+      cy.on('tap', 'node', function(evt) {
+        selectNode(evt.target);
+      });
+      
+      cy.on('tap', function(evt) {
+        if (evt.target === cy) {
+          clearSelection();
+          closeEdgeDetail();
+        }
+      });
+      
+      // C.8 Edge tap → show relationship detail
+      cy.on('tap', 'edge', function(evt) {
+        showEdgeDetail(evt.target);
+      });
+      
+      cy.on('mouseover', 'node', function(evt) {
+        evt.target.style('cursor', 'pointer');
+      });
+    }
+    
+    // Load RTE instances
+    async function loadRTEInstances() {
+      try {
+        const response = await fetch('/api/rte');
+        const rtes = await response.json();
+        
+        const select = document.getElementById('rteSelect');
+        select.innerHTML = '';
+        
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        
+        if (rtes && rtes.length > 0) {
+          rtes.forEach(rte => {
+            const option = document.createElement('option');
+            option.value = rte.id;
+            option.textContent = rte.name + (rte.readOnly ? ' (read-only)' : '');
+            if (defaultRte && defaultRte == rte.id) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          });
+          
+          // Use default RTE if set, otherwise first RTE
+          currentRteId = defaultRte || rtes[0].id;
+          // Don't auto-load graph - wait for user to select a view
+          showEmptyState();
+        } else {
+          select.innerHTML = '<option value="">No RTEs found</option>';
+        }
+        
+        select.addEventListener('change', function() {
+          currentRteId = this.value;
+          loadGraph();
+        });
+      } catch (error) {
+        console.error('Failed to load RTEs:', error);
+      }
+    }
+    
+    // View presets configuration
+    const VIEW_PRESETS = {
+      overview: { actorTypes: null, label: 'Overview' },
+      people: { actorTypes: ['person', 'team', 'role'], label: 'People & Teams' },
+      systems: { actorTypes: ['system', 'technology'], label: 'Systems' },
+      'people-systems': { actorTypes: ['person', 'system'], label: 'People × Systems' },
+      partners: { actorTypes: ['organization', 'team'], label: 'Partners' }
+    };
+    
+    let currentView = 'overview';
+    
+    // Load a preset view
+    function loadView(viewName) {
+      const preset = VIEW_PRESETS[viewName];
+      if (!preset) return;
+
+      currentView = viewName;
+
+      // Hide empty state and init Cytoscape if first load
+      hideEmptyState();
+
+      // Save preference
+      saveNetworkPrefs();
+
+      // Update button states
+      document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === viewName);
+      });
+
+      // Update checkbox filters to match preset
+      if (preset.actorTypes) {
+        document.querySelectorAll('#actorTypeFilters input[type="checkbox"]').forEach(cb => {
+          cb.checked = preset.actorTypes.includes(cb.value);
+        });
+        activeActorTypes = [...preset.actorTypes];
+      } else {
+        document.querySelectorAll('#actorTypeFilters input[type="checkbox"]').forEach(cb => {
+          cb.checked = true;
+        });
+        activeActorTypes = ['person', 'role', 'team', 'system', 'organization', 'project', 'location', 'technology'];
+      }
+
+      loadGraph();
+    }
+    
+    // Save/restore network preferences
+    function saveNetworkPrefs() {
+      localStorage.setItem('poai_network_prefs', JSON.stringify({
+        view: currentView,
+        actorTypes: activeActorTypes,
+        degreeThreshold: degreeThreshold,
+        confidenceThreshold: confidenceThreshold
+      }));
+    }
+    
+    function restoreNetworkPrefs() {
+      try {
+        const prefs = JSON.parse(localStorage.getItem('poai_network_prefs'));
+        if (prefs) {
+          // Restore view
+          if (prefs.view && VIEW_PRESETS[prefs.view]) {
+            currentView = prefs.view;
+            document.querySelectorAll('.view-btn').forEach(btn => {
+              btn.classList.toggle('active', btn.dataset.view === currentView);
+            });
+          }
+          
+          // Restore sliders
+          if (prefs.degreeThreshold !== undefined) {
+            degreeThreshold = prefs.degreeThreshold;
+            document.getElementById('degreeSlider').value = degreeThreshold;
+            document.getElementById('degreeValue').textContent = degreeThreshold;
+          }
+          if (prefs.confidenceThreshold !== undefined) {
+            confidenceThreshold = prefs.confidenceThreshold;
+            document.getElementById('confidenceSlider').value = Math.round(confidenceThreshold * 100);
+            document.getElementById('confidenceValue').textContent = Math.round(confidenceThreshold * 100) + '%';
+          }
+        }
+      } catch (e) {
+        console.log('Could not restore network prefs:', e);
+      }
+    }
+    
+    // Load graph data
+    async function loadGraph() {
+      if (!currentRteId) return;
+
+      document.getElementById('loading').style.display = 'block';
+
+      try {
+        // Build query params with actor type filter
+        const typeParam = activeActorTypes.length > 0 ? `&actorTypes=${activeActorTypes.join(',')}` : '';
+        const groupParam = currentGroupBy ? `&groupBy=${currentGroupBy}` : '';
+
+        const [graphResponse, statsResponse] = await Promise.all([
+          fetch(`/api/rte/${currentRteId}/graph?refresh=true${typeParam}${groupParam}`),
+          fetch(`/api/rte/${currentRteId}/stats`)
+        ]);
+
+        const graphData = await graphResponse.json();
+        const statsData = await statsResponse.json();
+
+        // When grouping by team, filter out implicit team edges
+        // (team membership is shown spatially, not via edges)
+        let edges = graphData.edges || [];
+        if (currentGroupBy === 'team') {
+          edges = edges.filter(e => e.data.edgeSource !== 'implicit_team');
+        } else if (currentGroupBy === 'organization') {
+          edges = edges.filter(e => e.data.edgeSource !== 'implicit_org');
+        }
+
+        // Update stats
+        document.getElementById('statNodes').textContent = graphData.nodes?.length || 0;
+        document.getElementById('statEdges').textContent = edges.length || 0;
+        document.getElementById('statSuggestions').textContent = statsData.pendingSuggestions || 0;
+
+        // Clear and add elements
+        cy.elements().remove();
+
+        if (graphData.nodes?.length > 0) {
+          cy.add(graphData.nodes);
+          cy.add(edges);
+          
+          // Apply layout
+          applyLayout();
+        } else {
+          // Show empty state
+          document.getElementById('cy').innerHTML = `
+            <div class="empty-state">
+              <h2>No relationships yet</h2>
+              <p>Start adding actors and relationships to see your network.</p>
+            </div>
+          `;
+        }
+        
+        // Apply staleness visualization
+        applyStalenessVisualization();
+      } catch (error) {
+        console.error('Failed to load graph:', error);
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+    
+    // Apply staleness visualization based on last_seen_at
+    function applyStalenessVisualization() {
+      if (!cy) return;
+      
+      const now = new Date();
+      cy.nodes().forEach(node => {
+        const lastSeenAt = node.data('lastSeenAt');
+        if (!lastSeenAt) return;
+        
+        const lastSeen = new Date(lastSeenAt);
+        const daysSince = Math.floor((now - lastSeen) / (1000 * 60 * 60 * 24));
+        
+        if (daysSince > 180) {
+          // Very stale: hide by default
+          node.style('display', 'none');
+        } else if (daysSince > 90) {
+          // Stale: faded with amber border
+          node.style({
+            'opacity': 0.4,
+            'border-width': 2,
+            'border-color': '#f59e0b',
+            'border-style': 'dashed'
+          });
+        }
+        // Active nodes: keep default styling
+      });
+    }
+    
+    // Apply layout
+    function applyLayout() {
+      // Use different settings for compound (grouped) vs flat layout
+      const isGrouped = currentGroupBy !== null;
+
+      const layoutOptions = {
+        name: currentLayout,
+        animate: true,
+        animationDuration: 500,
+        padding: 50,
+        numIter: 1000
+      };
+
+      if (currentLayout === 'cose') {
+        if (isGrouped) {
+          // Compound node layout - focus on containing children in parents
+          Object.assign(layoutOptions, {
+            nodeRepulsion: 12000,     // Less repulsion within groups
+            idealEdgeLength: 80,      // Shorter links within group
+            edgeElasticity: 60,       // More flexible
+            gravity: 0.5,             // Strong gravity keeps children in parent
+            nestingFactor: 1.2,       // Space between nested levels
+            componentSpacing: 100,    // Space between disconnected components
+            fit: true
+          });
+        } else {
+          // Flat layout - balanced spread
+          Object.assign(layoutOptions, {
+            nodeRepulsion: 18000,
+            idealEdgeLength: 120,
+            edgeElasticity: 80,
+            gravity: 0.35
+          });
+        }
+      }
+
+      const layout = cy.layout(layoutOptions);
+      layout.run();
+    }
+    
+    // Toggle layout
+    function toggleLayout() {
+      const layouts = ['cose', 'circle', 'grid', 'concentric', 'breadthfirst'];
+      const currentIndex = layouts.indexOf(currentLayout);
+      currentLayout = layouts[(currentIndex + 1) % layouts.length];
+      applyLayout();
+    }
+    
+    // Select node
+    function selectNode(node) {
+      clearSelection();
+      selectedNode = node;
+      node.select();
+      
+      // Show node details
+      const data = node.data();
+      if (data.type === 'person') {
+        document.getElementById('nodeName').innerHTML = `<a href="/stakeholder/${node.id()}" style="color:inherit;text-decoration:underline dotted;text-underline-offset:3px" title="View profile">${escapeHtml(data.label)}</a>`;
+      } else {
+        document.getElementById('nodeName').textContent = data.label;
+      }
+      document.getElementById('nodeType').textContent = data.type || '-';
+      document.getElementById('nodeRole').textContent = data.role || '-';
+      document.getElementById('nodeTeam').textContent = data.team || '-';
+      document.getElementById('nodeOrg').textContent = data.organization || '-';
+      document.getElementById('nodeLastSeen').textContent = data.lastSeenAt ? formatDate(data.lastSeenAt) : '-';
+      document.getElementById('nodeMentions').textContent = data.mentionCount || 1;
+      document.getElementById('nodeConnections').textContent = node.degree();
+      document.getElementById('nodeDetails').classList.add('active');
+      
+      // Build connections list
+      const connectionsList = document.getElementById('connectionsList');
+      const neighbors = node.neighborhood('node');
+      let connectionsHtml = '';
+      neighbors.forEach(n => {
+        const nData = n.data();
+        connectionsHtml += `<div class="connection-item" onclick="selectNodeById('${n.id()}')">${nData.label} <span style="color:#6e7681">(${nData.type})</span></div>`;
+      });
+      connectionsList.innerHTML = connectionsHtml || '<span style="color:#6e7681">No connections</span>';
+      
+      // Highlight connected nodes
+      const neighborhood = node.neighborhood().add(node);
+      cy.elements().addClass('faded');
+      neighborhood.removeClass('faded');
+    }
+    
+    // Navigate to stakeholder profile by name
+    async function goToStakeholder(name) {
+      try {
+        const res = await fetch(`/api/stakeholders/lookup/${encodeURIComponent(name)}`);
+        if (res.ok) {
+          const actor = await res.json();
+          window.location.href = `/stakeholder/${actor.id}`;
+        } else {
+          alert(`No profile found for "${name}"`);
+        }
+      } catch (err) {
+        console.error('Stakeholder lookup failed:', err);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Format date for display
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const date = new Date(dateStr);
+      const now = new Date();
+      const days = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+      if (days === 0) return 'Today';
+      if (days === 1) return 'Yesterday';
+      if (days < 7) return `${days} days ago`;
+      if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+      if (days < 365) return `${Math.floor(days / 30)} months ago`;
+      return `${Math.floor(days / 365)} years ago`;
+    }
+    
+    // Clear selection
+    function clearSelection() {
+      if (selectedNode) {
+        selectedNode.unselect();
+        selectedNode = null;
+      }
+      cy.elements().removeClass('faded').removeClass('highlighted');
+      document.getElementById('nodeDetails').classList.remove('active');
+    }
+    
+    // Focus on selected node
+    function focusNode() {
+      if (selectedNode) {
+        cy.animate({
+          fit: {
+            eles: selectedNode,
+            padding: 100
+          }
+        }, { duration: 500 });
+      }
+    }
+    
+    // Show neighbors
+    async function showNeighbors() {
+      if (!selectedNode || !currentRteId) return;
+      
+      try {
+        const response = await fetch(`/api/rte/${currentRteId}/graph/neighbors/${selectedNode.id()}?depth=2`);
+        const data = await response.json();
+        
+        // Clear and show only neighbors
+        cy.elements().remove();
+        cy.add(data.nodes);
+        cy.add(data.edges);
+        applyLayout();
+      } catch (error) {
+        console.error('Failed to load neighbors:', error);
+      }
+    }
+    
+    // Search with live highlight
+    document.getElementById('searchInput').addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+      const resultsDiv = document.getElementById('searchResults');
+      
+      // Remove previous highlights
+      cy.nodes().removeClass('search-highlight');
+      
+      if (query.length < 2) {
+        resultsDiv.innerHTML = '';
+        return;
+      }
+      
+      const matches = cy.nodes().filter(node => {
+        const label = node.data('label')?.toLowerCase() || '';
+        return label.includes(query);
+      });
+      
+      // Highlight matching nodes
+      matches.addClass('search-highlight');
+      
+      resultsDiv.innerHTML = matches.map(node => `
+        <div class="search-result" onclick="selectNodeById('${node.id()}')">
+          <div>${node.data('label')}</div>
+          <div class="type">${node.data('type')}</div>
+        </div>
+      `).join('');
+    });
+    
+    function selectNodeById(id) {
+      const node = cy.getElementById(id);
+      if (node) {
+        selectNode(node);
+        cy.animate({
+          center: { eles: node },
+          zoom: 1.5
+        }, { duration: 500 });
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchResults').innerHTML = '';
+      }
+    }
+    
+    // Zoom controls
+    function zoomIn() {
+      cy.zoom(cy.zoom() * 1.2);
+    }
+    
+    function zoomOut() {
+      cy.zoom(cy.zoom() / 1.2);
+    }
+    
+    function fitGraph() {
+      cy.fit(null, 50);
+    }
+    
+    // Export as PNG
+    function exportPNG() {
+      const png = cy.png({ full: true, scale: 2 });
+      const link = document.createElement('a');
+      link.href = png;
+      link.download = `network-${currentRteId}-${Date.now()}.png`;
+      link.click();
+    }
+    
+    // Export as JSON
+    function exportJSON() {
+      const data = {
+        nodes: cy.nodes().map(node => ({
+          id: node.id(),
+          name: node.data('label'),
+          type: node.data('actorType'),
+          position: node.position()
+        })),
+        edges: cy.edges().map(edge => ({
+          source: edge.source().id(),
+          target: edge.target().id(),
+          type: edge.data('relationshipType'),
+          label: edge.data('label')
+        })),
+        exportedAt: new Date().toISOString(),
+        rteId: currentRteId
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `network-${currentRteId}-${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    // Export as CSV
+    function exportCSV() {
+      // Nodes CSV
+      let nodesCSV = 'id,name,type\n';
+      cy.nodes().forEach(node => {
+        nodesCSV += `"${node.id()}","${node.data('label') || ''}","${node.data('actorType') || ''}"\n`;
+      });
+      
+      // Edges CSV
+      let edgesCSV = 'source,target,relationship_type,label\n';
+      cy.edges().forEach(edge => {
+        edgesCSV += `"${edge.source().id()}","${edge.target().id()}","${edge.data('relationshipType') || ''}","${edge.data('label') || ''}"\n`;
+      });
+      
+      // Combined CSV with sections
+      const csv = `# Nodes\n${nodesCSV}\n# Edges\n${edgesCSV}`;
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `network-${currentRteId}-${Date.now()}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    // ============================================
+    // Modal Functions for Adding Relationships & Actors
+    // ============================================
+
+    let allActors = [];
+
+    // Load actors for dropdowns
+    async function loadActorsForDropdowns() {
+      if (!currentRteId) return;
+      try {
+        const res = await fetch(`/api/rte/${currentRteId}/actors`);
+        const data = await res.json();
+        allActors = data.actors || [];
+
+        const sourceSelect = document.getElementById('relSourceActor');
+        const targetSelect = document.getElementById('relTargetActor');
+
+        const optionsHtml = allActors.map(a =>
+          `<option value="${a.id}">${a.name} (${a.actor_type})</option>`
+        ).join('');
+
+        sourceSelect.innerHTML = '<option value="">Select source...</option>' + optionsHtml;
+        targetSelect.innerHTML = '<option value="">Select target...</option>' + optionsHtml;
+      } catch (err) {
+        console.error('Failed to load actors:', err);
+      }
+    }
+
+    // Open Add Relationship Modal
+    function openAddRelationshipModal() {
+      loadActorsForDropdowns();
+      document.getElementById('addRelationshipModal').classList.remove('hidden');
+    }
+
+    // Close Add Relationship Modal
+    function closeAddRelationshipModal() {
+      document.getElementById('addRelationshipModal').classList.add('hidden');
+      document.getElementById('relSourceActor').value = '';
+      document.getElementById('relTargetActor').value = '';
+      document.getElementById('relType').value = 'works_with';
+      document.getElementById('relTypeCustom').value = '';
+      document.getElementById('relContext').value = '';
+    }
+
+    // Create Relationship
+    async function createRelationship() {
+      const sourceSelect = document.getElementById('relSourceActor');
+      const targetSelect = document.getElementById('relTargetActor');
+      const sourceId = sourceSelect.value;
+      const targetId = targetSelect.value;
+      let relType = document.getElementById('relTypeCustom').value.trim()
+        || document.getElementById('relType').value;
+      const context = document.getElementById('relContext').value;
+
+      // Clear previous errors
+      POAI.form.clearError(sourceSelect);
+      POAI.form.clearError(targetSelect);
+
+      // Validation
+      let hasError = false;
+      if (!sourceId) {
+        POAI.form.showError(sourceSelect, 'Please select a source actor');
+        hasError = true;
+      }
+      if (!targetId) {
+        POAI.form.showError(targetSelect, 'Please select a target actor');
+        hasError = true;
+      }
+      if (sourceId && targetId && sourceId === targetId) {
+        POAI.form.showError(targetSelect, 'Source and target cannot be the same');
+        hasError = true;
+      }
+      if (hasError) return;
+
+      try {
+        const res = await fetch(`/api/rte/${currentRteId}/relationships`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_actor_id: parseInt(sourceId),
+            target_actor_id: parseInt(targetId),
+            relationship_type: relType,
+            context: context,
+            confidence: 1.0,
+            strength: 1.0
+          })
+        });
+
+        if (res.ok) {
+          closeAddRelationshipModal();
+          loadGraph(); // Refresh the graph
+          POAI.toast.success('Relationship created');
+        } else {
+          const err = await res.json();
+          POAI.toast.error('Failed to create relationship: ' + (err.error || 'Unknown error'));
+        }
+      } catch (err) {
+        console.error('Create relationship error:', err);
+        POAI.toast.error('Failed to create relationship');
+      }
+    }
+
+    // Open Add Actor Modal
+    function openAddActorModal() {
+      document.getElementById('addActorModal').classList.remove('hidden');
+    }
+
+    // Close Add Actor Modal
+    function closeAddActorModal() {
+      document.getElementById('addActorModal').classList.add('hidden');
+      document.getElementById('actorName').value = '';
+      document.getElementById('actorType').value = 'person';
+      document.getElementById('actorDescription').value = '';
+    }
+
+    // Create Actor
+    async function createActor() {
+      const nameInput = document.getElementById('actorName');
+      const name = nameInput.value.trim();
+      const actorType = document.getElementById('actorType').value;
+      const description = document.getElementById('actorDescription').value;
+
+      // Clear previous errors
+      POAI.form.clearError(nameInput);
+
+      // Validation
+      if (!name) {
+        POAI.form.showError(nameInput, 'Please enter an actor name');
+        nameInput.focus();
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/rte/${currentRteId}/actors`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            actor_type: actorType,
+            description: description
+          })
+        });
+
+        if (res.ok) {
+          closeAddActorModal();
+          loadGraph(); // Refresh the graph
+          POAI.toast.success(`Actor "${name}" created`);
+        } else {
+          const err = await res.json();
+          POAI.toast.error('Failed to create actor: ' + (err.error || 'Unknown error'));
+        }
+      } catch (err) {
+        console.error('Create actor error:', err);
+        POAI.toast.error('Failed to create actor');
+      }
+    }
+
+    // Sync Tags to Actors
+    async function syncTagsToActors() {
+      if (!currentRteId) {
+        alert('Please select an RTE first');
+        return;
+      }
+
+      const confirmed = await POAI.confirm.show({
+        title: 'Sync Tags to Actors',
+        message: 'This will create actors from your tags (projects, systems, organizations, etc.). Continue?',
+        confirmText: 'Sync',
+        type: 'info'
+      });
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/rte/${currentRteId}/sync-tags-to-actors`, {
+          method: 'POST'
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          alert(`Synced ${data.created} new actors from tags.\n${data.skipped} already existed.`);
+          loadGraph(); // Refresh the graph
+        } else {
+          alert('Sync failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        console.error('Sync tags error:', err);
+        alert('Failed to sync tags');
+      }
+    }
+
+    // =========================================
+    // FOCUS MODE (C.6)
+    // =========================================
+    function enterFocusMode() {
+      if (!selectedNode) return;
+      
+      focusMode = true;
+      focusNodeId = selectedNode.id();
+      const data = selectedNode.data();
+      
+      document.getElementById('focusNodeName').textContent = data.label;
+      document.getElementById('focusModeIndicator').classList.add('active');
+      
+      // Hide all nodes except focus node and its neighbors
+      const neighborhood = selectedNode.neighborhood().add(selectedNode);
+      cy.elements().forEach(ele => {
+        if (neighborhood.contains(ele)) {
+          ele.style('display', 'element');
+        } else {
+          ele.style('display', 'none');
+        }
+      });
+      
+      // Fit view to visible elements
+      cy.fit(neighborhood, 50);
+    }
+    
+    function exitFocusMode() {
+      focusMode = false;
+      focusNodeId = null;
+      
+      document.getElementById('focusModeIndicator').classList.remove('active');
+      
+      // Show all elements again
+      cy.elements().style('display', 'element');
+      applyFilters();
+      cy.fit();
+    }
+
+    // =========================================
+    // DEGREE & CONFIDENCE FILTERS (C.3, C.5)
+    // =========================================
+    function updateDegreeFilter(value) {
+      degreeThreshold = parseInt(value);
+      document.getElementById('degreeValue').textContent = value;
+      applyFilters();
+      saveNetworkPrefs();
+    }
+    
+    function updateConfidenceFilter(value) {
+      confidenceThreshold = parseInt(value) / 100;
+      document.getElementById('confidenceValue').textContent = value + '%';
+      applyFilters();
+      saveNetworkPrefs();
+    }
+    
+    function applyFilters() {
+      if (!cy || focusMode) return;
+      
+      // Filter nodes by degree
+      cy.nodes().forEach(node => {
+        const shouldShow = node.degree() >= degreeThreshold;
+        node.style('display', shouldShow ? 'element' : 'none');
+      });
+      
+      // Filter edges by confidence and hidden endpoints
+      cy.edges().forEach(edge => {
+        const confidence = edge.data('confidence') || 1.0;
+        const sourceVisible = edge.source().style('display') === 'element';
+        const targetVisible = edge.target().style('display') === 'element';
+        const shouldShow = confidence >= confidenceThreshold && sourceVisible && targetVisible;
+        edge.style('display', shouldShow ? 'element' : 'none');
+      });
+    }
+
+    // =========================================
+    // EDGE TOOLTIPS (C.4)
+    // =========================================
+    function setupEdgeTooltips() {
+      const tooltip = document.getElementById('edgeTooltip');
+      
+      cy.on('mouseover', 'edge', function(e) {
+        const edge = e.target;
+        const data = edge.data();
+        
+        document.getElementById('tooltipLabel').textContent = 
+          `${data.source_label || edge.source().data('label')} → ${data.target_label || edge.target().data('label')}`;
+        document.getElementById('tooltipContext').textContent = data.context || data.type || 'Related';
+        document.getElementById('tooltipMeta').textContent = 
+          `Type: ${data.type || '-'} | Confidence: ${Math.round((data.confidence || 1) * 100)}%`;
+        
+        tooltip.classList.add('visible');
+      });
+      
+      cy.on('mouseout', 'edge', function() {
+        tooltip.classList.remove('visible');
+      });
+      
+      // Update tooltip position on mouse move
+      document.getElementById('cy').addEventListener('mousemove', function(e) {
+        tooltip.style.left = (e.clientX + 15) + 'px';
+        tooltip.style.top = (e.clientY + 15) + 'px';
+      });
+    }
+
+    // =========================================
+    // ARCHIVE ACTOR
+    // =========================================
+    async function archiveActor() {
+      if (!selectedNode || !currentRteId) return;
+      
+      const actorId = selectedNode.id();
+      const actorName = selectedNode.data('label');
+      
+      const confirmed = await POAI.confirm.warning('Archive Actor', `Archive "${actorName}"? This will hide it from the network.`);
+      if (!confirmed) return;
+      
+      try {
+        const response = await fetch(`/api/rte/${currentRteId}/actors/archive`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actorIds: [parseInt(actorId)] })
+        });
+        
+        if (response.ok) {
+          cy.remove(selectedNode);
+          clearSelection();
+          alert(`Archived "${actorName}"`);
+        } else {
+          throw new Error('Archive failed');
+        }
+      } catch (err) {
+        console.error('Archive error:', err);
+        alert('Failed to archive actor');
+      }
+    }
+    
+    // View actor in navigator (placeholder)
+    function viewInNavigator() {
+      if (!selectedNode) return;
+      const actorName = selectedNode.data('label');
+      // Navigate to navigator with actor filter
+      window.location.href = `/navigator?actor=${encodeURIComponent(actorName)}`;
+    }
+
+    // =========================================
+    // C.8 EDGE CLICK → SOURCE DOCUMENTS
+    // =========================================
+    async function showEdgeDetail(edge) {
+      const data = edge.data();
+      const panel = document.getElementById('edgeDetailPanel');
+      
+      document.getElementById('edgeDetailTitle').textContent = 
+        `${data.source_label || '?'} → ${data.target_label || '?'}`;
+      document.getElementById('edgeDetailType').textContent = data.type || '-';
+      document.getElementById('edgeDetailSource').textContent = data.edgeSource || 'explicit';
+      document.getElementById('edgeDetailConfidence').textContent = 
+        Math.round((data.confidence || 1) * 100) + '%';
+      document.getElementById('edgeDetailContext').textContent = data.context || '-';
+      
+      // Try to load detailed info if it's an explicit relationship
+      const sourceDocDiv = document.getElementById('edgeDetailSourceDoc');
+      sourceDocDiv.innerHTML = '';
+      
+      if (data.source_file) {
+        sourceDocDiv.innerHTML = `<a class="source-link" href="/navigator?file=${encodeURIComponent(data.source_file)}" target="_blank">📄 View Source Document</a>`;
+      } else if (data.edgeSource === 'explicit' && data.id && currentRteId) {
+        // Try fetching from relationship details endpoint
+        try {
+          const res = await fetch(`/api/rte/${currentRteId}/relationships/${data.id}/details`);
+          if (res.ok) {
+            const detail = await res.json();
+            if (detail.sourceDocument) {
+              sourceDocDiv.innerHTML = `<a class="source-link" href="/navigator?file=${encodeURIComponent(detail.sourceDocument.path)}" target="_blank">📄 ${detail.sourceDocument.filename || 'View Source'}</a>`;
+            }
+            if (detail.context) {
+              document.getElementById('edgeDetailContext').textContent = detail.context;
+            }
+          }
+        } catch (e) {
+          console.log('Could not load relationship details:', e);
+        }
+      }
+      
+      panel.classList.add('active');
+    }
+    
+    function closeEdgeDetail() {
+      document.getElementById('edgeDetailPanel').classList.remove('active');
+    }
+
+    // =========================================
+    // INTRA-TEAM EDGE VISIBILITY
+    // =========================================
+    let hideIntraTeam = false;
+
+    function toggleIntraTeamEdges() {
+      hideIntraTeam = document.getElementById('hideIntraTeam').checked;
+
+      if (!cy) return;
+
+      // Show/hide edges where source and target share the same team
+      cy.edges().forEach(edge => {
+        const sourceNode = cy.getElementById(edge.data('source'));
+        const targetNode = cy.getElementById(edge.data('target'));
+
+        if (sourceNode.length && targetNode.length) {
+          const sourceTeam = sourceNode.data('team');
+          const targetTeam = targetNode.data('team');
+
+          // If both nodes have the same team and it's not empty
+          if (sourceTeam && targetTeam && sourceTeam === targetTeam) {
+            edge.style('display', hideIntraTeam ? 'none' : 'element');
+          }
+        }
+      });
+    }
+
+    // =========================================
+    // C.12 COMPOUND NODES / TEAM GROUPING
+    // =========================================
+    let currentGroupBy = null;
+    
+    function toggleGroupBy() {
+      const modes = [null, 'team', 'organization', 'type'];
+      const labels = ['Group', 'By Team', 'By Org', 'By Type'];
+      const idx = modes.indexOf(currentGroupBy);
+      const nextIdx = (idx + 1) % modes.length;
+      currentGroupBy = modes[nextIdx];
+      
+      const btn = document.getElementById('groupByBtn');
+      btn.textContent = labels[nextIdx];
+      btn.classList.toggle('active', currentGroupBy !== null);
+      if (currentGroupBy) {
+        btn.style.background = '#238636';
+        btn.style.borderColor = '#238636';
+        btn.style.color = 'white';
+      } else {
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }
+      
+      loadGraph();
+    }
+
+    // Handle URL deep linking - ?focus=actorId or ?focus=actorName
+    function handleDeepLink() {
+      const params = new URLSearchParams(window.location.search);
+      const focusParam = params.get('focus');
+      
+      if (focusParam && cy) {
+        // Try to find by ID first, then by name
+        let node = cy.getElementById(focusParam);
+        if (!node || node.empty()) {
+          node = cy.nodes().filter(n => 
+            n.data('label').toLowerCase() === focusParam.toLowerCase()
+          ).first();
+        }
+        
+        if (node && !node.empty()) {
+          // Animate to node and select it
+          cy.animate({
+            fit: { eles: node, padding: 100 }
+          }, {
+            duration: 500,
+            complete: () => {
+              selectNode(node);
+            }
+          });
+        }
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      initCytoscape();
+      loadRTEInstances();
+      setupEdgeTooltips();
+      
+      // Check for deep link after graph loads
+      // Restore preferences before loading
+      restoreNetworkPrefs();
+      
+      const originalLoadGraph = loadGraph;
+      loadGraph = async function() {
+        await originalLoadGraph.apply(this, arguments);
+        setTimeout(handleDeepLink, 100);
+      };
+    });
+  </script>
+</body>
+</html>

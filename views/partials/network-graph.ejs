@@ -1,0 +1,43 @@
+<!-- Network Graph Container Partial -->
+<div class="graph-container">
+  <div id="cy"></div>
+  
+  <!-- Edge tooltip -->
+  <div id="edgeTooltip" class="edge-tooltip">
+    <div class="tooltip-label" id="tooltipLabel">-</div>
+    <div class="tooltip-context" id="tooltipContext">-</div>
+    <div class="tooltip-meta" id="tooltipMeta">-</div>
+  </div>
+  
+  <!-- Focus mode indicator -->
+  <div id="focusModeIndicator" class="focus-mode-indicator">
+    <span>🎯 Focus Mode: <strong id="focusNodeName">-</strong></span>
+    <button onclick="exitFocusMode()">Exit</button>
+  </div>
+  
+  <!-- Edge detail panel (C.8) -->
+  <div id="edgeDetailPanel" class="edge-detail-panel">
+    <button class="close-btn" onclick="closeEdgeDetail()">✕</button>
+    <h4 id="edgeDetailTitle">-</h4>
+    <div class="detail-row"><span class="label">Type:</span> <span id="edgeDetailType">-</span></div>
+    <div class="detail-row"><span class="label">Source:</span> <span id="edgeDetailSource">-</span></div>
+    <div class="detail-row"><span class="label">Confidence:</span> <span id="edgeDetailConfidence">-</span></div>
+    <div class="detail-row"><span class="label">Context:</span> <span id="edgeDetailContext">-</span></div>
+    <div id="edgeDetailSourceDoc"></div>
+  </div>
+  
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Loading graph...</p>
+  </div>
+  
+  <div class="toolbar">
+    <button onclick="zoomIn()">+</button>
+    <button onclick="zoomOut()">−</button>
+    <button class="secondary" onclick="toggleLayout()">Layout</button>
+    <button class="secondary" id="groupByBtn" onclick="toggleGroupBy()">Group</button>
+    <button class="secondary" onclick="exportPNG()">PNG</button>
+    <button class="secondary" onclick="exportJSON()">JSON</button>
+    <button class="secondary" onclick="exportCSV()">CSV</button>
+  </div>
+</div>

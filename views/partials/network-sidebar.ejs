@@ -1,0 +1,144 @@
+<!-- Network Sidebar Partial -->
+<div class="sidebar">
+  <h1>🕸️ Relationship Network</h1>
+  
+  <!-- View Selector - click to load graph -->
+  <div class="view-selector">
+    <button class="view-btn" data-view="overview" onclick="loadView('overview')">🌐 Overview</button>
+    <button class="view-btn" data-view="people" onclick="loadView('people')">👥 People & Teams</button>
+    <button class="view-btn" data-view="systems" onclick="loadView('systems')">🖥️ Systems</button>
+    <button class="view-btn" data-view="people-systems" onclick="loadView('people-systems')">🔗 People × Systems</button>
+    <button class="view-btn" data-view="partners" onclick="loadView('partners')">🤝 Partners</button>
+  </div>
+  
+  <!-- RTE Selector & Search -->
+  <div class="controls">
+    <div class="control-group">
+      <label>RTE Instance</label>
+      <select id="rteSelect">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label>Search Actors</label>
+      <input type="text" id="searchInput" placeholder="Type to search...">
+      <div id="searchResults" class="search-results"></div>
+    </div>
+    
+    <button onclick="if(!graphLoaded){loadView('overview')}else{loadGraph()}">Refresh Graph</button>
+    <button class="secondary" onclick="fitGraph()">Fit View</button>
+    <button id="groupByBtn" class="secondary" onclick="toggleGroupBy()" title="Cycle: None → Team → Org → Type">Group</button>
+
+    <div class="action-buttons">
+      <button onclick="openAddRelationshipModal()">➕ Add Relationship</button>
+      <button class="secondary" onclick="syncTagsToActors()">🔄 Sync Tags</button>
+      <button class="secondary" onclick="openAddActorModal()">👤 Add Actor</button>
+    </div>
+  </div>
+  
+  <!-- Legend / Actor Type Filters -->
+  <h2>Actor Types (Filter)</h2>
+  <div class="legend" id="actorTypeFilters">
+    <div class="legend-item">
+      <input type="checkbox" id="filter-person" value="person" onchange="updateFilters()">
+      <div class="legend-color" style="background: #10b981;"></div>
+      <label for="filter-person">Person</label>
+    </div>
+    <div class="legend-item">
+      <input type="checkbox" id="filter-role" value="role" onchange="updateFilters()">
+      <div class="legend-color" style="background: #6366f1;"></div>
+      <label for="filter-role">Role</label>
+    </div>
+    <div class="legend-item">
+      <input type="checkbox" id="filter-team" value="team" onchange="updateFilters()">
+      <div class="legend-color" style="background: #06b6d4;"></div>
+      <label for="filter-team">Team</label>
+    </div>
+    <div class="legend-item">
+      <input type="checkbox" id="filter-system" value="system" onchange="updateFilters()">
+      <div class="legend-color" style="background: #f59e0b;"></div>
+      <label for="filter-system">System</label>
+    </div>
+    <div class="legend-item">
+      <input type="checkbox" id="filter-organization" value="organization" onchange="updateFilters()">
+      <div class="legend-color" style="background: #8b5cf6;"></div>
+      <label for="filter-organization">Organization</label>
+    </div>
+    <div class="legend-item">
+      <input type="checkbox" id="filter-project" value="project" onchange="updateFilters()">
+      <div class="legend-color" style="background: #06b6d4;"></div>
+      <label for="filter-project">Project</label>
+    </div>
+    <div class="legend-item">
+      <input type="checkbox" id="filter-location" value="location" onchange="updateFilters()">
+      <div class="legend-color" style="background: #ec4899;"></div>
+      <label for="filter-location">Location</label>
+    </div>
+    <div class="legend-item">
+      <input type="checkbox" id="filter-technology" value="technology" onchange="updateFilters()">
+      <div class="legend-color" style="background: #14b8a6;"></div>
+      <label for="filter-technology">Technology</label>
+    </div>
+    <div style="margin-top: 8px;">
+      <button class="secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="selectAllTypes()">All</button>
+      <button class="secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="selectNoTypes()">None</button>
+    </div>
+  </div>
+  
+  <!-- Graph Filters -->
+  <h2>Graph Filters</h2>
+  <div class="controls">
+    <div class="control-group">
+      <label>Min Connections: <span class="slider-value" id="degreeValue">0</span></label>
+      <input type="range" id="degreeSlider" min="0" max="20" value="0" oninput="updateDegreeFilter(this.value)">
+    </div>
+    <div class="control-group">
+      <label>Min Confidence: <span class="slider-value" id="confidenceValue">0%</span></label>
+      <input type="range" id="confidenceSlider" min="0" max="100" value="0" oninput="updateConfidenceFilter(this.value)">
+    </div>
+    <div class="legend-item" style="margin-top: 8px;">
+      <input type="checkbox" id="hideIntraTeam" onchange="toggleIntraTeamEdges()">
+      <label for="hideIntraTeam" style="font-size: 0.85rem;">Hide same-team edges</label>
+    </div>
+  </div>
+  
+  <!-- Stats -->
+  <h2>Statistics</h2>
+  <div class="stats">
+    <div class="stat-row">
+      <span>Nodes</span>
+      <span class="stat-value" id="statNodes">0</span>
+    </div>
+    <div class="stat-row">
+      <span>Edges</span>
+      <span class="stat-value" id="statEdges">0</span>
+    </div>
+    <div class="stat-row">
+      <span>Pending Suggestions</span>
+      <span class="stat-value" id="statSuggestions">0</span>
+    </div>
+  </div>
+  
+  <!-- Node Details Panel -->
+  <h2>Selected Node</h2>
+  <div id="nodeDetails" class="node-details">
+    <h3 id="nodeName">-</h3>
+    <div class="detail-row"><span class="label">Type:</span> <span id="nodeType">-</span></div>
+    <div class="detail-row"><span class="label">Role:</span> <span id="nodeRole">-</span></div>
+    <div class="detail-row"><span class="label">Team:</span> <span id="nodeTeam">-</span></div>
+    <div class="detail-row"><span class="label">Organization:</span> <span id="nodeOrg">-</span></div>
+    <div class="detail-row"><span class="label">Last Seen:</span> <span id="nodeLastSeen">-</span></div>
+    <div class="detail-row"><span class="label">Mentions:</span> <span id="nodeMentions">-</span></div>
+    <div class="detail-row"><span class="label">Connections:</span> <span id="nodeConnections">-</span></div>
+    
+    <div class="connections-list" id="connectionsList"></div>
+    
+    <div class="action-buttons" style="margin-top: 12px;">
+      <button onclick="enterFocusMode()">🎯 Focus</button>
+      <button class="secondary" onclick="showNeighbors()">👥 Neighbors</button>
+      <button class="secondary" onclick="viewInNavigator()">📄 Documents</button>
+      <button class="secondary" onclick="archiveActor()" style="background: #da3633;">🗑️ Archive</button>
+    </div>
+  </div>
+</div>

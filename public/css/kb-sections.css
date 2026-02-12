@@ -1,0 +1,242 @@
+/* Knowledge Base Sections & Organization */
+
+.kb-sections-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Tab Navigation (hidden for ANT network view) */
+.kb-tabs {
+  display: none;
+}
+
+.kb-scope {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.kb-scope-select {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.kb-tab-btn {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.kb-tab-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border-radius: var(--radius-sm);
+}
+
+.kb-tab-btn.active {
+  color: var(--color-creation);
+  border-bottom-color: var(--color-creation);
+}
+
+/* Section Content (all visible in network mode) */
+.kb-section {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.kb-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* File Grid */
+.kb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Category-based Tree View */
+.category-tree-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.category-tree-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.category-tree-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.tree-legend {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--surface-1);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot.workflow {
+  background: #60a5fa;
+}
+
+.legend-dot.template {
+  background: #a855f7;
+}
+
+.legend-dot.epic {
+  background: #22c55e;
+}
+
+.legend-dot.architecture {
+  background: #f97316;
+}
+
+.legend-dot.meetings {
+  background: #eab308;
+}
+
+.legend-dot.analysis {
+  background: #ec4899;
+}
+
+.legend-dot.practice {
+  background: #06b6d4;
+}
+
+/* SVG Tree Container */
+.tree-svg-container {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.tree-svg-container svg {
+  min-height: 400px;
+}
+
+.kb-tree-label {
+  font-size: 12px;
+  fill: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Empty State */
+.kb-empty-state {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.kb-empty-state p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .kb-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kb-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .tree-legend {
+    gap: 1rem;
+  }
+}

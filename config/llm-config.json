@@ -1,0 +1,48 @@
+{
+  "models": [
+    {
+      "name": "mistral",
+      "type": "ollama",
+      "model": "mistral:latest",
+      "priority": 1,
+      "capabilities": ["generation", "orchestration", "translation"],
+      "languages": ["en", "nl"],
+      "maxTokens": 8192,
+      "temperature": 0.7,
+      "active": true
+    },
+    {
+      "name": "aya",
+      "type": "ollama",
+      "model": "aya:8b",
+      "priority": 2,
+      "capabilities": ["generation", "translation", "multilingual"],
+      "languages": ["en", "nl", "100+ others"],
+      "maxTokens": 8192,
+      "temperature": 0.7,
+      "active": true,
+      "notes": "Best for Dutch content generation and translation"
+    },
+    {
+      "name": "github-copilot",
+      "type": "api",
+      "endpoint": "https://api.github.com/copilot",
+      "priority": 3,
+      "capabilities": ["generation", "orchestration", "translation"],
+      "languages": ["all"],
+      "maxTokens": 16384,
+      "temperature": 0.7,
+      "active": false,
+      "requiresAuth": true,
+      "notes": "Paid API fallback - requires GitHub Copilot subscription"
+    }
+  ],
+  "embedding": {
+    "model": "nomic-embed-text",
+    "type": "ollama",
+    "dimensions": 768,
+    "notes": "Good multilingual support including Dutch/English"
+  },
+  "fallbackStrategy": "sequential",
+  "timeout": 30000
+}

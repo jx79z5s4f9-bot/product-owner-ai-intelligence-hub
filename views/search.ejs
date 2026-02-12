@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search - PO AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .search-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .search-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .search-header h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 1rem;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .search-btn {
+      padding: 12px 24px;
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    
+    .search-btn:hover {
+      background: #2ea043;
+    }
+    
+    .save-btn {
+      padding: 12px 16px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    
+    .save-btn:hover {
+      background: #21262d;
+      border-color: #58a6ff;
+    }
+    
+    .saved-searches {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #0d1117;
+      border-radius: 8px;
+    }
+    
+    .saved-searches label {
+      color: #8b949e;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    
+    .saved-searches select {
+      flex: 1;
+      padding: 8px 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+    }
+    
+    .save-dialog {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      z-index: 1000;
+      min-width: 300px;
+    }
+    
+    .save-dialog.active {
+      display: block;
+    }
+    
+    .save-dialog h3 {
+      margin-bottom: 16px;
+      color: #c9d1d9;
+    }
+    
+    .save-dialog input {
+      width: 100%;
+      padding: 10px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      margin-bottom: 16px;
+    }
+    
+    .save-dialog-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    
+    .save-dialog-buttons button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    .save-dialog-buttons .cancel {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #8b949e;
+    }
+    
+    .save-dialog-buttons .save {
+      background: #238636;
+      border: none;
+      color: white;
+    }
+    
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+    
+    .overlay.active {
+      display: block;
+    }
+    
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .filter-group label {
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+    
+    .filter-group select {
+      padding: 6px 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+    }
+    
+    .filter-group .date-input {
+      padding: 6px 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.85rem;
+    }
+    
+    .clear-filters-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    
+    .clear-filters-btn:hover {
+      background: #21262d;
+      color: #c9d1d9;
+    }
+    
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #21262d;
+    }
+    
+    .result-count {
+      color: #8b949e;
+    }
+    
+    .result-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    
+    .result-card:hover {
+      border-color: #58a6ff;
+    }
+    
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    
+    .result-title {
+      color: #58a6ff;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    
+    .result-title:hover {
+      text-decoration: underline;
+    }
+    
+    .result-rte {
+      background: #21262d;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: #8b949e;
+    }
+    
+    .result-snippet {
+      color: #8b949e;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    
+    .result-snippet mark {
+      background: rgba(88, 166, 255, 0.2);
+      color: #58a6ff;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    
+    .result-meta {
+      display: flex;
+      gap: 15px;
+      font-size: 0.8rem;
+      color: #6e7681;
+    }
+    
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b949e;
+    }
+    
+    .no-results h3 {
+      margin-bottom: 10px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #8b949e;
+    }
+    
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .search-tips {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+    
+    .search-tips h3 {
+      margin-bottom: 15px;
+      color: #c9d1d9;
+    }
+    
+    .search-tips ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #8b949e;
+    }
+    
+    .search-tips li {
+      margin-bottom: 8px;
+    }
+    
+    .search-tips code {
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    /* Document Modal */
+    .doc-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      z-index: 1001;
+      overflow: hidden;
+    }
+    
+    .doc-modal.active {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .doc-modal-header {
+      padding: 16px 20px;
+      background: #0d1117;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .doc-modal-title {
+      font-size: 1.1rem;
+      color: #c9d1d9;
+      margin: 0;
+    }
+    
+    .doc-modal-close {
+      background: none;
+      border: none;
+      color: #8b949e;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    
+    .doc-modal-close:hover {
+      color: #c9d1d9;
+    }
+
+    .btn-reextract {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #3b82f6;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .btn-reextract:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-reextract:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .doc-modal-meta {
+      padding: 12px 20px;
+      background: #21262d;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: #8b949e;
+    }
+    
+    .doc-modal-tags {
+      padding: 12px 20px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #30363d;
+    }
+    
+    .doc-tag {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+    }
+    
+    .doc-tag.person {
+      background: rgba(56, 139, 253, 0.2);
+      color: #58a6ff;
+    }
+    
+    .doc-tag.project {
+      background: rgba(163, 113, 247, 0.2);
+      color: #a371f7;
+    }
+    
+    .doc-tag.semantic {
+      background: rgba(35, 134, 54, 0.2);
+      color: #3fb950;
+    }
+    
+    .doc-modal-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .doc-modal-content pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'SF Mono', Monaco, 'Cascadia Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #c9d1d9;
+      margin: 0;
+    }
+    
+    .result-view-btn {
+      padding: 4px 10px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.75rem;
+      margin-left: auto;
+    }
+    
+    .result-view-btn:hover {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'search' }) %>
+
+  <!-- Document Modal -->
+  <div class="overlay" id="docOverlay" onclick="closeDocModal()"></div>
+  <div class="doc-modal" id="docModal">
+    <div class="doc-modal-header">
+      <h3 class="doc-modal-title" id="docModalTitle">Document</h3>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button class="btn-reextract" id="btnReextract" onclick="reExtractDocument()" title="Re-run entity extraction">🔄 Re-extract</button>
+        <button class="doc-modal-close" onclick="closeDocModal()">×</button>
+      </div>
+    </div>
+    <div class="doc-modal-meta" id="docModalMeta"></div>
+    <div class="doc-modal-tags" id="docModalTags"></div>
+    <div class="doc-modal-content">
+      <pre id="docModalContent">Loading...</pre>
+    </div>
+  </div>
+
+  <!-- Save Search Dialog -->
+  <div class="overlay" id="overlay" onclick="hideSaveDialog()"></div>
+  <div class="save-dialog" id="saveDialog">
+    <h3>💾 Save Search</h3>
+    <input type="text" id="searchName" placeholder="Enter a name for this search...">
+    <div class="save-dialog-buttons">
+      <button class="cancel" onclick="hideSaveDialog()">Cancel</button>
+      <button class="save" onclick="saveSearch()">Save</button>
+    </div>
+  </div>
+
+  <div class="search-container">
+    <div class="search-header">
+      <h1>🔍 Unified Search</h1>
+      <p style="color: #8b949e;">Search across all RTEs, documents, actors and relationships</p>
+    </div>
+    
+    <div class="search-box">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search for concepts, people, terms..." autofocus>
+      <button class="search-btn" onclick="performSearch()">Search</button>
+      <button class="save-btn" onclick="showSaveDialog()" title="Save this search">💾</button>
+    </div>
+    
+    <!-- Saved Searches Dropdown -->
+    <div class="saved-searches" id="savedSearches">
+      <label>📌 Saved Searches:</label>
+      <select id="savedSearchSelect" onchange="loadSavedSearch()">
+        <option value="">Select a saved search...</option>
+      </select>
+    </div>
+    
+    <div class="filters">
+      <div class="filter-group">
+        <label>RTE:</label>
+        <select id="rteFilter">
+          <option value="">All RTEs</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Type:</label>
+        <select id="typeFilter">
+          <option value="">All Types</option>
+          <option value="document">Documents</option>
+          <option value="actor">Actors</option>
+          <option value="relationship">Relationships</option>
+          <option value="glossary">Glossary Terms</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>👤 Person:</label>
+        <select id="personFilter">
+          <option value="">All People</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>📁 Project:</label>
+        <select id="projectFilter">
+          <option value="">All Projects</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>🏷️ Tag:</label>
+        <select id="semanticFilter">
+          <option value="">All Tags</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="filters" style="margin-top: -10px;">
+      <div class="filter-group">
+        <label>📅 From:</label>
+        <input type="date" id="dateFromFilter" class="date-input">
+      </div>
+      <div class="filter-group">
+        <label>To:</label>
+        <input type="date" id="dateToFilter" class="date-input">
+      </div>
+      <button class="clear-filters-btn" onclick="clearFilters()" title="Clear all filters">✕ Clear</button>
+    </div>
+    
+    <div id="resultsContainer">
+      <div class="search-tips">
+        <h3>💡 Search Tips</h3>
+        <ul>
+          <li>Search for <code>actor names</code> to find people, teams, or systems</li>
+          <li>Search for <code>concepts</code> to find related documents</li>
+          <li>Use <code>Dutch terms</code> to find glossary translations</li>
+          <li>Search relationships by typing <code>actor → actor</code></li>
+          <li>Use filters to narrow by <code>person</code>, <code>project</code>, or <code>tag</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let rtes = [];
+    
+    async function init() {
+      // Load RTEs for filter
+      try {
+        const response = await fetch('/api/rte');
+        rtes = await response.json();
+        
+        const rteFilter = document.getElementById('rteFilter');
+        const defaultRte = localStorage.getItem('poai_default_rte');
+        
+        rtes.forEach(rte => {
+          const option = document.createElement('option');
+          option.value = rte.id;
+          option.textContent = rte.name;
+          if (defaultRte && defaultRte == rte.id) {
+            option.selected = true;
+          }
+          rteFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Failed to load RTEs:', error);
+      }
+      
+      // Load filter options (persons, projects, semantic tags)
+      try {
+        const response = await fetch('/api/search/filters');
+        const filters = await response.json();
+        
+        // Populate person filter
+        const personFilter = document.getElementById('personFilter');
+        filters.persons.forEach(p => {
+          const option = document.createElement('option');
+          option.value = p.name;
+          option.textContent = `${p.name} (${p.count})`;
+          personFilter.appendChild(option);
+        });
+        
+        // Populate project filter
+        const projectFilter = document.getElementById('projectFilter');
+        filters.projects.forEach(p => {
+          const option = document.createElement('option');
+          option.value = p.name;
+          option.textContent = `${p.name} (${p.count})`;
+          projectFilter.appendChild(option);
+        });
+        
+        // Populate semantic filter
+        const semanticFilter = document.getElementById('semanticFilter');
+        filters.semantics.forEach(s => {
+          const option = document.createElement('option');
+          option.value = s.name;
+          option.textContent = s.name;
+          semanticFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Failed to load filters:', error);
+      }
+      
+      // Check for query parameter
+      const params = new URLSearchParams(window.location.search);
+      const query = params.get('q');
+      if (query) {
+        document.getElementById('searchInput').value = query;
+        performSearch();
+      }
+    }
+    
+    function clearFilters() {
+      document.getElementById('personFilter').value = '';
+      document.getElementById('projectFilter').value = '';
+      document.getElementById('semanticFilter').value = '';
+      document.getElementById('dateFromFilter').value = '';
+      document.getElementById('dateToFilter').value = '';
+    }
+    
+    async function performSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      const semantic = document.getElementById('semanticFilter').value;
+      const markerTypes = ['question', 'decision', 'insight', 'action'];
+      const isMarkerSearch = semantic && markerTypes.includes(semantic.toLowerCase());
+      
+      // Allow empty query if searching for semantic markers
+      if (!query && !isMarkerSearch) return;
+      
+      const rteId = document.getElementById('rteFilter').value;
+      const type = document.getElementById('typeFilter').value;
+      const person = document.getElementById('personFilter').value;
+      const project = document.getElementById('projectFilter').value;
+      const dateFrom = document.getElementById('dateFromFilter').value;
+      const dateTo = document.getElementById('dateToFilter').value;
+      
+      const container = document.getElementById('resultsContainer');
+      container.innerHTML = '<div class="loading">Searching</div>';
+      
+      try {
+        // Build search URL with all filters
+        // Use .* as wildcard when query is empty but searching for markers
+        const searchQuery = query || '.*';
+        let url = `/api/search?q=${encodeURIComponent(searchQuery)}`;
+        if (rteId) url += `&rteId=${rteId}`;
+        if (type) url += `&type=${type}`;
+        if (person) url += `&person=${encodeURIComponent(person)}`;
+        if (project) url += `&project=${encodeURIComponent(project)}`;
+        if (semantic) url += `&semantic=${encodeURIComponent(semantic)}`;
+        if (dateFrom) url += `&dateFrom=${dateFrom}`;
+        if (dateTo) url += `&dateTo=${dateTo}`;
+        
+        const response = await fetch(url);
+        const results = await response.json();
+        
+        displayResults(results, query || `All ${semantic}s`);
+      } catch (error) {
+        container.innerHTML = `
+          <div class="no-results">
+            <h3>Search Error</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
+    }
+    
+    function displayResults(results, query) {
+      const container = document.getElementById('resultsContainer');
+      
+      if (!results || results.length === 0) {
+        container.innerHTML = `
+          <div class="no-results">
+            <h3>No results found</h3>
+            <p>Try different keywords or check your filters</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const html = `
+        <div class="results-header">
+          <span class="result-count">${results.length} result${results.length !== 1 ? 's' : ''}</span>
+        </div>
+        ${results.map(result => renderResult(result, query)).join('')}
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    function renderResult(result, query) {
+      // Special rendering for semantic markers
+      if (result.type === 'marker') {
+        return renderMarkerResult(result);
+      }
+      
+      const snippet = highlightQuery(result.content || result.snippet || '', query);
+      const rteName = result.rteName || rtes.find(r => r.id === result.rteId)?.name || 'Unknown';
+      const docId = result.documentId || result.id;
+      
+      // Build tags display
+      let tagsHtml = '';
+      if (result.tags) {
+        const allTags = [
+          ...(result.tags.people || []).map(t => `<span class="doc-tag person">👤 ${t}</span>`),
+          ...(result.tags.projects || []).map(t => `<span class="doc-tag project">📁 ${t}</span>`),
+          ...(result.tags.semantics || []).map(t => `<span class="doc-tag semantic">🏷️ ${t}</span>`)
+        ];
+        if (allTags.length > 0) {
+          tagsHtml = `<div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">${allTags.slice(0, 5).join('')}${allTags.length > 5 ? `<span style="color: #8b949e; font-size: 0.75rem;">+${allTags.length - 5} more</span>` : ''}</div>`;
+        }
+      }
+      
+      return `
+        <div class="result-card">
+          <div class="result-header">
+            <a href="${getResultLink(result)}" class="result-title">${result.title || result.name || 'Untitled'}</a>
+            <button class="result-view-btn" onclick="viewDocument(${docId})">📄 View Full</button>
+            <span class="result-rte">${rteName}</span>
+          </div>
+          <div class="result-snippet">${snippet}</div>
+          ${tagsHtml}
+          <div class="result-meta">
+            <span>📄 ${result.type || 'document'}</span>
+            ${result.score ? `<span>🎯 ${(result.score * 100).toFixed(0)}% match</span>` : ''}
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderMarkerResult(marker) {
+      const rteName = marker.rteName || rtes.find(r => r.id === marker.rteId)?.name || 'Unknown';
+      const typeEmoji = {
+        question: '❓',
+        decision: '✅', 
+        insight: '💡',
+        action: '🎯'
+      }[marker.markerType] || '📌';
+      
+      const typeColor = {
+        question: '#f85149',
+        decision: '#3fb950',
+        insight: '#a371f7',
+        action: '#f0883e'
+      }[marker.markerType] || '#8b949e';
+      
+      // Format content - preserve newlines
+      const formattedContent = (marker.content || '')
+        .replace(/\n/g, '<br>')
+        .replace(/\\n/g, '<br>');
+      
+      return `
+        <div class="result-card marker-card" style="border-left: 3px solid ${typeColor};">
+          <div class="result-header" style="align-items: flex-start;">
+            <div style="flex: 1;">
+              <span style="background: ${typeColor}22; color: ${typeColor}; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
+                ${typeEmoji} ${marker.markerType.toUpperCase()}
+              </span>
+              ${marker.isResolved ? '<span style="background: #3fb95022; color: #3fb950; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 8px;">✓ Resolved</span>' : ''}
+            </div>
+            <button class="result-view-btn" onclick="viewDocument(${marker.documentId})" title="View source document">📄 Source</button>
+            ${!marker.isResolved ? `<button class="result-view-btn" onclick="resolveMarker(${marker.markerId})" style="background: #238636;" title="Mark as resolved">✓ Resolve</button>` : ''}
+          </div>
+          <div class="marker-content" style="margin: 12px 0; font-size: 1rem; line-height: 1.6; color: #e6edf3;">
+            ${formattedContent}
+          </div>
+          <div class="result-meta" style="border-top: 1px solid #30363d; padding-top: 8px; margin-top: 8px;">
+            <span>📄 ${marker.title}</span>
+            <span>🏢 ${rteName}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function resolveMarker(markerId) {
+      try {
+        const response = await fetch(`/api/search/markers/${markerId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_resolved: true })
+        });
+        
+        if (response.ok) {
+          // Re-run the search to refresh results
+          performSearch();
+        } else {
+          const error = await response.json();
+          alert('Failed to resolve: ' + (error.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Failed to resolve: ' + err.message);
+      }
+    }
+    
+    function highlightQuery(text, query) {
+      if (!text) return '';
+      
+      // Truncate to ~200 chars around the match
+      const lowerText = text.toLowerCase();
+      const lowerQuery = query.toLowerCase();
+      const matchIndex = lowerText.indexOf(lowerQuery);
+      
+      let snippet = text;
+      if (text.length > 250) {
+        if (matchIndex > 100) {
+          snippet = '...' + text.substring(matchIndex - 100);
+        }
+        if (snippet.length > 250) {
+          snippet = snippet.substring(0, 250) + '...';
+        }
+      }
+      
+      // Highlight matches
+      const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+      return snippet.replace(regex, '<mark>$1</mark>');
+    }
+    
+    function escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    
+    function getResultLink(result) {
+      switch (result.type) {
+        case 'actor':
+          return `/network?actor=${result.id}`;
+        case 'glossary':
+          return `/glossary?term=${result.id}`;
+        default:
+          return `/navigator?file=${result.path}`;
+      }
+    }
+    
+    // Handle Enter key
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') performSearch();
+    });
+    
+    // Saved Searches Functions
+    async function loadSavedSearches() {
+      try {
+        const response = await fetch('/api/search/saved');
+        const searches = await response.json();
+        
+        const select = document.getElementById('savedSearchSelect');
+        // Clear existing options except first
+        select.innerHTML = '<option value="">Select a saved search...</option>';
+        
+        searches.forEach(search => {
+          const option = document.createElement('option');
+          option.value = JSON.stringify({ query: search.query, filters: search.filters });
+          option.textContent = `${search.name} (${search.query})`;
+          option.dataset.id = search.id;
+          select.appendChild(option);
+        });
+        
+        // Hide if no saved searches
+        document.getElementById('savedSearches').style.display = searches.length ? 'flex' : 'none';
+      } catch (error) {
+        console.error('Failed to load saved searches:', error);
+      }
+    }
+    
+    function loadSavedSearch() {
+      const select = document.getElementById('savedSearchSelect');
+      if (!select.value) return;
+      
+      try {
+        const { query, filters } = JSON.parse(select.value);
+        document.getElementById('searchInput').value = query;
+        
+        if (filters) {
+          if (filters.rteId) document.getElementById('rteFilter').value = filters.rteId;
+          if (filters.type) document.getElementById('typeFilter').value = filters.type;
+        }
+        
+        performSearch();
+      } catch (error) {
+        console.error('Failed to load saved search:', error);
+      }
+    }
+    
+    function showSaveDialog() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) {
+        alert('Enter a search query first');
+        return;
+      }
+      
+      document.getElementById('overlay').classList.add('active');
+      document.getElementById('saveDialog').classList.add('active');
+      document.getElementById('searchName').focus();
+    }
+    
+    function hideSaveDialog() {
+      document.getElementById('overlay').classList.remove('active');
+      document.getElementById('saveDialog').classList.remove('active');
+      document.getElementById('searchName').value = '';
+    }
+    
+    async function saveSearch() {
+      const name = document.getElementById('searchName').value.trim();
+      const query = document.getElementById('searchInput').value.trim();
+      
+      if (!name) {
+        alert('Please enter a name');
+        return;
+      }
+      
+      const filters = {
+        rteId: document.getElementById('rteFilter').value || null,
+        type: document.getElementById('typeFilter').value || null,
+        person: document.getElementById('personFilter').value || null,
+        project: document.getElementById('projectFilter').value || null,
+        semantic: document.getElementById('semanticFilter').value || null
+      };
+      
+      try {
+        const response = await fetch('/api/search/saved', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, query, filters })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          hideSaveDialog();
+          loadSavedSearches();
+        } else {
+          alert('Failed to save: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Failed to save search:', error);
+        alert('Failed to save search');
+      }
+    }
+    
+    // Document Modal Functions
+    async function viewDocument(docId) {
+      if (!docId) return;
+      
+      const modal = document.getElementById('docModal');
+      const overlay = document.getElementById('docOverlay');
+      const title = document.getElementById('docModalTitle');
+      const meta = document.getElementById('docModalMeta');
+      const tags = document.getElementById('docModalTags');
+      const content = document.getElementById('docModalContent');
+      
+      // Show loading state
+      title.textContent = 'Loading...';
+      meta.innerHTML = '';
+      tags.innerHTML = '';
+      content.textContent = 'Loading document...';
+      modal.classList.add('active');
+      overlay.classList.add('active');
+      
+      try {
+        const response = await fetch(`/api/search/document/${docId}`);
+        const doc = await response.json();
+        
+        if (doc.error) {
+          content.textContent = `Error: ${doc.error}`;
+          return;
+        }
+        
+        title.textContent = doc.filename || 'Document';
+        
+        // Store current doc ID for re-extract
+        modal.dataset.docId = docId;
+        
+        // Build meta info
+        const metaItems = [];
+        if (doc.rteName) metaItems.push(`📍 ${doc.rteName}`);
+        if (doc.contentType) metaItems.push(`📋 ${doc.contentType}`);
+        if (doc.wordCount) metaItems.push(`📝 ${doc.wordCount} words`);
+        if (doc.documentDate) metaItems.push(`📅 ${doc.documentDate}`);
+        if (doc.extractionStatus) metaItems.push(`⚙️ ${doc.extractionStatus}`);
+        meta.innerHTML = metaItems.map(m => `<span>${m}</span>`).join('');
+        
+        // Build tags
+        const tagItems = [];
+        (doc.tags?.people || []).forEach(t => tagItems.push(`<span class="doc-tag person">👤 ${t}</span>`));
+        (doc.tags?.projects || []).forEach(t => tagItems.push(`<span class="doc-tag project">📁 ${t}</span>`));
+        (doc.tags?.semantics || []).forEach(t => tagItems.push(`<span class="doc-tag semantic">🏷️ ${t}</span>`));
+        tags.innerHTML = tagItems.join('');
+        
+        // Show content
+        content.textContent = doc.content || '(No content available)';
+      } catch (error) {
+        content.textContent = `Error loading document: ${error.message}`;
+      }
+    }
+
+    let currentDocId = null;
+    
+    async function reExtractDocument() {
+      const modal = document.getElementById('docModal');
+      const docId = modal.dataset.docId;
+      
+      if (!docId) {
+        alert('No document selected');
+        return;
+      }
+      
+      const confirmed = await POAI.confirm.warning(
+        'Re-extract Entities',
+        'Re-extract entities from this document? This will replace current extracted tags (but keep manually added semantic tags).'
+      );
+      if (!confirmed) return;
+      
+      const btn = document.getElementById('btnReextract');
+      btn.disabled = true;
+      btn.textContent = '⏳ Extracting...';
+      
+      try {
+        const res = await fetch(`/api/extraction/document/${docId}?clear=true`, {
+          method: 'POST'
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+          const e = result.entities;
+          alert(`✅ Re-extracted entities!\n\nFound:\n• ${e.people?.length || 0} people\n• ${e.projects?.length || 0} projects\n• ${e.systems?.length || 0} systems\n• ${e.organizations?.length || 0} organizations\n\nNote: Semantic tags (insight:, action:, etc.) are extracted from markers in your text during save.`);
+          // Refresh the document view
+          viewDocument(docId);
+        } else {
+          alert(`❌ Extraction failed: ${result.error}`);
+        }
+      } catch (err) {
+        alert(`❌ Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Re-extract';
+      }
+    }
+    
+    function closeDocModal() {
+      document.getElementById('docModal').classList.remove('active');
+      document.getElementById('docOverlay').classList.remove('active');
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeDocModal();
+        hideSaveDialog();
+      }
+    });
+
+    // Initialize on page load
+    init();
+    loadSavedSearches();
+  </script>
+</body>
+</html>
