@@ -265,6 +265,11 @@ app.get('/maintenance', (req, res) => {
   res.render('maintenance');
 });
 
+// Guide page - Interactive feature walkthrough
+app.get('/guide', (req, res) => {
+  res.render('guide');
+});
+
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   const db = getDb();

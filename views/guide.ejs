@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PO AI - Interactive Guide</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/design-system.css">
+</head>
+<body>
+  <%- include('partials/nav', { activePage: 'guide' }) %>
+
+  <main class="guide-container">
+    <!-- Hero -->
+    <div class="guide-hero">
+      <div class="guide-hero-icon">🗺️</div>
+      <h1>PO AI Guide</h1>
+      <p class="guide-hero-sub">Everything you need to know — at your own pace</p>
+      <div class="guide-progress-bar">
+        <div class="guide-progress-fill" id="progressFill"></div>
+      </div>
+      <p class="guide-progress-text" id="progressText">0 of 16 explored</p>
+    </div>
+
+    <!-- The Workflow -->
+    <div class="guide-section">
+      <div class="guide-section-header">
+        <span class="guide-section-icon">⚡</span>
+        <div>
+          <h2>The PO AI Workflow</h2>
+          <p>The three-step loop that powers everything</p>
+        </div>
+      </div>
+      <div class="guide-workflow">
+        <div class="guide-workflow-step">
+          <div class="workflow-num">1</div>
+          <div class="workflow-icon-big">📥</div>
+          <h3>Capture</h3>
+          <p>Ingest meeting notes, daily logs, artifacts, and ideas. Paste text, upload files, or import from Apple Pages.</p>
+          <div class="workflow-arrow-down">↓</div>
+          <span class="workflow-tag">PO AI auto-extracts entities, tags, and relationships in the background</span>
+        </div>
+        <div class="guide-workflow-step">
+          <div class="workflow-num">2</div>
+          <div class="workflow-icon-big">🔍</div>
+          <h3>Find</h3>
+          <p>Search your entire history with full-text search, tag filters, and date ranges. Everything is instantly searchable.</p>
+          <div class="workflow-arrow-down">↓</div>
+          <span class="workflow-tag">FTS5 full-text search — no external server needed</span>
+        </div>
+        <div class="guide-workflow-step">
+          <div class="workflow-num">3</div>
+          <div class="workflow-icon-big">💡</div>
+          <h3>Understand</h3>
+          <p>Ask questions and get evidence-based answers. Track trends over time. See the big picture through network graphs.</p>
+          <span class="workflow-tag">Powered by Ollama — your choice of local LLM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core Actions -->
+    <div class="guide-section">
+      <div class="guide-section-header">
+        <span class="guide-section-icon">📌</span>
+        <div>
+          <h2>Core Actions</h2>
+          <p>The tools you'll use every day</p>
+        </div>
+      </div>
+      <div class="guide-cards">
+
+        <div class="guide-card" data-id="ingest">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">📥</div>
+            <div class="guide-card-title">
+              <h3>Ingest</h3>
+              <span class="guide-card-tagline">Your front door for all knowledge</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Captures meeting notes, daily logs, artifacts, and ideas into your knowledge base.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">📝</span>
+                  <div>
+                    <strong>Paste or type</strong>
+                    <span>Write directly in the editor with smart template parsing</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">📎</span>
+                  <div>
+                    <strong>Upload files</strong>
+                    <span>.txt, .md, .docx, and .pages (macOS) files</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">📁</span>
+                  <div>
+                    <strong>Import folder</strong>
+                    <span>Scan a folder for new documents (configurable in Settings)</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🤖</span>
+                  <div>
+                    <strong>Auto-extraction</strong>
+                    <span>Background worker extracts entities, tags, and relationships</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>Pro tip:</strong> Use the template format with Date, Title, Document type, and Tags headers for best results.
+              </div>
+            </div>
+            <a href="/ingest" class="guide-card-action">Open Ingest →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="ask">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">❓</div>
+            <div class="guide-card-title">
+              <h3>Ask</h3>
+              <span class="guide-card-tagline">Evidence-based answers from your documents</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Ask natural language questions and get answers backed by evidence from your own documents.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">📖</span>
+                  <div>
+                    <strong>Source citations</strong>
+                    <span>Every answer cites the documents it drew from</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🎯</span>
+                  <div>
+                    <strong>Confidence scores</strong>
+                    <span>Know how reliable the answer is based on available evidence</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🧠</span>
+                  <div>
+                    <strong>Context-aware</strong>
+                    <span>Uses your RTE context to scope answers to the right product</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>Try asking:</strong> "What decisions were made about authentication last week?" or "Who is responsible for the API redesign?"
+              </div>
+            </div>
+            <a href="/ask" class="guide-card-action">Open Ask →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="search">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">🔍</div>
+            <div class="guide-card-title">
+              <h3>Search</h3>
+              <span class="guide-card-tagline">Find anything in seconds</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Full-text search across all your documents with powerful filtering options.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">⚡</span>
+                  <div>
+                    <strong>Instant results</strong>
+                    <span>SQLite FTS5 — sub-millisecond full-text search</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🏷️</span>
+                  <div>
+                    <strong>Filter by tags</strong>
+                    <span>Narrow results using tags, date ranges, and document types</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🔗</span>
+                  <div>
+                    <strong>Semantic markers</strong>
+                    <span>Search for decisions, actions, questions, or insights specifically</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>Pro tip:</strong> Use quotes for exact phrases: "sprint review" finds the exact phrase, not just documents with both words.
+              </div>
+            </div>
+            <a href="/search" class="guide-card-action">Open Search →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="trend">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">📈</div>
+            <div class="guide-card-title">
+              <h3>Trends</h3>
+              <span class="guide-card-tagline">See how topics evolve over time</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Timeline analysis showing when and how often topics appear across your documents.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">📊</span>
+                  <div>
+                    <strong>Visual timeline</strong>
+                    <span>See topic frequency over weeks and months</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🔄</span>
+                  <div>
+                    <strong>Pattern detection</strong>
+                    <span>Spot recurring themes and emerging concerns</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>Use case:</strong> Track how "technical debt" mentions spike before release cycles, or see which stakeholders are mentioned most frequently.
+              </div>
+            </div>
+            <a href="/trend" class="guide-card-action">Open Trends →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="analyze">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">📄</div>
+            <div class="guide-card-title">
+              <h3>Deep Analysis</h3>
+              <span class="guide-card-tagline">Heavy-duty document processing</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Runs thorough LLM analysis on documents — extracting architecture, relationships, and strategic insights. Supports Dutch.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">🏗️</span>
+                  <div>
+                    <strong>Architecture extraction</strong>
+                    <span>Identify system components and their relationships</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🌍</span>
+                  <div>
+                    <strong>Dutch language support</strong>
+                    <span>Analyze documents in Dutch without translation first</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>When to use:</strong> For important documents that deserve more than basic extraction — strategic plans, architecture reviews, retrospectives.
+              </div>
+            </div>
+            <a href="/analyze" class="guide-card-action">Open Deep Analysis →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="standup">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">☀️</div>
+            <div class="guide-card-title">
+              <h3>Standup</h3>
+              <span class="guide-card-tagline">Instant daily summary</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> One-click daily summary generated from your recent activity — what happened yesterday, what's planned for today.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">⏱️</span>
+                  <div>
+                    <strong>One-click generation</strong>
+                    <span>No configuration needed — just click and get your summary</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">📋</span>
+                  <div>
+                    <strong>Copy-ready</strong>
+                    <span>Formatted for pasting into Slack, Teams, or email</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>Best for:</strong> Morning standup prep. Open it, click generate, copy-paste into your team channel.
+              </div>
+            </div>
+            <a href="/standup" class="guide-card-action">Open Standup →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Knowledge Tools -->
+    <div class="guide-section">
+      <div class="guide-section-header">
+        <span class="guide-section-icon">🧠</span>
+        <div>
+          <h2>Knowledge Tools</h2>
+          <p>Explore, connect, and manage your knowledge base</p>
+        </div>
+      </div>
+      <div class="guide-cards">
+
+        <div class="guide-card" data-id="navigator">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">🗂️</div>
+            <div class="guide-card-title">
+              <h3>Navigator</h3>
+              <span class="guide-card-tagline">Browse and manage all documents</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Browse, view, edit, and delete all documents in your knowledge base. Filter by RTE, type, date, and tags.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">📂</span>
+                  <div>
+                    <strong>Multi-view</strong>
+                    <span>List, card, and table views for different browsing needs</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">✏️</span>
+                  <div>
+                    <strong>Edit in place</strong>
+                    <span>Click any document to view or edit its content and metadata</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a href="/navigator" class="guide-card-action">Open Navigator →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="network">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">🕸️</div>
+            <div class="guide-card-title">
+              <h3>Network</h3>
+              <span class="guide-card-tagline">See how everything connects</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Interactive force-directed graph showing relationships between people, topics, and decisions across your documents.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">🎯</span>
+                  <div>
+                    <strong>Interactive</strong>
+                    <span>Click nodes to explore, drag to rearrange, zoom to focus</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🔗</span>
+                  <div>
+                    <strong>Auto-discovered</strong>
+                    <span>Relationships are built from document co-mentions</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>Insight:</strong> The thicker the edge between two nodes, the more often they appear together. Clusters reveal hidden organizational patterns.
+              </div>
+            </div>
+            <a href="/network" class="guide-card-action">Open Network →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="tags">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">🏷️</div>
+            <div class="guide-card-title">
+              <h3>Tags</h3>
+              <span class="guide-card-tagline">Organize with semantic categories</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Manage tags and categories. Tags are auto-extracted from documents but you can also create and assign them manually.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">🤖</span>
+                  <div>
+                    <strong>Auto-tagging</strong>
+                    <span>The extraction worker suggests tags from document content</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🎨</span>
+                  <div>
+                    <strong>Custom tags</strong>
+                    <span>Create your own taxonomy that makes sense for your team</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a href="/tags" class="guide-card-action">Open Tags →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="register">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">📋</div>
+            <div class="guide-card-title">
+              <h3>Register</h3>
+              <span class="guide-card-tagline">Track risks, actions, and blockers</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Risk and action register with ownership, severity, due dates, and response threads. Your central tracking hub for things that need attention.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">⚠️</span>
+                  <div>
+                    <strong>Severity levels</strong>
+                    <span>Low, medium, high, critical — with visual indicators</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">👤</span>
+                  <div>
+                    <strong>Ownership</strong>
+                    <span>Assign owners and due dates to every item</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">💬</span>
+                  <div>
+                    <strong>Response threads</strong>
+                    <span>Add updates and responses to track resolution progress</span>
+                  </div>
+                </div>
+              </div>
+              <div class="guide-tip">
+                <strong>PO workflow:</strong> After every PI Planning or sprint review, sweep your notes for risks and actions. Add them here so nothing falls through the cracks.
+              </div>
+            </div>
+            <a href="/register" class="guide-card-action">Open Register →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="stakeholders">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">👥</div>
+            <div class="guide-card-title">
+              <h3>Stakeholders</h3>
+              <span class="guide-card-tagline">Auto-built people profiles</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> People profiles auto-generated from document mentions. See who's involved in what, when they appear, and their relationships.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">📊</span>
+                  <div>
+                    <strong>Mention tracking</strong>
+                    <span>See how often and in what context each person appears</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">📝</span>
+                  <div>
+                    <strong>Personal notes</strong>
+                    <span>Add your own notes about stakeholders</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a href="/stakeholders" class="guide-card-action">Open Stakeholders →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="suggestions">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">🧪</div>
+            <div class="guide-card-title">
+              <h3>Suggestions</h3>
+              <span class="guide-card-tagline">Review AI-discovered relationships</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Review and approve (or dismiss) relationships that the extraction worker discovered automatically. You stay in control of your knowledge graph.</p>
+              <div class="guide-tip">
+                <strong>Philosophy:</strong> PO AI suggests, you decide. The AI finds patterns but only YOU know which connections are meaningful.
+              </div>
+            </div>
+            <a href="/suggestions" class="guide-card-action">Open Suggestions →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="glossary">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">📖</div>
+            <div class="guide-card-title">
+              <h3>Glossary</h3>
+              <span class="guide-card-tagline">Team terminology and definitions</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Define terms, acronyms, and concepts used in your product domain. Useful for onboarding new team members or standardizing vocabulary.</p>
+              <div class="guide-tip">
+                <strong>Example:</strong> Define "RTE" as "Release Train Engineer — coordinates across multiple agile teams in a SAFe environment."
+              </div>
+            </div>
+            <a href="/glossary" class="guide-card-action">Open Glossary →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- System Tools -->
+    <div class="guide-section">
+      <div class="guide-section-header">
+        <span class="guide-section-icon">⚙️</span>
+        <div>
+          <h2>System</h2>
+          <p>Configuration, translation, and maintenance</p>
+        </div>
+      </div>
+      <div class="guide-cards">
+
+        <div class="guide-card" data-id="translate">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">🌐</div>
+            <div class="guide-card-title">
+              <h3>Translate</h3>
+              <span class="guide-card-tagline">Dutch / English via local LLM</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Translate text between Dutch and English using your local Ollama model. No data sent to the cloud.</p>
+              <div class="guide-tip">
+                <strong>Use case:</strong> Working in a multilingual team? Translate meeting notes from Dutch to English before ingesting, or translate your analysis for international stakeholders.
+              </div>
+            </div>
+            <a href="/translate" class="guide-card-action">Open Translate →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="settings">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">⚙️</div>
+            <div class="guide-card-title">
+              <h3>Settings</h3>
+              <span class="guide-card-tagline">LLM, import, and content configuration</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> Configure your LLM provider, import folder, document templates, content type aliases, and default RTE.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">🤖</span>
+                  <div>
+                    <strong>LLM models</strong>
+                    <span>Switch between any Ollama model — Mistral, DeepSeek, Aya, Llama, Phi</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">📁</span>
+                  <div>
+                    <strong>Import folder</strong>
+                    <span>Set which folder to scan for new documents</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">📝</span>
+                  <div>
+                    <strong>Templates</strong>
+                    <span>Download .md templates for each document type</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a href="/settings" class="guide-card-action">Open Settings →</a>
+          </div>
+        </div>
+
+        <div class="guide-card" data-id="maintenance">
+          <div class="guide-card-header" onclick="toggleCard(this)">
+            <div class="guide-card-icon">🔧</div>
+            <div class="guide-card-title">
+              <h3>Maintenance</h3>
+              <span class="guide-card-tagline">Database health and backups</span>
+            </div>
+            <div class="guide-card-toggle">▸</div>
+          </div>
+          <div class="guide-card-body">
+            <div class="guide-card-content">
+              <p><strong>What it does:</strong> System health dashboard, database reindexing, backup management, and extraction queue monitoring.</p>
+              <div class="guide-features">
+                <div class="guide-feature">
+                  <span class="feature-icon">💾</span>
+                  <div>
+                    <strong>Auto-backups</strong>
+                    <span>Daily automated database backups via node-cron</span>
+                  </div>
+                </div>
+                <div class="guide-feature">
+                  <span class="feature-icon">🔄</span>
+                  <div>
+                    <strong>Reindex</strong>
+                    <span>Rebuild search index if results seem stale</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a href="/maintenance" class="guide-card-action">Open Maintenance →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Keyboard shortcuts -->
+    <div class="guide-section">
+      <div class="guide-section-header">
+        <span class="guide-section-icon">⌨️</span>
+        <div>
+          <h2>Keyboard Shortcuts</h2>
+          <p>Navigate like a pro</p>
+        </div>
+      </div>
+      <div class="guide-shortcuts">
+        <div class="shortcut-item">
+          <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd>
+          <span>Open Command Palette — jump to any page or run an action</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>/</kbd>
+          <span>Open Command Palette (when not in a text field)</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>↑</kbd> <kbd>↓</kbd>
+          <span>Navigate results in Command Palette</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>Enter</kbd>
+          <span>Select highlighted item</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd>Esc</kbd>
+          <span>Close any overlay or modal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy reminder -->
+    <div class="guide-privacy">
+      <div class="privacy-icon">🔒</div>
+      <div>
+        <h3>Everything stays on your machine</h3>
+        <p>Your database lives at <code>~/ProductOwnerAI/database.db</code>. Your LLM runs locally via Ollama. No API keys, no cloud, no telemetry. Your data never leaves your laptop.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <style>
+    .guide-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* Hero */
+    .guide-hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .guide-hero-icon {
+      font-size: 3.5rem;
+      margin-bottom: 12px;
+    }
+    .guide-hero h1 {
+      font-size: 2.2rem;
+      color: var(--text-primary, #f0f6fc);
+      margin-bottom: 8px;
+    }
+    .guide-hero-sub {
+      color: var(--text-muted, #8b949e);
+      font-size: 1.1rem;
+      margin-bottom: 24px;
+    }
+    .guide-progress-bar {
+      width: 100%;
+      max-width: 400px;
+      height: 6px;
+      background: var(--bg-tertiary, #21262d);
+      border-radius: 3px;
+      margin: 0 auto 8px;
+      overflow: hidden;
+    }
+    .guide-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3fb950, #58a6ff);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .guide-progress-text {
+      font-size: 0.8rem;
+      color: var(--text-subtle, #6e7681);
+    }
+
+    /* Sections */
+    .guide-section {
+      margin-bottom: 48px;
+    }
+    .guide-section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle, #21262d);
+    }
+    .guide-section-icon {
+      font-size: 2rem;
+    }
+    .guide-section-header h2 {
+      font-size: 1.4rem;
+      color: var(--text-primary, #f0f6fc);
+      margin: 0;
+    }
+    .guide-section-header p {
+      color: var(--text-muted, #8b949e);
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    /* Workflow */
+    .guide-workflow {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .guide-workflow-step {
+      background: var(--bg-secondary, #161b22);
+      border: 1px solid var(--border-default, #30363d);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      position: relative;
+    }
+    .workflow-num {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3fb950, #238636);
+      color: white;
+      font-weight: 700;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .workflow-icon-big {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    .guide-workflow-step h3 {
+      color: var(--text-primary, #f0f6fc);
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+    }
+    .guide-workflow-step p {
+      color: var(--text-muted, #8b949e);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin: 0 0 12px;
+    }
+    .workflow-arrow-down {
+      color: #3fb950;
+      font-size: 1.5rem;
+      margin: 4px 0;
+    }
+    .workflow-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      color: #3fb950;
+      background: rgba(63, 185, 80, 0.1);
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-top: 4px;
+    }
+
+    /* Cards */
+    .guide-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .guide-card {
+      background: var(--bg-secondary, #161b22);
+      border: 1px solid var(--border-default, #30363d);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .guide-card.explored {
+      border-color: rgba(63, 185, 80, 0.3);
+    }
+    .guide-card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .guide-card-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .guide-card-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+    .guide-card-title {
+      flex: 1;
+    }
+    .guide-card-title h3 {
+      color: var(--text-primary, #f0f6fc);
+      margin: 0;
+      font-size: 1.05rem;
+    }
+    .guide-card-tagline {
+      color: var(--text-muted, #8b949e);
+      font-size: 0.82rem;
+    }
+    .guide-card-toggle {
+      font-size: 1.2rem;
+      color: var(--text-subtle, #6e7681);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .guide-card.open .guide-card-toggle {
+      transform: rotate(90deg);
+    }
+
+    /* Card body */
+    .guide-card-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .guide-card.open .guide-card-body {
+      max-height: 800px;
+    }
+    .guide-card-content {
+      padding: 0 20px 16px;
+    }
+    .guide-card-content > p {
+      color: var(--text-secondary, #c9d1d9);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    /* Features list */
+    .guide-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .guide-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .feature-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .guide-feature div {
+      display: flex;
+      flex-direction: column;
+    }
+    .guide-feature strong {
+      color: var(--text-primary, #f0f6fc);
+      font-size: 0.85rem;
+    }
+    .guide-feature span {
+      color: var(--text-muted, #8b949e);
+      font-size: 0.8rem;
+    }
+
+    /* Tips */
+    .guide-tip {
+      background: rgba(88, 166, 255, 0.08);
+      border: 1px solid rgba(88, 166, 255, 0.15);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      color: var(--text-secondary, #c9d1d9);
+      line-height: 1.5;
+    }
+    .guide-tip strong {
+      color: #58a6ff;
+    }
+
+    /* Card action button */
+    .guide-card-action {
+      display: block;
+      text-align: center;
+      padding: 12px;
+      background: rgba(63, 185, 80, 0.08);
+      color: #3fb950;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+      border-top: 1px solid var(--border-subtle, #21262d);
+    }
+    .guide-card-action:hover {
+      background: rgba(63, 185, 80, 0.15);
+    }
+
+    /* Keyboard shortcuts */
+    .guide-shortcuts {
+      background: var(--bg-secondary, #161b22);
+      border: 1px solid var(--border-default, #30363d);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .shortcut-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .shortcut-item:last-child {
+      border-bottom: none;
+    }
+    .shortcut-item kbd {
+      background: var(--bg-tertiary, #21262d);
+      border: 1px solid var(--border-default, #30363d);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary, #c9d1d9);
+      min-width: 24px;
+      text-align: center;
+    }
+    .shortcut-item span {
+      color: var(--text-muted, #8b949e);
+      font-size: 0.85rem;
+    }
+
+    /* Privacy */
+    .guide-privacy {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 24px;
+      background: rgba(63, 185, 80, 0.06);
+      border: 1px solid rgba(63, 185, 80, 0.2);
+      border-radius: 12px;
+      margin-top: 48px;
+    }
+    .privacy-icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+    .guide-privacy h3 {
+      color: #3fb950;
+      margin: 0 0 6px;
+      font-size: 1rem;
+    }
+    .guide-privacy p {
+      color: var(--text-muted, #8b949e);
+      margin: 0;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .guide-privacy code {
+      background: rgba(63, 185, 80, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      color: #3fb950;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .guide-workflow {
+        grid-template-columns: 1fr;
+      }
+      .workflow-arrow-down { display: none; }
+    }
+  </style>
+
+  <script>
+  (function() {
+    var STORAGE_KEY = 'poai_guide_explored';
+
+    function getExplored() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch(e) { return []; }
+    }
+
+    function saveExplored(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function updateProgress() {
+      var explored = getExplored();
+      var total = document.querySelectorAll('.guide-card').length;
+      var count = explored.length;
+      var pct = total > 0 ? Math.round((count / total) * 100) : 0;
+
+      var fill = document.getElementById('progressFill');
+      var text = document.getElementById('progressText');
+      if (fill) fill.style.width = pct + '%';
+      if (text) {
+        if (count === total) {
+          text.textContent = 'All ' + total + ' features explored!';
+          text.style.color = '#3fb950';
+        } else {
+          text.textContent = count + ' of ' + total + ' explored';
+        }
+      }
+
+      // Mark explored cards
+      document.querySelectorAll('.guide-card').forEach(function(card) {
+        if (explored.indexOf(card.getAttribute('data-id')) !== -1) {
+          card.classList.add('explored');
+        }
+      });
+    }
+
+    window.toggleCard = function(headerEl) {
+      var card = headerEl.closest('.guide-card');
+      var isOpen = card.classList.contains('open');
+
+      if (!isOpen) {
+        card.classList.add('open');
+
+        // Mark as explored
+        var id = card.getAttribute('data-id');
+        var explored = getExplored();
+        if (explored.indexOf(id) === -1) {
+          explored.push(id);
+          saveExplored(explored);
+          card.classList.add('explored');
+          updateProgress();
+        }
+      } else {
+        card.classList.remove('open');
+      }
+    };
+
+    updateProgress();
+  })();
+  </script>
+</body>
+</html>

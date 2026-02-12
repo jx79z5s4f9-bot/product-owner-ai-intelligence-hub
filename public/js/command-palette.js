@@ -35,6 +35,7 @@ class CommandPalette {
       { type: 'nav', icon: '⚙️', label: 'Go to Settings', action: () => window.location.href = '/settings', keywords: 'settings config preferences llm' },
       { type: 'nav', icon: '🔧', label: 'Go to Maintenance', action: () => window.location.href = '/maintenance', keywords: 'maintenance system status' },
       { type: 'nav', icon: '🌐', label: 'Go to Translate', action: () => window.location.href = '/translate', keywords: 'translate dutch english' },
+      { type: 'nav', icon: '🗺️', label: 'Go to Guide', action: () => window.location.href = '/guide', keywords: 'guide tour help onboarding walkthrough features' },
       
       // Quick actions (these will be enhanced with the query)
       { type: 'action', icon: '🔍', label: 'Search for...', action: (q) => window.location.href = `/search?q=${encodeURIComponent(q)}`, keywords: 'search find', requiresQuery: true },
