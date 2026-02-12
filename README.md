@@ -6,7 +6,21 @@ A local-first, AI-powered knowledge base for Product Owners and Agile practition
 
 ## Why PO AI?
 
-Product Owners drown in information: Slack threads, meeting notes, decisions made verbally, risks mentioned in passing. PO AI captures all of it, extracts meaning automatically, and gives you a searchable, analyzable knowledge base — without sending anything to the cloud.
+Product Owners drown in information: Slack threads, meeting notes, decisions made verbally, risks mentioned in passing. PO AI captures all of it, extracts meaning automatically, and gives you a searchable, analyzable knowledge base.
+
+### 🔒 Privacy first, your choice of LLM
+
+PO AI works with **any Ollama-compatible model** — run whatever your hardware can handle:
+
+- **Mistral** — fast, great for English + Dutch
+- **DeepSeek** — strong reasoning and analysis
+- **Aya** — excellent multilingual support (100+ languages)
+- **Llama**, **Phi**, **Gemma**, or any other Ollama model
+- Swap models anytime from the Settings page — no code changes
+
+All inference runs locally via [Ollama](https://ollama.ai). No API keys required. No data sent to the cloud.
+
+### Key features
 
 - 📥 **Ingest** meeting notes, logs, and documents (paste, upload, or import from Apple Pages)
 - 🔍 **Search** with full-text + semantic search across your entire history
@@ -59,14 +73,13 @@ Product Owners drown in information: Slack threads, meeting notes, decisions mad
 │         18 route modules + middleware            │
 ├──────────┬──────────┬───────────────────────────┤
 │  SQLite  │  FTS5    │    LLM Manager            │
-│   (DB)   │ (Search) │  (Ollama / Mistral /      │
-│          │          │   GitHub Copilot)          │
+│   (DB)   │ (Search) │  (Ollama — any model)     │
 └──────────┴──────────┴───────────────────────────┘
 ```
 
 - **Database**: SQLite via `better-sqlite3` — zero config, single file
 - **Search**: FTS5 full-text search — no external search server needed
-- **LLM**: Pluggable — Ollama (local, default), Mistral API, or GitHub Copilot
+- **LLM**: Pluggable via Ollama — Mistral, DeepSeek, Aya, Llama, or any model you can run
 - **Background**: Extraction worker polls for new documents, auto-extracts entities, relationships, and semantic markers
 - **Backup**: Automated daily database backups via `node-cron`
 
@@ -143,12 +156,6 @@ PORT=3001
 
 # Ollama host (default: http://localhost:11434)
 OLLAMA_HOST=http://localhost:11434
-
-# Optional: Mistral API key (for cloud LLM)
-MISTRAL_API_KEY=your-key-here
-
-# Optional: GitHub token (for Copilot LLM provider)
-GITHUB_TOKEN=your-token-here
 ```
 
 LLM model selection is also configurable via the **Settings** page in the UI.

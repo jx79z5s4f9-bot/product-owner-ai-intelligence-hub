@@ -1,6 +1,6 @@
 /**
  * LLM Manager - Flexible model selection with fallback
- * Supports: Ollama (Mistral, Aya), GitHub Copilot API
+ * Supports: Ollama (local models), OpenAI-compatible APIs
  */
 
 const fs = require('fs');
@@ -134,46 +134,48 @@ class LLMManager {
   }
 
   /**
-   * Call external API (GitHub Copilot, OpenAI, etc.)
+   * Call external OpenAI-compatible API
    */
   async callAPI(modelConfig, prompt, options) {
-    if (modelConfig.name === 'github-copilot') {
-      // GitHub Copilot uses OpenAI-compatible API
-      const token = process.env.GITHUB_COPILOT_TOKEN || process.env.GITHUB_TOKEN;
-      
-      if (!token) {
-        throw new Error('GitHub token not configured');
-      }
+    const endpoint = modelConfig.endpoint;
+    const tokenEnvVar = modelConfig.tokenEnvVar || 'LLM_API_TOKEN';
+    const token = process.env[tokenEnvVar];
 
-      const response = await fetch('https://api.github.com/copilot/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messages: [{
-            role: 'user',
-            content: prompt
-          }],
-          temperature: options.temperature,
-          max_tokens: options.maxTokens
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`GitHub Copilot API failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return {
-        text: data.choices[0].message.content,
-        model: 'github-copilot',
-        tokens: data.usage?.total_tokens || 0
-      };
+    if (!endpoint) {
+      throw new Error(`No endpoint configured for API model: ${modelConfig.name}`);
     }
 
-    throw new Error(`Unsupported API model: ${modelConfig.name}`);
+    if (!token) {
+      throw new Error(`API token not configured (set ${tokenEnvVar} in .env)`);
+    }
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: modelConfig.model,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
+        temperature: options.temperature,
+        max_tokens: options.maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API ${modelConfig.name} failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      text: data.choices[0].message.content,
+      model: modelConfig.name,
+      tokens: data.usage?.total_tokens || 0
+    };
   }
 
   /**
@@ -192,8 +194,9 @@ class LLMManager {
             const data = await response.json();
             available = data.models?.some(m => m.name === model.model);
           }
-        } else if (model.type === 'api' && model.name === 'github-copilot') {
-          available = !!(process.env.GITHUB_COPILOT_TOKEN || process.env.GITHUB_TOKEN);
+        } else if (model.type === 'api') {
+          const tokenEnvVar = model.tokenEnvVar || 'LLM_API_TOKEN';
+          available = !!process.env[tokenEnvVar];
         }
       } catch (error) {
         available = false;

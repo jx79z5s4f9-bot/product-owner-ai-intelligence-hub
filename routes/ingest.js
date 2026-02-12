@@ -551,12 +551,14 @@ router.get('/tags/content-types', (req, res) => {
 /**
  * Parse template fields from document content
  * Expected template format:
- *   Line 1: Date (e.g., "Saturday, 7 February 2026")
+ *   Line 1: Date (e.g. "Wednesday, 12 February 2026" or "2026-02-12")
  *   Line 2: Title
- *   Line 3: Document type: [Artifact, meeting, log the day]
- *   Line 4: Participants: [comma-separated names]
- *   Line 5: Tags: [#tag1, #tag2]
+ *   Line 3: Document type: meeting
+ *   Line 4: Participants: Alice, Bob, Charlie
+ *   Line 5: Tags: #architecture, #sprint-5
  *   Line 6+: Content (unstructured)
+ *
+ * Brackets around values are optional: "Participants: [Alice, Bob]" also works.
  */
 function parseTemplateFields(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
