@@ -84,7 +84,6 @@ const promptRoutes = require('./routes/prompt');
 const translateRoutes = require('./routes/translate');
 const rteRoutes = require('./routes/rte');
 const navigatorRoutes = require('./routes/navigator');
-const glossaryRoutes = require('./routes/glossary');
 const searchRoutes = require('./routes/search');
 const maintenanceRoutes = require('./routes/maintenance');
 const debriefRoutes = require('./routes/debrief');
@@ -103,7 +102,6 @@ app.use('/api/prompt', promptRoutes);
 app.use('/api/translate', translateRoutes);
 app.use('/api/rte', rteRoutes);
 app.use('/api/navigator', navigatorRoutes);
-app.use('/api/glossary', glossaryRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/debriefs', debriefRoutes);
@@ -174,11 +172,6 @@ app.get('/navigator', (req, res) => {
 // Tags page - Tag Manager (replaces Glossary)
 app.get('/tags', (req, res) => {
   res.render('tags');
-});
-
-// Glossary page - Legacy, redirects to Tags
-app.get('/glossary', (req, res) => {
-  res.redirect('/tags');
 });
 
 // Network page - Relationship visualization

@@ -566,7 +566,6 @@
           <option value="document">Documents</option>
           <option value="actor">Actors</option>
           <option value="relationship">Relationships</option>
-          <option value="glossary">Glossary Terms</option>
         </select>
       </div>
       
@@ -899,8 +898,6 @@
       switch (result.type) {
         case 'actor':
           return `/network?actor=${result.id}`;
-        case 'glossary':
-          return `/glossary?term=${result.id}`;
         default:
           return `/navigator?file=${result.path}`;
       }
