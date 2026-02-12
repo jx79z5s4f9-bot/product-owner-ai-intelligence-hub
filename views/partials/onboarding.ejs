@@ -46,8 +46,8 @@
       </div>
 
       <div class="step-actions">
-        <button class="btn-secondary" onclick="skipOnboarding()">Skip Tour</button>
-        <button class="btn-primary" onclick="nextStep(2)">Get Started →</button>
+        <button class="btn-secondary" id="onb-skip">Skip Tour</button>
+        <button class="btn-primary" id="onb-start">Get Started →</button>
       </div>
     </div>
 
@@ -65,7 +65,7 @@
           </select>
 
           <div class="new-rte-option">
-            <input type="checkbox" id="createNewRte" onchange="toggleNewRteInput()">
+            <input type="checkbox" id="createNewRte">
             <label for="createNewRte">Create a new RTE instead</label>
           </div>
 
@@ -81,8 +81,8 @@
       </div>
 
       <div class="step-actions">
-        <button class="btn-secondary" onclick="nextStep(1)">← Back</button>
-        <button class="btn-primary" onclick="saveRteAndContinue()">Continue →</button>
+        <button class="btn-secondary" id="onb-back-to-1">← Back</button>
+        <button class="btn-primary" id="onb-save-rte">Continue →</button>
       </div>
     </div>
 
@@ -125,8 +125,8 @@
       </div>
 
       <div class="step-actions">
-        <button class="btn-secondary" onclick="nextStep(2)">← Back</button>
-        <button class="btn-primary" onclick="completeOnboarding()">Start Using PO AI</button>
+        <button class="btn-secondary" id="onb-back-to-2">← Back</button>
+        <button class="btn-primary" id="onb-complete">Start Using PO AI</button>
       </div>
     </div>
   </div>
@@ -455,161 +455,161 @@
 </style>
 
 <script>
-// Onboarding state
-let currentStep = 1;
-let selectedRteId = null;
+(function() {
+  // Onboarding state
+  let currentStep = 1;
+  let selectedRteId = null;
 
-// Check and show onboarding if needed
-async function checkOnboarding() {
-  try {
-    const res = await fetch('/api/onboarding/status');
-    const { completed } = await res.json();
+  function nextStep(step) {
+    document.querySelectorAll('.onboarding-step').forEach(function(el) {
+      el.style.display = 'none';
+    });
+    var target = document.querySelector('.onboarding-step[data-step="' + step + '"]');
+    if (target) target.style.display = 'block';
 
-    if (!completed) {
-      showOnboarding();
-    }
-  } catch (err) {
-    console.error('Failed to check onboarding status:', err);
+    document.querySelectorAll('.progress-step').forEach(function(el) {
+      var stepNum = parseInt(el.getAttribute('data-step'));
+      el.classList.remove('active', 'completed');
+      if (stepNum < step) el.classList.add('completed');
+      if (stepNum === step) el.classList.add('active');
+    });
+    currentStep = step;
   }
-}
 
-function showOnboarding() {
-  document.getElementById('onboardingModal').style.display = 'flex';
-  runSystemChecks();
-  loadRtes();
-}
-
-function nextStep(step) {
-  // Hide all steps
-  document.querySelectorAll('.onboarding-step').forEach(el => {
-    el.style.display = 'none';
-  });
-
-  // Show target step
-  document.querySelector(`.onboarding-step[data-step="${step}"]`).style.display = 'block';
-
-  // Update progress indicators
-  document.querySelectorAll('.progress-step').forEach(el => {
-    const stepNum = parseInt(el.dataset.step);
-    el.classList.remove('active', 'completed');
-    if (stepNum < step) el.classList.add('completed');
-    if (stepNum === step) el.classList.add('active');
-  });
-
-  currentStep = step;
-}
-
-async function runSystemChecks() {
-  // Check Ollama
-  const ollamaEl = document.getElementById('ollamaStatus');
-  try {
-    const res = await fetch('/api/health');
-    const health = await res.json();
-
-    ollamaEl.innerHTML = health.services.ollama
-      ? '<span class="status-indicator success"></span><span>Ollama is running</span>'
-      : '<span class="status-indicator error"></span><span>Ollama not detected — <a href="https://ollama.ai" target="_blank">Install Ollama</a></span>';
-
-    const dbEl = document.getElementById('dbStatus');
-    dbEl.innerHTML = health.services.database
-      ? `<span class="status-indicator success"></span><span>Database ready (${health.stats.documents} documents)</span>`
-      : '<span class="status-indicator error"></span><span>Database error</span>';
-  } catch (err) {
-    ollamaEl.innerHTML = '<span class="status-indicator error"></span><span>Connection error</span>';
-  }
-}
-
-async function loadRtes() {
-  const select = document.getElementById('rteSelect');
-  try {
-    const res = await fetch('/api/rtes');
-    const { rtes, defaultRteId } = await res.json();
-
-    select.innerHTML = rtes
-      .filter(r => r.name !== 'Orchestrator') // Hide system RTE
-      .map(r => `<option value="${r.id}" ${r.id === defaultRteId ? 'selected' : ''}>${r.name}</option>`)
-      .join('');
-
-    selectedRteId = defaultRteId;
-  } catch (err) {
-    select.innerHTML = '<option value="">Failed to load RTEs</option>';
-  }
-}
-
-function toggleNewRteInput() {
-  const checkbox = document.getElementById('createNewRte');
-  const inputDiv = document.getElementById('newRteInput');
-  const selectEl = document.getElementById('rteSelect');
-
-  inputDiv.style.display = checkbox.checked ? 'block' : 'none';
-  selectEl.disabled = checkbox.checked;
-}
-
-async function saveRteAndContinue() {
-  const createNew = document.getElementById('createNewRte').checked;
-
-  if (createNew) {
-    const newName = document.getElementById('newRteName').value.trim();
-    if (!newName) {
-      alert('Please enter an RTE name');
-      return;
-    }
-
+  async function runSystemChecks() {
+    var ollamaEl = document.getElementById('ollamaStatus');
     try {
-      const res = await fetch('/api/rte', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName })
-      });
+      var res = await fetch('/api/health');
+      var health = await res.json();
 
-      if (!res.ok) throw new Error('Failed to create RTE');
+      ollamaEl.innerHTML = health.services.ollama
+        ? '<span class="status-indicator success"></span><span>Ollama is running</span>'
+        : '<span class="status-indicator error"></span><span>Ollama not detected — <a href="https://ollama.ai" target="_blank">Install Ollama</a></span>';
 
-      const { rte } = await res.json();
-      selectedRteId = rte.id;
+      var dbEl = document.getElementById('dbStatus');
+      dbEl.innerHTML = health.services.database
+        ? '<span class="status-indicator success"></span><span>Database ready (' + health.stats.documents + ' documents)</span>'
+        : '<span class="status-indicator error"></span><span>Database error</span>';
+    } catch (err) {
+      if (ollamaEl) ollamaEl.innerHTML = '<span class="status-indicator error"></span><span>Connection error</span>';
+    }
+  }
 
-      // Set as default
+  async function loadRtes() {
+    var select = document.getElementById('rteSelect');
+    try {
+      var res = await fetch('/api/rtes');
+      var data = await res.json();
+      var rtes = data.rtes;
+      var defaultRteId = data.defaultRteId;
+
+      select.innerHTML = rtes
+        .filter(function(r) { return r.name !== 'Orchestrator'; })
+        .map(function(r) { return '<option value="' + r.id + '"' + (r.id === defaultRteId ? ' selected' : '') + '>' + r.name + '</option>'; })
+        .join('');
+
+      selectedRteId = defaultRteId;
+    } catch (err) {
+      if (select) select.innerHTML = '<option value="">Failed to load RTEs</option>';
+    }
+  }
+
+  async function saveRteAndContinue() {
+    var createNew = document.getElementById('createNewRte').checked;
+
+    if (createNew) {
+      var newName = document.getElementById('newRteName').value.trim();
+      if (!newName) {
+        alert('Please enter an RTE name');
+        return;
+      }
+      try {
+        var res = await fetch('/api/rte', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        if (!res.ok) throw new Error('Failed to create RTE');
+        var result = await res.json();
+        selectedRteId = result.rte.id;
+        await fetch('/api/rtes/default', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rteId: selectedRteId })
+        });
+      } catch (err) {
+        alert('Failed to create RTE: ' + err.message);
+        return;
+      }
+    } else {
+      selectedRteId = document.getElementById('rteSelect').value;
       await fetch('/api/rtes/default', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rteId: selectedRteId })
       });
+    }
+    nextStep(3);
+  }
+
+  async function completeOnboarding() {
+    try {
+      await fetch('/api/onboarding/complete', { method: 'POST' });
     } catch (err) {
-      alert('Failed to create RTE: ' + err.message);
-      return;
+      console.error('Failed to complete onboarding:', err);
     }
-  } else {
-    selectedRteId = document.getElementById('rteSelect').value;
+    document.getElementById('onboardingModal').style.display = 'none';
+    if (typeof loadStats === 'function') loadStats();
+  }
 
-    // Set as default
-    await fetch('/api/rtes/default', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rteId: selectedRteId })
+  function showOnboarding() {
+    document.getElementById('onboardingModal').style.display = 'flex';
+    runSystemChecks();
+    loadRtes();
+  }
+
+  async function checkOnboarding() {
+    try {
+      var res = await fetch('/api/onboarding/status');
+      var data = await res.json();
+      if (!data.completed) {
+        showOnboarding();
+      }
+    } catch (err) {
+      console.error('Failed to check onboarding status:', err);
+    }
+  }
+
+  // Bind all event listeners once DOM is ready
+  function bindEvents() {
+    var skipBtn = document.getElementById('onb-skip');
+    var startBtn = document.getElementById('onb-start');
+    var backTo1Btn = document.getElementById('onb-back-to-1');
+    var saveRteBtn = document.getElementById('onb-save-rte');
+    var backTo2Btn = document.getElementById('onb-back-to-2');
+    var completeBtn = document.getElementById('onb-complete');
+    var createNewRte = document.getElementById('createNewRte');
+
+    if (skipBtn) skipBtn.addEventListener('click', function() { completeOnboarding(); });
+    if (startBtn) startBtn.addEventListener('click', function() { nextStep(2); });
+    if (backTo1Btn) backTo1Btn.addEventListener('click', function() { nextStep(1); });
+    if (saveRteBtn) saveRteBtn.addEventListener('click', function() { saveRteAndContinue(); });
+    if (backTo2Btn) backTo2Btn.addEventListener('click', function() { nextStep(2); });
+    if (completeBtn) completeBtn.addEventListener('click', function() { completeOnboarding(); });
+    if (createNewRte) createNewRte.addEventListener('change', function() {
+      var inputDiv = document.getElementById('newRteInput');
+      var selectEl = document.getElementById('rteSelect');
+      inputDiv.style.display = this.checked ? 'block' : 'none';
+      selectEl.disabled = this.checked;
     });
+
+    checkOnboarding();
   }
 
-  nextStep(3);
-}
-
-async function completeOnboarding() {
-  try {
-    await fetch('/api/onboarding/complete', { method: 'POST' });
-    document.getElementById('onboardingModal').style.display = 'none';
-
-    // Refresh stats on home page
-    if (typeof loadStats === 'function') {
-      loadStats();
-    }
-  } catch (err) {
-    console.error('Failed to complete onboarding:', err);
-    document.getElementById('onboardingModal').style.display = 'none';
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindEvents);
+  } else {
+    bindEvents();
   }
-}
-
-function skipOnboarding() {
-  completeOnboarding();
-}
-
-// Auto-run check on page load
-document.addEventListener('DOMContentLoaded', checkOnboarding);
+})();
 </script>
