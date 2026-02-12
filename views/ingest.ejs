@@ -2108,25 +2108,38 @@ Action items:
     }
     
     // Document type mapping
+    // Document type alias map — loaded dynamically from DB
+    let docTypeAliasMap = {};
+
+    async function loadDocTypeAliases() {
+      try {
+        const res = await fetch('/api/settings/content-types/with-aliases');
+        const data = await res.json();
+        docTypeAliasMap = {};
+        (data.types || []).forEach(t => {
+          // Map the type name to itself
+          docTypeAliasMap[t.name.toLowerCase()] = t.name;
+          // Map each alias to this type
+          if (t.aliases) {
+            t.aliases.split(',').map(a => a.trim().toLowerCase()).filter(a => a).forEach(alias => {
+              docTypeAliasMap[alias] = t.name;
+            });
+          }
+        });
+      } catch (e) {
+        console.warn('Failed to load doc type aliases, using defaults');
+        // Minimal fallback
+        docTypeAliasMap = { 'log': 'log', 'meeting': 'meeting', 'artifact': 'artifact', 'idea': 'idea' };
+      }
+    }
+
     function mapDocumentType(docType) {
       if (!docType) return null;
-      const lower = docType.toLowerCase().trim();
-      const typeMap = {
-        'log the day': 'log',
-        'log': 'log',
-        'daily': 'log',
-        'daily log': 'log',
-        'meeting': 'meeting',
-        'meetings': 'meeting',
-        'bespreking': 'meeting',
-        'overleg': 'meeting',
-        'sessie': 'meeting',
-        'artifact': 'artifact',
-        'artefact': 'artifact',
-        'idea': 'idea'
-      };
-      return typeMap[lower] || null;
+      return docTypeAliasMap[docType.toLowerCase().trim()] || null;
     }
+
+    // Load aliases on page init
+    loadDocTypeAliases();
     
     // No-template choice handlers
     document.getElementById('ingestAsIsBtn')?.addEventListener('click', () => {

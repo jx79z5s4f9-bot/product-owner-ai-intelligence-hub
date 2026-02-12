@@ -371,6 +371,100 @@ router.post('/extraction/stop', (req, res) => {
 });
 
 // ============================================================
+// App Settings (key-value)
+// ============================================================
+
+/**
+ * GET /api/settings/app
+ * Get all app settings from the settings table
+ */
+router.get('/app', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  try {
+    const rows = db.prepare('SELECT key, value FROM settings').all();
+    const settings = {};
+    rows.forEach(r => settings[r.key] = r.value);
+    res.json(settings);
+  } catch (e) {
+    // settings table may not exist yet
+    res.json({});
+  }
+});
+
+/**
+ * PUT /api/settings/app
+ * Save an app setting (key-value)
+ */
+router.put('/app', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  const { key, value } = req.body;
+  if (!key) return res.status(400).json({ error: 'Key is required' });
+
+  try {
+    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value || '');
+    res.json({ success: true, key, value });
+  } catch (e) {
+    console.error('[Settings] Save app setting failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * GET /api/settings/content-types/with-aliases
+ * Get content types including aliases
+ */
+router.get('/content-types/with-aliases', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  try {
+    const types = db.prepare(`
+      SELECT id, name, description, icon, aliases, is_active, sort_order
+      FROM content_types
+      WHERE is_active = 1
+      ORDER BY sort_order
+    `).all();
+    res.json({ types });
+  } catch (e) {
+    // aliases column may not exist yet — return without it
+    try {
+      const types = db.prepare(`
+        SELECT id, name, description, icon, is_active, sort_order
+        FROM content_types
+        WHERE is_active = 1
+        ORDER BY sort_order
+      `).all();
+      res.json({ types: types.map(t => ({ ...t, aliases: '' })) });
+    } catch (e2) {
+      res.status(500).json({ error: e2.message });
+    }
+  }
+});
+
+/**
+ * PUT /api/settings/content-types/:id/aliases
+ * Update aliases for a content type
+ */
+router.put('/content-types/:id/aliases', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  const { aliases } = req.body;
+  try {
+    db.prepare('UPDATE content_types SET aliases = ? WHERE id = ?').run(aliases || '', req.params.id);
+    const updated = db.prepare('SELECT * FROM content_types WHERE id = ?').get(req.params.id);
+    res.json({ success: true, contentType: updated });
+  } catch (e) {
+    console.error('[Settings] Update aliases failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================
 // System Status
 // ============================================================
 

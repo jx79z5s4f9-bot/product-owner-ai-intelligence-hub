@@ -773,21 +773,53 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
 // IMPORT TODAY — Batch scan incoming folder
 // =====================================================
 
-const INCOMING_FOLDER = path.join(os.homedir(), 'Documents (local)');
+/**
+ * Get the incoming folder path from DB settings, env var, or OS-specific default.
+ * Configurable via Settings > Preferences in the UI.
+ */
+function getIncomingFolder() {
+  try {
+    const db = getDb();
+    if (db) {
+      const row = db.prepare("SELECT value FROM settings WHERE key = 'incoming_folder'").get();
+      if (row && row.value) {
+        // Expand ~ to home directory
+        return row.value.replace(/^~/, os.homedir());
+      }
+    }
+  } catch (e) { /* settings table may not exist yet */ }
+
+  // Env var fallback
+  if (process.env.INCOMING_FOLDER) {
+    return process.env.INCOMING_FOLDER.replace(/^~/, os.homedir());
+  }
+
+  // OS-specific default
+  if (process.platform === 'darwin') {
+    return path.join(os.homedir(), 'Documents');
+  } else if (process.platform === 'win32') {
+    return path.join(os.homedir(), 'Documents');
+  } else {
+    return path.join(os.homedir(), 'Documents');
+  }
+}
 
 /**
  * GET /api/ingest/scan-incoming
  * Scan ~/Documents (local)/ root for .pages files ready to import
  */
 router.get('/scan-incoming', (req, res) => {
+  const INCOMING_FOLDER = getIncomingFolder();
   try {
     if (!fs.existsSync(INCOMING_FOLDER)) {
-      return res.json({ files: [], folder: INCOMING_FOLDER, error: 'Incoming folder not found' });
+      return res.json({ files: [], folder: INCOMING_FOLDER, error: `Incoming folder not found: ${INCOMING_FOLDER}. Configure it in Settings > Preferences.` });
     }
 
     const entries = fs.readdirSync(INCOMING_FOLDER, { withFileTypes: true });
+    // Accept common document formats, not just .pages
+    const importExtensions = ['.pages', '.md', '.txt', '.docx', '.markdown'];
     const files = entries
-      .filter(e => e.isFile() && e.name.endsWith('.pages') && !e.name.startsWith('.'))
+      .filter(e => e.isFile() && importExtensions.some(ext => e.name.toLowerCase().endsWith(ext)) && !e.name.startsWith('.'))
       .map(e => {
         const fullPath = path.join(INCOMING_FOLDER, e.name);
         const stats = fs.statSync(fullPath);
@@ -813,9 +845,10 @@ router.get('/scan-incoming', (req, res) => {
  */
 router.post('/parse-local-file', async (req, res) => {
   try {
+    const INCOMING_FOLDER = getIncomingFolder();
     const { filePath: localPath } = req.body;
-    if (!localPath || !localPath.startsWith(INCOMING_FOLDER)) {
-      return res.status(400).json({ error: 'Invalid file path' });
+    if (!localPath || !path.resolve(localPath).startsWith(path.resolve(INCOMING_FOLDER))) {
+      return res.status(400).json({ error: 'Invalid file path — not inside the configured incoming folder' });
     }
 
     if (!fs.existsSync(localPath)) {
@@ -876,6 +909,7 @@ router.post('/archive-source', (req, res) => {
   try {
     const { sourcePath, contentType } = req.body;
 
+    const INCOMING_FOLDER = getIncomingFolder();
     console.log(`[Archive] Request: sourcePath=${sourcePath}, contentType=${contentType}, INCOMING_FOLDER=${INCOMING_FOLDER}`);
 
     if (!sourcePath) {
@@ -904,7 +938,7 @@ router.post('/archive-source', (req, res) => {
     };
 
     const subFolder = folderMap[contentType] || 'artifacts';
-    const destDir = path.join(INCOMING_FOLDER, subFolder);
+    const destDir = path.join(INCOMING_FOLDER, subFolder);  // Uses dynamic incoming folder
 
     // Ensure destination exists
     if (!fs.existsSync(destDir)) {

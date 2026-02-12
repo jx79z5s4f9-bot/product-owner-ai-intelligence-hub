@@ -15,6 +15,7 @@ const v6Migration = require('./migrations/v6_semantic_markers');
 const v7Migration = require('./migrations/v7_lifecycle_tracking');
 const v8Migration = require('./migrations/v8_entity_consolidation');
 const v9Migration = require('./migrations/v9_register_system');
+const v10Migration = require('./migrations/v10_configurable_content_types');
 
 const DB_PATH = path.join(__dirname, '..', 'database.db');
 let db = null;
@@ -98,6 +99,14 @@ function runMigrations() {
     v9Migration.migrate(db);
   } else {
     console.log('[DB] v9 migration already applied');
+  }
+
+  // v10 Configurable Content Types + Settings
+  if (!v10Migration.isApplied(db)) {
+    console.log('[DB] Running v10 Configurable Content Types migration...');
+    v10Migration.migrate(db);
+  } else {
+    console.log('[DB] v10 migration already applied');
   }
 }
 

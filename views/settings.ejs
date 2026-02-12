@@ -318,6 +318,17 @@
           <span id="rteSaved" style="color: #3fb950; font-size: 0.85rem; display: none;">✓ Saved</span>
         </div>
         <p style="color: #6e7681; font-size: 0.85rem;">This RTE will be pre-selected on the Ingest page.</p>
+
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; margin-top: 20px;">
+          <label style="color: #8b949e; min-width: 120px;">Import folder:</label>
+          <input type="text" id="incomingFolder" class="model-select" placeholder="~/Documents" style="flex: 1; max-width: 400px;">
+          <button class="action-btn primary" onclick="saveIncomingFolder()" style="flex: none;">Save</button>
+          <span id="folderSaved" style="color: #3fb950; font-size: 0.85rem; display: none;">✓ Saved</span>
+        </div>
+        <p style="color: #6e7681; font-size: 0.85rem;">
+          Folder to scan for documents in "Import Today". Use <code>~</code> for your home directory.
+          <br>Examples: <code>~/Documents</code> (macOS/Linux/Windows), <code>~/Downloads</code>, <code>~/Dropbox/Notes</code>
+        </p>
       </div>
       
       <div class="panel">
@@ -372,7 +383,10 @@
       
       <div class="panel">
         <h3>Content Types</h3>
-        <div class="tag-list" id="contentTypes">Loading...</div>
+        <p style="color: #6e7681; font-size: 0.85rem; margin-bottom: 12px;">
+          Aliases are synonyms recognized during import (e.g. "bespreking" → meeting). Comma-separated.
+        </p>
+        <div id="contentTypes">Loading...</div>
         <div class="add-form">
           <input type="text" id="newTypeName" placeholder="Type name">
           <input type="text" id="newTypeIcon" placeholder="Icon (emoji)" style="width: 80px; flex: none;">
@@ -650,15 +664,24 @@
           </div>
         `).join('') || '<span style="color: #8b949e;">No tags</span>';
         
-        // Load content types
-        const typeRes = await fetch('/api/settings/content-types');
-        const types = await typeRes.json();
+        // Load content types with aliases
+        const typeRes = await fetch('/api/settings/content-types/with-aliases');
+        const typeData = await typeRes.json();
+        const types = typeData.types || typeData;
         
         document.getElementById('contentTypes').innerHTML = types.map(t => `
-          <div class="tag-item">
-            <span>${t.icon || '📄'}</span>
-            <span class="tag-name">${t.name}</span>
-            <span class="tag-count">(${t.usage_count})</span>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #30363d; border-radius: 6px; margin-bottom: 8px;">
+            <span style="font-size: 1.3rem;">${t.icon || '📄'}</span>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: #e6edf3;">${t.name}</div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <label style="color: #8b949e; font-size: 0.8rem; white-space: nowrap;">Aliases:</label>
+                <input type="text" value="${(t.aliases || '').replace(/"/g, '&quot;')}" 
+                  placeholder="comma-separated synonyms" 
+                  style="flex: 1; padding: 4px 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; color: #e6edf3; font-size: 0.85rem;"
+                  onchange="saveAliases(${t.id}, this.value)">
+              </div>
+            </div>
           </div>
         `).join('') || '<span style="color: #8b949e;">No content types</span>';
       } catch (error) {
@@ -810,9 +833,54 @@
       }
     }
     
+    // =============================================
+    // Incoming Folder & Content Type Aliases
+    // =============================================
+
+    async function loadAppSettings() {
+      try {
+        const res = await fetch('/api/settings/app');
+        const settings = await res.json();
+        if (settings.incoming_folder) {
+          document.getElementById('incomingFolder').value = settings.incoming_folder;
+        }
+      } catch (e) { /* first run, no settings yet */ }
+    }
+
+    async function saveIncomingFolder() {
+      const value = document.getElementById('incomingFolder').value.trim();
+      try {
+        await fetch('/api/settings/app', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'incoming_folder', value })
+        });
+        const saved = document.getElementById('folderSaved');
+        saved.style.display = 'inline';
+        setTimeout(() => saved.style.display = 'none', 2000);
+        showToast('Import folder saved');
+      } catch (e) {
+        showToast('Failed to save folder', 'error');
+      }
+    }
+
+    async function saveAliases(typeId, aliases) {
+      try {
+        await fetch(`/api/settings/content-types/${typeId}/aliases`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aliases })
+        });
+        showToast('Aliases saved');
+      } catch (e) {
+        showToast('Failed to save aliases', 'error');
+      }
+    }
+
     // Initial load
     loadStatus();
     loadRTEs();
+    loadAppSettings();
   </script>
 </body>
 </html>

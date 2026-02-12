@@ -77,7 +77,19 @@ Product Owners drown in information: Slack threads, meeting notes, decisions mad
   - Install: https://ollama.ai
   - Pull a model: `ollama pull mistral` or `ollama pull aya`
 
+### Windows additional requirements
+
+`better-sqlite3` requires native compilation. Before running `npm install`:
+
+1. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+2. During install, select **"Desktop development with C++"**
+3. Then run `npm install` as normal
+
+> **Note:** Apple Pages import (`.pages` files) is macOS-only. On Windows, use `.docx`, `.md`, or `.txt` files instead.
+
 ## Quick Start
+
+### macOS / Linux
 
 ```bash
 # Clone the repo
@@ -89,7 +101,6 @@ npm install
 
 # (Optional) Configure environment
 cp .env.example .env
-# Edit .env with your settings
 
 # Start the app
 npm start
@@ -98,9 +109,31 @@ npm start
 open http://localhost:3001
 ```
 
+### Windows
+
+```powershell
+# Clone the repo
+git clone https://github.com/jx79z5s4f9-bot/product-owner-ai-intelligence-hub.git
+cd product-owner-ai-intelligence-hub
+
+# Install dependencies
+npm install
+
+# (Optional) Configure environment
+copy .env.example .env
+
+# Start the app
+npm start
+
+# Open in browser
+start http://localhost:3001
+```
+
 On first run, the database is auto-created with all tables and migrations.
 
 ## Configuration
+
+### Environment variables
 
 Copy `.env.example` to `.env`:
 
@@ -119,6 +152,25 @@ GITHUB_TOKEN=your-token-here
 ```
 
 LLM model selection is also configurable via the **Settings** page in the UI.
+
+### Settings UI
+
+Most configuration can be done from **Settings** (⚙️) in the app:
+
+- **Import folder** — Set which folder "Import Today" scans for new documents (default: `~/Documents`)
+- **Content type aliases** — Add synonyms so the parser recognizes your terms (e.g., "bespreking" → meeting, "dagboek" → log)
+- **Default RTE** — Pre-select which product/project context to use
+- **LLM models** — Switch between Ollama models, enable/disable providers
+
+### Platform notes
+
+| Feature | macOS | Windows | Linux |
+|---------|-------|---------|-------|
+| Core app (ingest, search, ask, register) | ✅ | ✅ | ✅ |
+| `.pages` file import | ✅ | ❌ Use .docx/.md | ❌ Use .docx/.md |
+| Import folder scan | ✅ | ✅ | ✅ |
+| Ollama LLM | ✅ | ✅ | ✅ |
+| Auto-backups | ✅ | ✅ | ✅ |
 
 ## Project Structure
 
