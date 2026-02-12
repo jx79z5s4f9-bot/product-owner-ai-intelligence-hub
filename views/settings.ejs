@@ -288,6 +288,107 @@
     .toast.show {
       display: block;
     }
+
+    /* Template maker */
+    .template-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.2s;
+    }
+    .template-card:hover {
+      border-color: #58a6ff;
+    }
+    .template-card-info {
+      flex: 1;
+    }
+    .template-card-info h4 {
+      margin: 0 0 4px 0;
+      color: #e6edf3;
+    }
+    .template-card-info p {
+      margin: 0;
+      color: #8b949e;
+      font-size: 0.85rem;
+    }
+    .template-card-badge {
+      padding: 4px 10px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      color: #8b949e;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+    .template-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .template-editor {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .template-editor h4 {
+      margin: 0 0 16px;
+      color: #e6edf3;
+    }
+    .field-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+    }
+    .field-row .grip {
+      cursor: grab;
+      color: #6e7681;
+      font-size: 1.1rem;
+      user-select: none;
+    }
+    .field-row input, .field-row select {
+      padding: 6px 8px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      color: #e6edf3;
+      font-size: 0.85rem;
+    }
+    .field-row .field-key { width: 110px; }
+    .field-row .field-label { flex: 1; }
+    .field-row .field-hint { flex: 2; }
+    .field-row .field-remove {
+      background: none;
+      border: none;
+      color: #6e7681;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+    }
+    .field-row .field-remove:hover {
+      color: #f85149;
+    }
+    .template-preview {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      color: #c9d1d9;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -303,6 +404,7 @@
       <button class="tab active" onclick="showTab('status')">📊 Status</button>
       <button class="tab" onclick="showTab('llm')">🤖 LLM Models</button>
       <button class="tab" onclick="showTab('tags')">🏷️ Semantic Tags</button>
+      <button class="tab" onclick="showTab('templates')">📝 Templates</button>
       <button class="tab" onclick="showTab('extraction')">⚙️ Extraction</button>
     </div>
     
@@ -395,6 +497,75 @@
       </div>
     </div>
     
+    <!-- Templates Tab -->
+    <div id="templates-tab" class="tab-content">
+      <div class="panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h3 style="margin-bottom: 4px;">📝 Document Templates</h3>
+            <p style="color: #8b949e; font-size: 0.85rem; margin: 0;">Design templates, download as .md, fill in, and import. Templates appear in your incoming folder.</p>
+          </div>
+          <button class="action-btn primary" onclick="openTemplateEditor()">+ New Template</button>
+        </div>
+        <div id="templateList">Loading...</div>
+      </div>
+
+      <!-- Template Editor (hidden by default) -->
+      <div id="templateEditorPanel" class="panel" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 id="editorTitle" style="margin: 0;">New Template</h3>
+          <button class="action-btn secondary" onclick="closeTemplateEditor()">✕ Close</button>
+        </div>
+        <div class="template-editor">
+          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <div style="flex: 1;">
+              <label style="color: #8b949e; font-size: 0.85rem;">Template name</label>
+              <input type="text" id="tplName" placeholder="e.g. Sprint Meeting" style="width: 100%; padding: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; color: #e6edf3; margin-top: 4px;">
+            </div>
+            <div style="flex: 1;">
+              <label style="color: #8b949e; font-size: 0.85rem;">Description</label>
+              <input type="text" id="tplDescription" placeholder="What is this template for?" style="width: 100%; padding: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; color: #e6edf3; margin-top: 4px;">
+            </div>
+            <div style="width: 160px;">
+              <label style="color: #8b949e; font-size: 0.85rem;">Default type</label>
+              <select id="tplContentType" style="width: 100%; padding: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; color: #e6edf3; margin-top: 4px;">
+                <option value="">-- none --</option>
+              </select>
+            </div>
+          </div>
+
+          <h4>Fields</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 8px; padding: 0 8px; color: #6e7681; font-size: 0.75rem;">
+            <span style="width: 30px;"></span>
+            <span class="field-key">Key</span>
+            <span class="field-label">Label</span>
+            <span class="field-hint">Hint / placeholder</span>
+            <span style="width: 60px;">Prefill</span>
+            <span style="width: 70px;">Multiline</span>
+            <span style="width: 28px;"></span>
+          </div>
+          <div id="fieldRows"></div>
+          <button class="action-btn secondary" onclick="addFieldRow()" style="margin-top: 8px;">+ Add Field</button>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <button class="action-btn secondary" onclick="addFieldRow('date')" style="font-size: 0.8rem;">+ Date</button>
+            <button class="action-btn secondary" onclick="addFieldRow('title')" style="font-size: 0.8rem;">+ Title</button>
+            <button class="action-btn secondary" onclick="addFieldRow('type')" style="font-size: 0.8rem;">+ Type</button>
+            <button class="action-btn secondary" onclick="addFieldRow('participants')" style="font-size: 0.8rem;">+ Participants</button>
+            <button class="action-btn secondary" onclick="addFieldRow('tags')" style="font-size: 0.8rem;">+ Tags</button>
+            <button class="action-btn secondary" onclick="addFieldRow('content')" style="font-size: 0.8rem;">+ Content</button>
+          </div>
+        </div>
+
+        <h4 style="color: #e6edf3; margin-bottom: 8px;">Preview</h4>
+        <div class="template-preview" id="templatePreview"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button class="action-btn primary" onclick="saveTemplate()" style="padding: 10px 24px;">💾 Save Template</button>
+          <button class="action-btn secondary" onclick="downloadPreview()" style="padding: 10px 24px;">⬇ Download .md Preview</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Extraction Tab -->
     <div id="extraction-tab" class="tab-content">
       <div class="panel">
@@ -462,6 +633,7 @@
       if (tabName === 'status') loadStatus();
       if (tabName === 'llm') loadLLMConfig();
       if (tabName === 'tags') loadTags();
+      if (tabName === 'templates') loadTemplates();
       if (tabName === 'extraction') loadExtractionStatus();
     }
     
@@ -833,6 +1005,261 @@
       }
     }
     
+    // =============================================
+    // Document Templates
+    // =============================================
+
+    let editingTemplateId = null;
+    let contentTypes = []; // cached for type dropdown
+
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/api/settings/templates');
+        const templates = await res.json();
+
+        // Also cache content types for the editor
+        try {
+          const ctRes = await fetch('/api/settings/content-types/with-aliases');
+          const ctData = await ctRes.json();
+          contentTypes = ctData.types || ctData;
+        } catch (e) { /* ok */ }
+
+        const list = document.getElementById('templateList');
+        if (templates.length === 0) {
+          list.innerHTML = '<p style="color: #8b949e;">No templates yet. Create one to get started!</p>';
+          return;
+        }
+
+        list.innerHTML = templates.map(t => `
+          <div class="template-card">
+            <div class="template-card-info">
+              <h4>${esc(t.name)}</h4>
+              <p>${esc(t.description || 'No description')}</p>
+            </div>
+            ${t.content_type ? `<span class="template-card-badge">${esc(t.content_type)}</span>` : ''}
+            <span class="template-card-badge">${t.fields.length} fields</span>
+            <div class="template-card-actions">
+              <a href="/api/settings/templates/${t.id}/download" class="action-btn primary" style="text-decoration:none;">⬇ .md</a>
+              <button class="action-btn secondary" onclick="editTemplate(${t.id})">✏️ Edit</button>
+              <button class="action-btn danger" onclick="deleteTemplate(${t.id}, '${esc(t.name)}')">🗑</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error('Failed to load templates:', e);
+      }
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function openTemplateEditor(template) {
+      editingTemplateId = template ? template.id : null;
+      document.getElementById('editorTitle').textContent = template ? 'Edit Template' : 'New Template';
+      document.getElementById('tplName').value = template ? template.name : '';
+      document.getElementById('tplDescription').value = template ? (template.description || '') : '';
+
+      // Populate content type dropdown
+      const sel = document.getElementById('tplContentType');
+      sel.innerHTML = '<option value="">-- none --</option>' +
+        contentTypes.map(ct => `<option value="${ct.name}" ${template && template.content_type === ct.name ? 'selected' : ''}>${ct.icon || '📄'} ${ct.name}</option>`).join('');
+
+      // Populate fields
+      const rows = document.getElementById('fieldRows');
+      rows.innerHTML = '';
+      const fields = template ? template.fields : [
+        { key: 'date', label: 'Date', hint: '', prefill: '', multiline: false },
+        { key: 'title', label: 'Title', hint: '', prefill: '', multiline: false },
+        { key: 'type', label: 'Document type', hint: '', prefill: '', multiline: false },
+        { key: 'content', label: 'Content', hint: 'Write your content here...', prefill: '', multiline: true }
+      ];
+      fields.forEach(f => insertFieldRow(f));
+      updatePreview();
+
+      document.getElementById('templateEditorPanel').style.display = 'block';
+      document.getElementById('templateEditorPanel').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeTemplateEditor() {
+      document.getElementById('templateEditorPanel').style.display = 'none';
+      editingTemplateId = null;
+    }
+
+    async function editTemplate(id) {
+      try {
+        const res = await fetch(`/api/settings/templates/${id}`);
+        const template = await res.json();
+        openTemplateEditor(template);
+      } catch (e) {
+        showToast('Failed to load template', 'error');
+      }
+    }
+
+    async function deleteTemplate(id, name) {
+      const confirmed = await POAI.confirm.danger('Delete Template', `Delete template "${name}"?`);
+      if (!confirmed) return;
+      try {
+        await fetch(`/api/settings/templates/${id}`, { method: 'DELETE' });
+        showToast(`Template "${name}" deleted`);
+        loadTemplates();
+        if (editingTemplateId === id) closeTemplateEditor();
+      } catch (e) {
+        showToast('Failed to delete template', 'error');
+      }
+    }
+
+    const fieldPresets = {
+      date:         { key: 'date', label: 'Date', hint: 'e.g. Monday, 12 February 2026', prefill: '', multiline: false },
+      title:        { key: 'title', label: 'Title', hint: '', prefill: '', multiline: false },
+      type:         { key: 'type', label: 'Document type', hint: '', prefill: '', multiline: false },
+      participants: { key: 'participants', label: 'Participants', hint: 'e.g. Alice, Bob, Charlie', prefill: '', multiline: false },
+      tags:         { key: 'tags', label: 'Tags', hint: 'e.g. #sprint-review, #architecture', prefill: '', multiline: false },
+      content:      { key: 'content', label: 'Content', hint: 'Write your content here...', prefill: '', multiline: true }
+    };
+
+    function addFieldRow(preset) {
+      const f = preset ? { ...fieldPresets[preset] } : { key: '', label: '', hint: '', prefill: '', multiline: false };
+      insertFieldRow(f);
+      updatePreview();
+    }
+
+    function insertFieldRow(f) {
+      const container = document.getElementById('fieldRows');
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      row.innerHTML = `
+        <span class="grip">⠿</span>
+        <input class="field-key" value="${esc(f.key || '')}" placeholder="key" oninput="updatePreview()">
+        <input class="field-label" value="${esc(f.label || '')}" placeholder="Label shown in template" oninput="updatePreview()">
+        <input class="field-hint" value="${esc(f.hint || '')}" placeholder="Hint / example" oninput="updatePreview()">
+        <input style="width: 60px;" value="${esc(f.prefill || '')}" placeholder="prefill" oninput="updatePreview()">
+        <label style="width: 70px; display: flex; align-items: center; gap: 4px; color: #8b949e; font-size: 0.8rem; cursor: pointer;">
+          <input type="checkbox" ${f.multiline ? 'checked' : ''} onchange="updatePreview()"> multi
+        </label>
+        <button class="field-remove" onclick="this.closest('.field-row').remove(); updatePreview();">✕</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function getFieldsFromEditor() {
+      const rows = document.querySelectorAll('#fieldRows .field-row');
+      return Array.from(rows).map(row => {
+        const inputs = row.querySelectorAll('input');
+        return {
+          key: inputs[0].value.trim(),
+          label: inputs[1].value.trim(),
+          hint: inputs[2].value.trim(),
+          prefill: inputs[3].value.trim(),
+          multiline: inputs[4].checked
+        };
+      }).filter(f => f.key || f.label);
+    }
+
+    function updatePreview() {
+      const fields = getFieldsFromEditor();
+      const contentType = document.getElementById('tplContentType').value;
+
+      // Build type hints
+      let typeHints = '';
+      if (contentTypes.length > 0) {
+        const vals = contentTypes.map(ct => {
+          const aliases = ct.aliases ? ct.aliases.split(',').map(a => a.trim()).filter(a => a) : [];
+          return [ct.name, ...aliases];
+        });
+        typeHints = vals.flat().join(', ');
+      }
+
+      const today = new Date();
+      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const dateStr = `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+
+      let md = '';
+      for (const f of fields) {
+        if (f.key === 'content') continue;
+
+        let value = f.prefill || '';
+        let comment = '';
+
+        if (f.key === 'date') value = dateStr;
+        if (f.key === 'type' && !value && contentType) value = contentType;
+        if (f.key === 'type' && typeHints) comment = `  ← ${typeHints}`;
+        if (!value && f.hint) comment = comment || `  ← ${f.hint}`;
+
+        md += `${f.label || f.key}: ${value}${comment}\n`;
+      }
+
+      const contentField = fields.find(f => f.key === 'content');
+      if (contentField) {
+        md += `\n${contentField.hint || 'Write your content here...'}\n`;
+      }
+
+      document.getElementById('templatePreview').textContent = md;
+    }
+
+    async function saveTemplate() {
+      const name = document.getElementById('tplName').value.trim();
+      if (!name) return showToast('Template name is required', 'error');
+
+      const payload = {
+        name,
+        description: document.getElementById('tplDescription').value.trim(),
+        content_type: document.getElementById('tplContentType').value,
+        fields: getFieldsFromEditor()
+      };
+
+      // Set the type prefill from the dropdown if the type field exists and has no prefill
+      const typeField = payload.fields.find(f => f.key === 'type');
+      if (typeField && !typeField.prefill && payload.content_type) {
+        typeField.prefill = payload.content_type;
+      }
+
+      try {
+        const url = editingTemplateId
+          ? `/api/settings/templates/${editingTemplateId}`
+          : '/api/settings/templates';
+        const method = editingTemplateId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          showToast(`Template "${name}" saved`);
+          editingTemplateId = result.template.id;
+          loadTemplates();
+        } else {
+          showToast(result.error || 'Failed to save', 'error');
+        }
+      } catch (e) {
+        showToast('Failed to save template', 'error');
+      }
+    }
+
+    function downloadPreview() {
+      // If saved, use the server download (includes DB type hints)
+      if (editingTemplateId) {
+        window.location.href = `/api/settings/templates/${editingTemplateId}/download`;
+        return;
+      }
+      // Otherwise generate from editor state
+      const preview = document.getElementById('templatePreview').textContent;
+      const name = document.getElementById('tplName').value.trim() || 'template';
+      const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+      const blob = new Blob([preview], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${safeName}-template.md`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
     // =============================================
     // Incoming Folder & Content Type Aliases
     // =============================================

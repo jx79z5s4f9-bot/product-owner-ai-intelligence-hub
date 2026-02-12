@@ -6,6 +6,7 @@ node_modules/
 *.db-shm
 *.db-wal
 *.db.backup*
+*.db.migrated
 
 # Environment & secrets
 .env

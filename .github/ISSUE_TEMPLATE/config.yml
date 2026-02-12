@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & Discussions
+    url: https://github.com/jx79z5s4f9-bot/product-owner-ai-intelligence-hub/discussions
+    about: Ask questions and discuss PO AI with the community
+  - name: Documentation
+    url: https://github.com/jx79z5s4f9-bot/product-owner-ai-intelligence-hub#readme
+    about: Check the README for setup instructions and troubleshooting

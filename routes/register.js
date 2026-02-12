@@ -245,10 +245,16 @@ router.patch('/:id', (req, res) => {
   try {
     const { id } = req.params;
     const { owner, due_date, severity, marker_content, is_resolved } = req.body;
-    
+
+    // Validate severity enum if provided
+    const VALID_SEVERITIES = ['low', 'medium', 'high', 'critical'];
+    if (severity !== undefined && severity !== null && !VALID_SEVERITIES.includes(severity)) {
+      return res.status(400).json({ error: `Invalid severity. Must be one of: ${VALID_SEVERITIES.join(', ')}` });
+    }
+
     const updates = [];
     const params = [];
-    
+
     if (owner !== undefined) { updates.push('owner = ?'); params.push(owner || null); }
     if (due_date !== undefined) { updates.push('due_date = ?'); params.push(due_date || null); }
     if (severity !== undefined) { updates.push('severity = ?'); params.push(severity || null); }

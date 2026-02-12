@@ -1,10 +1,15 @@
 /**
  * SQLite Database Connection using better-sqlite3
  * Synchronous API for simpler code
+ *
+ * Database location: ~/ProductOwnerAI/database.db
+ * Auto-migrates from old location (project root) if found
  */
 
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 // Import migrations
 const v2Migration = require('./migrations/v2_intelligence_system');
@@ -16,15 +21,73 @@ const v7Migration = require('./migrations/v7_lifecycle_tracking');
 const v8Migration = require('./migrations/v8_entity_consolidation');
 const v9Migration = require('./migrations/v9_register_system');
 const v10Migration = require('./migrations/v10_configurable_content_types');
+const v11Migration = require('./migrations/v11_document_templates');
 
-const DB_PATH = path.join(__dirname, '..', 'database.db');
+// New database location in user's home directory
+const WORKSPACE_ROOT = path.join(os.homedir(), 'ProductOwnerAI');
+const DB_PATH = path.join(WORKSPACE_ROOT, 'database.db');
+
+// Old location for migration
+const OLD_DB_PATH = path.join(__dirname, '..', 'database.db');
+
 let db = null;
+
+/**
+ * Migrate database from old location (project root) to new location (~/ProductOwnerAI/)
+ */
+function migrateDatabase() {
+  // Ensure workspace directory exists
+  if (!fs.existsSync(WORKSPACE_ROOT)) {
+    fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
+    console.log(`[DB] Created workspace directory: ${WORKSPACE_ROOT}`);
+  }
+
+  // Check if old database exists and new one doesn't
+  if (fs.existsSync(OLD_DB_PATH) && !fs.existsSync(DB_PATH)) {
+    console.log('[DB] Migrating database to new location...');
+
+    try {
+      // Copy main database file
+      fs.copyFileSync(OLD_DB_PATH, DB_PATH);
+      console.log(`[DB] Copied database to ${DB_PATH}`);
+
+      // Copy WAL file if exists
+      const oldWalPath = OLD_DB_PATH + '-wal';
+      const newWalPath = DB_PATH + '-wal';
+      if (fs.existsSync(oldWalPath)) {
+        fs.copyFileSync(oldWalPath, newWalPath);
+        console.log('[DB] Copied WAL file');
+      }
+
+      // Copy SHM file if exists
+      const oldShmPath = OLD_DB_PATH + '-shm';
+      const newShmPath = DB_PATH + '-shm';
+      if (fs.existsSync(oldShmPath)) {
+        fs.copyFileSync(oldShmPath, newShmPath);
+        console.log('[DB] Copied SHM file');
+      }
+
+      // Rename old files to .migrated to prevent re-migration
+      fs.renameSync(OLD_DB_PATH, OLD_DB_PATH + '.migrated');
+      if (fs.existsSync(oldWalPath)) fs.unlinkSync(oldWalPath);
+      if (fs.existsSync(oldShmPath)) fs.unlinkSync(oldShmPath);
+
+      console.log('[DB] Migration complete! Old database renamed to database.db.migrated');
+    } catch (err) {
+      console.error('[DB] Migration failed:', err.message);
+      console.log('[DB] Falling back to creating new database');
+    }
+  }
+}
 
 function initDb() {
   try {
+    // Auto-migrate from old location if needed
+    migrateDatabase();
+
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
-    console.log('Connected to SQLite database');
+    console.log(`Connected to SQLite database at ${DB_PATH}`);
     createTables();
     seedRtes();
     runMigrations();
@@ -107,6 +170,14 @@ function runMigrations() {
     v10Migration.migrate(db);
   } else {
     console.log('[DB] v10 migration already applied');
+  }
+
+  // v11 Document Templates
+  if (!v11Migration.isApplied(db)) {
+    console.log('[DB] Running v11 Document Templates migration...');
+    v11Migration.migrate(db);
+  } else {
+    console.log('[DB] v11 migration already applied');
   }
 }
 

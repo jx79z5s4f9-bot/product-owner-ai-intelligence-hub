@@ -465,6 +465,187 @@ router.put('/content-types/:id/aliases', (req, res) => {
 });
 
 // ============================================================
+// Document Templates
+// ============================================================
+
+/**
+ * GET /api/settings/templates
+ * List all templates
+ */
+router.get('/templates', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  try {
+    const templates = db.prepare('SELECT * FROM document_templates ORDER BY name').all();
+    // Parse fields JSON for each
+    res.json(templates.map(t => ({
+      ...t,
+      fields: JSON.parse(t.fields || '[]')
+    })));
+  } catch (e) {
+    console.error('[Settings] Load templates failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * GET /api/settings/templates/:id
+ * Get a single template
+ */
+router.get('/templates/:id', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  try {
+    const template = db.prepare('SELECT * FROM document_templates WHERE id = ?').get(req.params.id);
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+    template.fields = JSON.parse(template.fields || '[]');
+    res.json(template);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * POST /api/settings/templates
+ * Create a new template
+ */
+router.post('/templates', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  const { name, description, content_type, fields } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+
+  try {
+    const result = db.prepare(`
+      INSERT INTO document_templates (name, description, content_type, fields)
+      VALUES (?, ?, ?, ?)
+    `).run(name, description || '', content_type || '', JSON.stringify(fields || []));
+
+    const template = db.prepare('SELECT * FROM document_templates WHERE id = ?').get(result.lastInsertRowid);
+    template.fields = JSON.parse(template.fields || '[]');
+    res.json({ success: true, template });
+  } catch (e) {
+    console.error('[Settings] Create template failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * PUT /api/settings/templates/:id
+ * Update a template
+ */
+router.put('/templates/:id', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  const { name, description, content_type, fields } = req.body;
+
+  try {
+    db.prepare(`
+      UPDATE document_templates 
+      SET name = ?, description = ?, content_type = ?, fields = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(name, description || '', content_type || '', JSON.stringify(fields || []), req.params.id);
+
+    const template = db.prepare('SELECT * FROM document_templates WHERE id = ?').get(req.params.id);
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+    template.fields = JSON.parse(template.fields || '[]');
+    res.json({ success: true, template });
+  } catch (e) {
+    console.error('[Settings] Update template failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * DELETE /api/settings/templates/:id
+ * Delete a template
+ */
+router.delete('/templates/:id', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  try {
+    const result = db.prepare('DELETE FROM document_templates WHERE id = ?').run(req.params.id);
+    if (result.changes === 0) return res.status(404).json({ error: 'Template not found' });
+    res.json({ success: true });
+  } catch (e) {
+    console.error('[Settings] Delete template failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * GET /api/settings/templates/:id/download
+ * Download template as .md file
+ * Generates a markdown template with all fields, hints, and valid type values
+ */
+router.get('/templates/:id/download', (req, res) => {
+  const db = getDb();
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+
+  try {
+    const template = db.prepare('SELECT * FROM document_templates WHERE id = ?').get(req.params.id);
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+
+    const fields = JSON.parse(template.fields || '[]');
+
+    // Load content type names for the type field hint (main types only, no aliases)
+    let typeHints = '';
+    try {
+      const types = db.prepare('SELECT name FROM content_types WHERE is_active = 1 ORDER BY sort_order').all();
+      typeHints = types.map(t => t.name).join(', ');
+    } catch (e) { /* content_types table may not exist */ }
+
+    // Build the .md content
+    let md = '';
+    const today = new Date();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const dateStr = `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+
+    for (const field of fields) {
+      if (field.key === 'content') continue; // content goes at the end, no label
+
+      let value = field.prefill || '';
+      let comment = '';
+
+      if (field.key === 'date') {
+        value = dateStr;
+      } else if (field.key === 'type' && typeHints) {
+        comment = `  ← ${typeHints}`;
+      }
+
+      if (!value && field.hint) {
+        comment = comment || `  ← ${field.hint}`;
+      }
+
+      md += `${field.label}: ${value}${comment}\n`;
+    }
+
+    // Add content section
+    const contentField = fields.find(f => f.key === 'content');
+    if (contentField) {
+      md += `\n${contentField.hint || 'Write your content here...'}\n`;
+    }
+
+    // Generate filename
+    const safeName = template.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+    const filename = `${safeName}-template.md`;
+
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(md);
+  } catch (e) {
+    console.error('[Settings] Download template failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================
 // System Status
 // ============================================================
 

@@ -1,0 +1,615 @@
+<!-- Onboarding Wizard Modal -->
+<div id="onboardingModal" class="onboarding-overlay" style="display: none;">
+  <div class="onboarding-modal">
+    <!-- Progress indicator -->
+    <div class="onboarding-progress">
+      <div class="progress-step active" data-step="1">1</div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="2">2</div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="3">3</div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="onboarding-step" data-step="1">
+      <div class="step-icon">🎯</div>
+      <h2>Welcome to PO AI</h2>
+      <p class="step-subtitle">Your local-first Product Ownership knowledge base</p>
+
+      <div class="step-content">
+        <div class="info-box">
+          <div class="info-item">
+            <span class="info-icon">🔒</span>
+            <span>All data stays on your machine</span>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">🧠</span>
+            <span>AI-powered via Ollama (local LLM)</span>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">📁</span>
+            <span>Files stored in ~/ProductOwnerAI/</span>
+          </div>
+        </div>
+
+        <div class="status-check">
+          <h4>System Check</h4>
+          <div class="status-item" id="ollamaStatus">
+            <span class="status-indicator loading"></span>
+            <span>Checking Ollama...</span>
+          </div>
+          <div class="status-item" id="dbStatus">
+            <span class="status-indicator loading"></span>
+            <span>Checking database...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-secondary" onclick="skipOnboarding()">Skip Tour</button>
+        <button class="btn-primary" onclick="nextStep(2)">Get Started →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: First RTE Setup -->
+    <div class="onboarding-step" data-step="2" style="display: none;">
+      <div class="step-icon">🏷️</div>
+      <h2>Set Up Your First Product</h2>
+      <p class="step-subtitle">An RTE (Release Train Engineer context) organizes your documents by product or project</p>
+
+      <div class="step-content">
+        <div class="rte-setup">
+          <label for="rteSelect">Select or create your RTE:</label>
+          <select id="rteSelect" class="form-select">
+            <option value="">Loading RTEs...</option>
+          </select>
+
+          <div class="new-rte-option">
+            <input type="checkbox" id="createNewRte" onchange="toggleNewRteInput()">
+            <label for="createNewRte">Create a new RTE instead</label>
+          </div>
+
+          <div id="newRteInput" class="new-rte-input" style="display: none;">
+            <input type="text" id="newRteName" placeholder="My Product Name" class="form-input">
+            <p class="input-hint">This will create a folder at ~/ProductOwnerAI/rte/[name]/</p>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <strong>Tip:</strong> You can have multiple RTEs — one per product, team, or project. Switch between them anytime.
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-secondary" onclick="nextStep(1)">← Back</button>
+        <button class="btn-primary" onclick="saveRteAndContinue()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Quick Tour -->
+    <div class="onboarding-step" data-step="3" style="display: none;">
+      <div class="step-icon">🚀</div>
+      <h2>You're All Set!</h2>
+      <p class="step-subtitle">Here's how to get the most out of PO AI</p>
+
+      <div class="step-content">
+        <div class="workflow-cards">
+          <div class="workflow-card">
+            <div class="workflow-icon">📥</div>
+            <div class="workflow-text">
+              <strong>1. Ingest</strong>
+              <span>Capture meeting notes, logs, and documents</span>
+            </div>
+          </div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-card">
+            <div class="workflow-icon">🔍</div>
+            <div class="workflow-text">
+              <strong>2. Search</strong>
+              <span>Find anything with full-text & semantic search</span>
+            </div>
+          </div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-card">
+            <div class="workflow-icon">❓</div>
+            <div class="workflow-text">
+              <strong>3. Ask</strong>
+              <span>Get answers with evidence from your docs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="keyboard-shortcut">
+          <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> opens the Command Palette from anywhere
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-secondary" onclick="nextStep(2)">← Back</button>
+        <button class="btn-primary" onclick="completeOnboarding()">Start Using PO AI</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.onboarding-modal {
+  background: var(--bg-card, #1a1a1a);
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 16px;
+  max-width: 560px;
+  width: 90%;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.onboarding-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+}
+
+.progress-step {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-elevated, #2a2a2a);
+  border: 2px solid var(--border-subtle, #444);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-muted, #888);
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background: var(--accent, #10b981);
+  border-color: var(--accent, #10b981);
+  color: white;
+}
+
+.progress-step.completed {
+  background: var(--accent, #10b981);
+  border-color: var(--accent, #10b981);
+  color: white;
+}
+
+.progress-line {
+  width: 40px;
+  height: 2px;
+  background: var(--border-subtle, #444);
+}
+
+.onboarding-step {
+  text-align: center;
+}
+
+.step-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.onboarding-step h2 {
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary, #fff);
+}
+
+.step-subtitle {
+  color: var(--text-muted, #888);
+  margin: 0 0 1.5rem 0;
+}
+
+.step-content {
+  text-align: left;
+  margin: 1.5rem 0;
+}
+
+.info-box {
+  background: var(--bg-elevated, #252525);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  color: var(--text-secondary, #ccc);
+}
+
+.info-icon {
+  font-size: 1.2rem;
+}
+
+.status-check {
+  background: var(--bg-elevated, #252525);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.status-check h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: var(--text-muted, #888);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  color: var(--text-secondary, #ccc);
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted, #666);
+}
+
+.status-indicator.loading {
+  background: var(--warning, #f59e0b);
+  animation: pulse 1s infinite;
+}
+
+.status-indicator.success {
+  background: var(--success, #10b981);
+}
+
+.status-indicator.error {
+  background: var(--error, #ef4444);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.step-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--accent, #10b981);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover, #059669);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-muted, #888);
+  border: 1px solid var(--border-subtle, #444);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-elevated, #2a2a2a);
+  color: var(--text-primary, #fff);
+}
+
+/* Step 2 specific styles */
+.rte-setup {
+  margin-bottom: 1.5rem;
+}
+
+.rte-setup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary, #ccc);
+}
+
+.form-select, .form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle, #444);
+  background: var(--bg-elevated, #252525);
+  color: var(--text-primary, #fff);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-select:focus, .form-input:focus {
+  outline: none;
+  border-color: var(--accent, #10b981);
+}
+
+.new-rte-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-secondary, #ccc);
+}
+
+.new-rte-input {
+  margin-top: 1rem;
+}
+
+.input-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted, #888);
+  margin-top: 0.25rem;
+}
+
+.tip-box {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #ccc);
+}
+
+/* Step 3 specific styles */
+.workflow-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.workflow-card {
+  background: var(--bg-elevated, #252525);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  flex: 1;
+  min-width: 120px;
+}
+
+.workflow-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.workflow-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.workflow-text strong {
+  color: var(--text-primary, #fff);
+}
+
+.workflow-text span {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+}
+
+.workflow-arrow {
+  color: var(--text-muted, #666);
+  font-size: 1.5rem;
+}
+
+.keyboard-shortcut {
+  text-align: center;
+  padding: 1rem;
+  background: var(--bg-elevated, #252525);
+  border-radius: 8px;
+  color: var(--text-secondary, #ccc);
+}
+
+.keyboard-shortcut kbd {
+  background: var(--bg-card, #1a1a1a);
+  border: 1px solid var(--border-subtle, #444);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-family: monospace;
+  margin: 0 0.25rem;
+}
+
+@media (max-width: 480px) {
+  .onboarding-modal {
+    padding: 1.5rem;
+  }
+
+  .workflow-arrow {
+    display: none;
+  }
+
+  .workflow-cards {
+    flex-direction: column;
+  }
+}
+</style>
+
+<script>
+// Onboarding state
+let currentStep = 1;
+let selectedRteId = null;
+
+// Check and show onboarding if needed
+async function checkOnboarding() {
+  try {
+    const res = await fetch('/api/onboarding/status');
+    const { completed } = await res.json();
+
+    if (!completed) {
+      showOnboarding();
+    }
+  } catch (err) {
+    console.error('Failed to check onboarding status:', err);
+  }
+}
+
+function showOnboarding() {
+  document.getElementById('onboardingModal').style.display = 'flex';
+  runSystemChecks();
+  loadRtes();
+}
+
+function nextStep(step) {
+  // Hide all steps
+  document.querySelectorAll('.onboarding-step').forEach(el => {
+    el.style.display = 'none';
+  });
+
+  // Show target step
+  document.querySelector(`.onboarding-step[data-step="${step}"]`).style.display = 'block';
+
+  // Update progress indicators
+  document.querySelectorAll('.progress-step').forEach(el => {
+    const stepNum = parseInt(el.dataset.step);
+    el.classList.remove('active', 'completed');
+    if (stepNum < step) el.classList.add('completed');
+    if (stepNum === step) el.classList.add('active');
+  });
+
+  currentStep = step;
+}
+
+async function runSystemChecks() {
+  // Check Ollama
+  const ollamaEl = document.getElementById('ollamaStatus');
+  try {
+    const res = await fetch('/api/health');
+    const health = await res.json();
+
+    ollamaEl.innerHTML = health.services.ollama
+      ? '<span class="status-indicator success"></span><span>Ollama is running</span>'
+      : '<span class="status-indicator error"></span><span>Ollama not detected — <a href="https://ollama.ai" target="_blank">Install Ollama</a></span>';
+
+    const dbEl = document.getElementById('dbStatus');
+    dbEl.innerHTML = health.services.database
+      ? `<span class="status-indicator success"></span><span>Database ready (${health.stats.documents} documents)</span>`
+      : '<span class="status-indicator error"></span><span>Database error</span>';
+  } catch (err) {
+    ollamaEl.innerHTML = '<span class="status-indicator error"></span><span>Connection error</span>';
+  }
+}
+
+async function loadRtes() {
+  const select = document.getElementById('rteSelect');
+  try {
+    const res = await fetch('/api/rtes');
+    const { rtes, defaultRteId } = await res.json();
+
+    select.innerHTML = rtes
+      .filter(r => r.name !== 'Orchestrator') // Hide system RTE
+      .map(r => `<option value="${r.id}" ${r.id === defaultRteId ? 'selected' : ''}>${r.name}</option>`)
+      .join('');
+
+    selectedRteId = defaultRteId;
+  } catch (err) {
+    select.innerHTML = '<option value="">Failed to load RTEs</option>';
+  }
+}
+
+function toggleNewRteInput() {
+  const checkbox = document.getElementById('createNewRte');
+  const inputDiv = document.getElementById('newRteInput');
+  const selectEl = document.getElementById('rteSelect');
+
+  inputDiv.style.display = checkbox.checked ? 'block' : 'none';
+  selectEl.disabled = checkbox.checked;
+}
+
+async function saveRteAndContinue() {
+  const createNew = document.getElementById('createNewRte').checked;
+
+  if (createNew) {
+    const newName = document.getElementById('newRteName').value.trim();
+    if (!newName) {
+      alert('Please enter an RTE name');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/rte', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+      });
+
+      if (!res.ok) throw new Error('Failed to create RTE');
+
+      const { rte } = await res.json();
+      selectedRteId = rte.id;
+
+      // Set as default
+      await fetch('/api/rtes/default', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rteId: selectedRteId })
+      });
+    } catch (err) {
+      alert('Failed to create RTE: ' + err.message);
+      return;
+    }
+  } else {
+    selectedRteId = document.getElementById('rteSelect').value;
+
+    // Set as default
+    await fetch('/api/rtes/default', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rteId: selectedRteId })
+    });
+  }
+
+  nextStep(3);
+}
+
+async function completeOnboarding() {
+  try {
+    await fetch('/api/onboarding/complete', { method: 'POST' });
+    document.getElementById('onboardingModal').style.display = 'none';
+
+    // Refresh stats on home page
+    if (typeof loadStats === 'function') {
+      loadStats();
+    }
+  } catch (err) {
+    console.error('Failed to complete onboarding:', err);
+    document.getElementById('onboardingModal').style.display = 'none';
+  }
+}
+
+function skipOnboarding() {
+  completeOnboarding();
+}
+
+// Auto-run check on page load
+document.addEventListener('DOMContentLoaded', checkOnboarding);
+</script>

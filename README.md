@@ -208,6 +208,96 @@ PO AI organizes documents by **RTE** — your product, team, or project context.
 
 You can manage multiple RTEs and switch between them in the UI.
 
+## Troubleshooting
+
+### Ollama not detected
+
+**Symptom:** "Ollama not running" warning in the app, LLM features don't work.
+
+**Solution:**
+1. Install Ollama from https://ollama.ai
+2. Start Ollama (it runs as a background service)
+3. Pull a model: `ollama pull mistral`
+4. Verify it's running: `curl http://localhost:11434/api/tags`
+
+If using a custom Ollama host, set `OLLAMA_HOST` in your `.env` file.
+
+### Port already in use
+
+**Symptom:** `EADDRINUSE: address already in use :::3001`
+
+**Solution:**
+1. Find the process: `lsof -i :3001` (macOS/Linux) or `netstat -ano | findstr :3001` (Windows)
+2. Kill it: `kill -9 <PID>` or set a different port in `.env`:
+   ```
+   PORT=3002
+   ```
+
+### npm install fails on Windows
+
+**Symptom:** Errors about `better-sqlite3` native compilation.
+
+**Solution:**
+1. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+2. During install, select **"Desktop development with C++"**
+3. Restart your terminal
+4. Run `npm install` again
+
+### Database locked
+
+**Symptom:** `SQLITE_BUSY: database is locked`
+
+**Solution:**
+1. Ensure only one instance of PO AI is running
+2. If the app crashed, delete the lock files:
+   ```bash
+   rm ~/ProductOwnerAI/database.db-shm
+   rm ~/ProductOwnerAI/database.db-wal
+   ```
+3. Restart the app
+
+### .pages import fails
+
+**Symptom:** "Failed to convert .pages file" error on macOS.
+
+**Solution:**
+1. Ensure Apple Pages is installed
+2. Grant Terminal/VS Code permission to control Pages in System Preferences → Privacy & Security → Automation
+3. Or export from Pages manually: File → Export To → Word/Plain Text
+
+### LLM responses are slow
+
+**Symptom:** Ask/Analyze features take a long time.
+
+**Solution:**
+1. Try a smaller model: `ollama pull phi` (2.7B parameters)
+2. Check available RAM — LLMs need significant memory
+3. On Apple Silicon, ensure you're using ARM-native Ollama
+
+### Missing documents after update
+
+**Symptom:** Documents ingested before an update are gone.
+
+**Solution:**
+Your database may still be in the old location. Check:
+- `./database.db` (project folder) — old location
+- `~/ProductOwnerAI/database.db` — new location
+
+If found in the old location, move it:
+```bash
+mv ./database.db ~/ProductOwnerAI/database.db
+```
+
+## Support
+
+If PO AI is useful to you, consider supporting development:
+
+**ETH:** `jurnan.base.eth`
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

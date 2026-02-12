@@ -5,6 +5,9 @@
 
 const express = require('express');
 const path = require('path');
+const helmet = require('helmet');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const { initDb, getDb } = require('./db/connection');
 const { getInstance: getSqliteVectorSearch } = require('./services/sqlite-vector-search');
 const { getInstance: getLLMManager } = require('./services/llm-manager');
@@ -12,10 +15,62 @@ const { getInstance: getLLMManager } = require('./services/llm-manager');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Security: Helmet for HTTP headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'", "http://localhost:*", "http://127.0.0.1:*"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// Security: CORS - only allow localhost
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (local file, curl, etc.) or from localhost
+    if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed from this origin'));
+    }
+  },
+  credentials: true
+}));
+
+// Security: Rate limiting for API endpoints
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Stricter limit for LLM-heavy endpoints
+const llmLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 20, // 20 LLM requests per minute
+  message: { error: 'Too many LLM requests, please wait before asking again' }
+});
+
 // Middleware
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '2mb' })); // Reduced from 10mb
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Apply rate limiting to API routes
+app.use('/api', apiLimiter);
+app.use('/api/ask', llmLimiter);
+app.use('/api/analyze', llmLimiter);
+app.use('/api/translate', llmLimiter);
 
 // View engine
 app.set('view engine', 'ejs');
@@ -208,6 +263,70 @@ app.get('/translate', (req, res) => {
 // Maintenance page - System status
 app.get('/maintenance', (req, res) => {
   res.render('maintenance');
+});
+
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  const db = getDb();
+  let ollamaStatus = false;
+
+  // Check Ollama connectivity
+  try {
+    const ollamaHost = process.env.OLLAMA_HOST || 'http://localhost:11434';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch(`${ollamaHost}/api/tags`, { signal: controller.signal });
+    clearTimeout(timeout);
+    ollamaStatus = response.ok;
+  } catch (e) {
+    ollamaStatus = false;
+  }
+
+  // Check database
+  let dbStatus = false;
+  let docCount = 0;
+  try {
+    const row = db.prepare('SELECT COUNT(*) as count FROM rte_documents').get();
+    docCount = row?.count || 0;
+    dbStatus = true;
+  } catch (e) {
+    dbStatus = false;
+  }
+
+  res.json({
+    status: dbStatus ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: dbStatus,
+      ollama: ollamaStatus
+    },
+    stats: {
+      documents: docCount
+    }
+  });
+});
+
+// Onboarding status endpoint
+app.get('/api/onboarding/status', (req, res) => {
+  const db = getDb();
+  try {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'onboarding_completed'").get();
+    const completed = row?.value === 'true';
+    res.json({ completed });
+  } catch (e) {
+    res.json({ completed: false });
+  }
+});
+
+// Mark onboarding as complete
+app.post('/api/onboarding/complete', (req, res) => {
+  const db = getDb();
+  try {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('onboarding_completed', 'true')").run();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Initialize services
