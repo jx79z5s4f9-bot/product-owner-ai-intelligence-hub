@@ -81,8 +81,8 @@ Product Owners drown in information: Slack threads, meeting notes, decisions mad
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/po-ai.git
-cd po-ai
+git clone https://github.com/jurnan/product-owner-ai.git
+cd product-owner-ai
 
 # Install dependencies
 npm install
