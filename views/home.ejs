@@ -36,6 +36,13 @@
         <div class="stat-label">Pending</div>
       </div>
     </div>
+
+    <!-- Overdue alert banner -->
+    <a id="overdueBanner" href="/register?status=overdue" class="overdue-banner" style="display:none;">
+      <span class="overdue-pulse"></span>
+      <span class="overdue-text">⚠️ <strong id="overdueCount">0</strong> overdue items need attention</span>
+      <span class="overdue-arrow">→</span>
+    </a>
     
     <!-- 
       TILE CONFIGURATION
@@ -64,6 +71,41 @@
   </main>
 
   <style>
+    /* Overdue banner */
+    .overdue-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.25rem;
+      margin-bottom: 1rem;
+      background: rgba(248, 81, 73, 0.08);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      border-radius: 8px;
+      color: #f85149;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .overdue-banner:hover {
+      background: rgba(248, 81, 73, 0.15);
+      border-color: rgba(248, 81, 73, 0.5);
+    }
+    .overdue-pulse {
+      width: 8px;
+      height: 8px;
+      background: #f85149;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    .overdue-text { flex: 1; color: #e6edf3; }
+    .overdue-text strong { color: #f85149; }
+    .overdue-arrow { color: #f85149; font-size: 1.1rem; }
+
     .donate-banner {
       display: flex;
       align-items: center;
@@ -216,9 +258,25 @@
       if (banner) banner.style.display = 'none';
     }
 
+    // Load overdue count from register
+    async function loadOverdue() {
+      try {
+        const res = await fetch('/api/register/stats');
+        const stats = await res.json();
+        const overdue = stats.overdue || 0;
+        if (overdue > 0) {
+          document.getElementById('overdueCount').textContent = overdue;
+          document.getElementById('overdueBanner').style.display = 'flex';
+        }
+      } catch (err) {
+        console.error('Failed to load overdue stats:', err);
+      }
+    }
+
     // Initialize
     renderTiles();
     loadStats();
+    loadOverdue();
     checkDonateBanner();
   </script>
 </body>

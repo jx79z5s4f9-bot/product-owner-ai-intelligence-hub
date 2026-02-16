@@ -12,6 +12,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db/connection');
+const { getVectorSearch } = require('../services/sqlite-vector-search');
 
 // Ollama configuration
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
@@ -898,7 +899,7 @@ function extractEntitiesFromAnalysis(analysis, entityTypes) {
  * Import extracted entities into PO AI database
  */
 router.post('/import', (req, res) => {
-  const { entities, rteId, sourceFilename } = req.body;
+  const { entities, rteId, sourceFilename, documentContent, analysisContent } = req.body;
   const db = getDb();
 
   if (!db) {
@@ -962,12 +963,46 @@ router.post('/import', (req, res) => {
       }
     }
 
+    // Index document content into FTS for search
+    let indexed = false;
+    try {
+      const vs = getVectorSearch();
+      if (vs && (documentContent || analysisContent)) {
+        const timestamp = new Date().toISOString().split('T')[0];
+        const name = sourceFilename || 'analyzed-document';
+        
+        if (documentContent) {
+          await vs.indexDocument({
+            filepath: `/analyzed/${rteId}/${timestamp}-${name}.md`,
+            content: documentContent,
+            title: name,
+            rteId: rteId
+          });
+        }
+        
+        if (analysisContent) {
+          await vs.indexDocument({
+            filepath: `/analyzed/${rteId}/${timestamp}-${name}-analysis.md`,
+            content: analysisContent,
+            title: `${name} (analysis)`,
+            rteId: rteId
+          });
+        }
+        
+        indexed = true;
+        console.log(`[Analyze] Indexed document content for search`);
+      }
+    } catch (indexErr) {
+      console.error('[Analyze] FTS indexing failed (non-fatal):', indexErr.message);
+    }
+
     console.log(`[Analyze] Imported to RTE ${rteId}:`, imported);
 
     res.json({
       success: true,
       imported,
-      message: `Imported ${imported.actors} actors and ${imported.relationships} relationships`
+      indexed,
+      message: `Imported ${imported.actors} actors and ${imported.relationships} relationships${indexed ? ' (document indexed for search)' : ''}`
     });
 
   } catch (error) {

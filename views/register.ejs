@@ -393,6 +393,46 @@
       padding: 40px;
       color: #8b949e;
     }
+
+    /* Quick date picker */
+    .quick-date-picker {
+      position: absolute;
+      z-index: 100;
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      min-width: 200px;
+    }
+    .quick-date-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .quick-date-buttons button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .quick-date-buttons button:hover { background: #30363d; color: #58a6ff; }
+    .quick-date-buttons .clear-btn { color: #f85149; }
+    .quick-date-buttons .clear-btn:hover { background: #f8514922; }
+    .quick-date-picker input[type="date"] {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -512,6 +552,13 @@
     // Init
     async function init() {
       await Promise.all([loadRtes(), loadOwners(), loadStats(), loadTypes()]);
+      // Auto-filter by overdue if linked from home page
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('status') === 'overdue') {
+        filters.overdue = '1';
+        const pill = document.querySelector('.filter-pill[data-status="overdue"]');
+        if (pill) pill.classList.add('active');
+      }
       await loadItems();
     }
 
@@ -737,22 +784,61 @@
     }
 
     function editDate(el, id, currentValue) {
-      if (el.querySelector('input')) return;
-      const input = document.createElement('input');
-      input.type = 'date';
-      input.value = currentValue;
+      if (el.querySelector('.quick-date-picker')) return;
+      
+      const picker = document.createElement('div');
+      picker.className = 'quick-date-picker';
+      picker.innerHTML = `
+        <div class="quick-date-buttons">
+          <button type="button" data-days="0">Today</button>
+          <button type="button" data-days="7">+1w</button>
+          <button type="button" data-days="14">+2w</button>
+          <button type="button" data-days="30">+1m</button>
+          <button type="button" data-days="90">+Q</button>
+          <button type="button" data-days="clear" class="clear-btn">Clear</button>
+        </div>
+        <input type="date" value="${currentValue || ''}">
+      `;
       el.innerHTML = '';
-      el.appendChild(input);
+      el.appendChild(picker);
+      
+      const input = picker.querySelector('input');
       input.focus();
-
-      const save = async () => {
-        await updateItem(id, { due_date: input.value || null });
+      
+      const save = async (val) => {
+        await updateItem(id, { due_date: val || null });
       };
-
-      input.onblur = save;
-      input.onchange = save;
+      
+      // Quick buttons
+      picker.querySelectorAll('button[data-days]').forEach(btn => {
+        btn.onclick = async () => {
+          const days = btn.dataset.days;
+          if (days === 'clear') {
+            await save(null);
+          } else {
+            const d = new Date();
+            d.setDate(d.getDate() + parseInt(days));
+            await save(d.toISOString().split('T')[0]);
+          }
+        };
+      });
+      
+      input.onchange = () => save(input.value || null);
+      
+      // Close on click outside
+      const close = (e) => {
+        if (!picker.contains(e.target)) {
+          document.removeEventListener('click', close);
+          loadItems();
+        }
+      };
+      setTimeout(() => document.addEventListener('click', close), 10);
+      
       input.onkeydown = (e) => {
-        if (e.key === 'Escape') loadItems();
+        if (e.key === 'Escape') {
+          document.removeEventListener('click', close);
+          loadItems();
+        }
       };
     }
 

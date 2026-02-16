@@ -583,13 +583,15 @@ function parseTemplateFields(text) {
   const fullText = text;
   
   // Document type: can appear anywhere - extract and remember position
-  const docTypeMatch = fullText.match(/document\s*type:\s*\[?([^\]\n]+?)\]?(?=\s*(?:participants?:|tags?:|$|\n))/i);
+  // Use [ \t]* instead of \s* to prevent matching across newlines
+  const docTypeMatch = fullText.match(/document\s*type:[ \t]*\[?([^\]\n]+?)\]?(?=[ \t]*(?:participants?:|tags?:|$|\n))/i);
   if (docTypeMatch) {
     result.docType = docTypeMatch[1].trim().replace(/[\[\]]/g, '');
   }
   
   // Participants: can appear anywhere
-  const participantsMatch = fullText.match(/participants?:\s*\[?([^\]\n]+?)\]?(?=\s*(?:document\s*type:|tags?:|$|\n))/i);
+  // Use *? (not +?) to allow empty match when no participants listed
+  const participantsMatch = fullText.match(/participants?:[ \t]*\[?([^\]\n]*?)\]?(?=[ \t]*(?:document\s*type:|tags?:|$|\n))/i);
   if (participantsMatch) {
     result.participants = participantsMatch[1]
       .split(/[,;]/)
@@ -598,7 +600,8 @@ function parseTemplateFields(text) {
   }
   
   // Tags: can appear anywhere
-  const tagsMatch = fullText.match(/tags?:\s*\[?([^\]\n]+?)\]?(?=\s*(?:document\s*type:|participants?:|$|\n))/i);
+  // Use *? (not +?) to allow empty match when no tags listed
+  const tagsMatch = fullText.match(/tags?:[ \t]*\[?([^\]\n]*?)\]?(?=[ \t]*(?:document\s*type:|participants?:|$|\n))/i);
   if (tagsMatch) {
     // Extract hashtags from the match
     const tagContent = tagsMatch[1];

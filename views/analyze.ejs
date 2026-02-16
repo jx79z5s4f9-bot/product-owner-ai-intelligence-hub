@@ -377,24 +377,7 @@
       to { transform: rotate(360deg); }
     }
     
-    /* Import modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .modal-overlay.show {
-      display: flex;
-    }
-    
+    /* Import modal — uses design-system .modal-overlay + .hidden pattern */
     .modal {
       background: #161b22;
       border: 1px solid #30363d;
@@ -712,7 +695,7 @@ Supports:
   </div>
   
   <!-- Import Modal -->
-  <div id="importModal" class="modal-overlay">
+  <div id="importModal" class="modal-overlay hidden">
     <div class="modal">
       <h3>📤 Import to PO AI</h3>
       <p>Import extracted entities to the knowledge graph:</p>
@@ -1159,12 +1142,12 @@ Supports:
         Will import: <strong>${total}</strong> actors/systems and <strong>${rels}</strong> relationships
       `;
       
-      document.getElementById('importModal').classList.add('show');
+      document.getElementById('importModal').classList.remove('hidden');
     });
     
     // Cancel import
     document.getElementById('cancelImport').addEventListener('click', () => {
-      document.getElementById('importModal').classList.remove('show');
+      document.getElementById('importModal').classList.add('hidden');
     });
     
     // Confirm import
@@ -1177,7 +1160,9 @@ Supports:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             entities: currentEntities,
-            rteId: parseInt(rteId)
+            rteId: parseInt(rteId),
+            documentContent: documentContent.value,
+            analysisContent: currentAnalysis
           })
         });
         
@@ -1185,7 +1170,7 @@ Supports:
         
         if (data.success) {
           alert(`✓ ${data.message}`);
-          document.getElementById('importModal').classList.remove('show');
+          document.getElementById('importModal').classList.add('hidden');
         } else {
           throw new Error(data.error);
         }
